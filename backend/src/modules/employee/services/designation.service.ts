@@ -1,6 +1,7 @@
 import { IDesignation } from '../../../models/Designation';
 import DesignationRepository from '../repositories/designation.repository';
 import DepartmentRepository from '../repositories/department.repository';
+import EmployeeRepository from '../repositories/employee.repository';
 import {
   CreateDesignationDTO,
   UpdateDesignationDTO,
@@ -114,8 +115,11 @@ export class DesignationService {
       throw new Error('Designation not found');
     }
 
-    // Note: You may want to add additional checks here to prevent deletion
-    // if employees are assigned to this designation
+    // Prevent deletion if employees are assigned to this designation
+    const employeeCount = await EmployeeRepository.countByDesignation(designationId);
+    if (employeeCount > 0) {
+      throw new Error('Cannot delete designation with active employees');
+    }
 
     await DesignationRepository.delete(designationId);
   }

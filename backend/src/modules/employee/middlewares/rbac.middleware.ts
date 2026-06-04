@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import EmployeeModel from '../../../models/Employee';
 
 export enum EmployeeModuleRoles {
   MANAGEMENT_ADMIN = 'MANAGEMENT_ADMIN',
@@ -22,7 +23,9 @@ const rolePermissions: Record<EmployeeModuleRoles, string[]> = {
 
     'manage:designation',
     'read:designation',
-
+    'read:directory',
+    'read:team',
+    'read:department',
     'view:directory',
 
     'view:hierarchy',
@@ -42,6 +45,7 @@ const rolePermissions: Record<EmployeeModuleRoles, string[]> = {
     'update:employee',
     'read:department',
     'read:designation',
+    'read:directory',
     'view:directory',
   ],
   [EmployeeModuleRoles.EMPLOYEE]: [
@@ -211,3 +215,66 @@ declare global {
     }
   }
 }
+
+/**
+ * Allow access if the user is MANAGEMENT_ADMIN / HR_RECRUITER OR if the employee record belongs to the logged-in user.
+ */
+export const requireEmployeeAccess = () => {
+  return async (req: Request, res: Response, next: NextFunction) => {
+    const userRole = req.user?.role as EmployeeModuleRoles;
+    const userId = req.user?._id;
+
+    if (!userRole || !userId) {
+      return res.status(401).json({
+        success: false,
+        message: 'Unauthorized: No active session',
+        statusCode: 401,
+      });
+    }
+
+    // Admins and HR recruiters can access any employee record
+    if (
+      userRole === EmployeeModuleRoles.MANAGEMENT_ADMIN ||
+      userRole === EmployeeModuleRoles.HR_RECRUITER
+    ) {
+      return next();
+    }
+
+    const { id } = req.params;
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        message: 'Bad Request: Employee ID parameter is missing',
+        statusCode: 400,
+      });
+    }
+
+    try {
+      const employee = await EmployeeModel.findOne({ _id: id, isDeleted: false });
+      if (!employee) {
+        return res.status(404).json({
+          success: false,
+          message: 'Employee record not found',
+          statusCode: 404,
+        });
+      }
+
+      // Check if this employee record belongs to the logged in user
+      if (employee.userId && employee.userId.toString() === userId.toString()) {
+        return next();
+      }
+
+      return res.status(403).json({
+        success: false,
+        message: 'Forbidden: You can only access your own profile',
+        statusCode: 403,
+      });
+    } catch (error: any) {
+      return res.status(500).json({
+        success: false,
+        message: error.message || 'Server error verifying access',
+        statusCode: 500,
+      });
+    }
+  };
+};

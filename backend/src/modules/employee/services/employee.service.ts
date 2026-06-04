@@ -145,6 +145,7 @@ export class EmployeeService {
       if (!manager) {
         throw new Error('Manager not found');
       }
+      await this.checkReportingCycle(employeeId, updateData.managerId);
     }
 
     // Update employee
@@ -157,22 +158,67 @@ export class EmployeeService {
       throw new Error('Failed to update employee');
     }
 
-    // Log activity
-    await EmployeeActivityRepository.create({
-      employeeId,
-      activityType: ActivityType.PROFILE_UPDATED,
-      title: 'Profile Updated',
-      description: `${employee.firstName} ${employee.lastName}'s profile was updated`,
-      previousValue: {
-        phone: employee.phone,
-        location: employee.workLocation,
-      },
-      newValue: {
-        phone: updateData.phone || employee.phone,
-        location: updateData.workLocation || employee.workLocation,
-      },
-      createdBy: userId,
+    // Log timeline changes
+    if (updateData.managerId && String((employee.managerId as any)?._id || employee.managerId || '') !== String(updateData.managerId)) {
+      await EmployeeActivityRepository.create({
+        employeeId,
+        activityType: ActivityType.MANAGER_CHANGED,
+        title: 'Manager Changed',
+        description: `${employee.firstName} ${employee.lastName}'s reporting manager was changed`,
+        previousValue: { managerId: (employee.managerId as any)?._id || employee.managerId || null },
+        newValue: { managerId: updateData.managerId },
+        createdBy: userId,
+      });
+    }
+
+    if (updateData.departmentId && String((employee.departmentId as any)?._id || employee.departmentId || '') !== String(updateData.departmentId)) {
+      await EmployeeActivityRepository.create({
+        employeeId,
+        activityType: ActivityType.DEPARTMENT_CHANGED,
+        title: 'Department Changed',
+        description: `${employee.firstName} ${employee.lastName}'s department was changed`,
+        previousValue: { departmentId: (employee.departmentId as any)?._id || employee.departmentId || null },
+        newValue: { departmentId: updateData.departmentId },
+        createdBy: userId,
+      });
+    }
+
+    if (updateData.designationId && String((employee.designationId as any)?._id || employee.designationId || '') !== String(updateData.designationId)) {
+      await EmployeeActivityRepository.create({
+        employeeId,
+        activityType: ActivityType.DESIGNATION_CHANGED,
+        title: 'Designation Changed',
+        description: `${employee.firstName} ${employee.lastName}'s designation was changed`,
+        previousValue: { designationId: (employee.designationId as any)?._id || employee.designationId || null },
+        newValue: { designationId: updateData.designationId },
+        createdBy: userId,
+      });
+    }
+
+    // Log other profile updates
+    const profileFields = ['firstName', 'lastName', 'email', 'phone', 'workLocation', 'experience', 'salaryGrade', 'gender', 'dateOfBirth'];
+    const profileChanges: any = {};
+    const profilePrevious: any = {};
+    
+    profileFields.forEach((field) => {
+      const val = (updateData as any)[field];
+      if (val !== undefined && String(val) !== String((employee as any)[field])) {
+        profileChanges[field] = val;
+        profilePrevious[field] = (employee as any)[field];
+      }
     });
+
+    if (Object.keys(profileChanges).length > 0) {
+      await EmployeeActivityRepository.create({
+        employeeId,
+        activityType: ActivityType.PROFILE_UPDATED,
+        title: 'Profile Updated',
+        description: `${employee.firstName} ${employee.lastName}'s profile fields were updated: ${Object.keys(profileChanges).join(', ')}`,
+        previousValue: profilePrevious,
+        newValue: profileChanges,
+        createdBy: userId,
+      });
+    }
 
     return updatedEmployee;
   }
@@ -266,6 +312,11 @@ export class EmployeeService {
     }
 
     if (transferData.managerId) {
+      const manager = await EmployeeRepository.findById(transferData.managerId);
+      if (!manager) {
+        throw new Error('Manager not found');
+      }
+      await this.checkReportingCycle(transferData.employeeId, transferData.managerId);
       updateData.managerId = transferData.managerId;
     }
 
@@ -671,14 +722,22 @@ export class EmployeeService {
     managerId: string,
     pagination?: PaginationDTO
   ): Promise<any> {
-    const { employees, total } = await EmployeeRepository.getDirectReports(
-      managerId
-    ) as any;
+
+    const { employees, total } =
+      await EmployeeRepository.findByManager(
+        managerId,
+        pagination
+      );
 
     const page = pagination?.page || 1;
     const limit = pagination?.limit || 10;
 
-    return createPaginatedResponse(employees, employees.length, page, limit);
+    return createPaginatedResponse(
+      employees,
+      total,
+      page,
+      limit
+    );
   }
 
   /**
@@ -727,6 +786,36 @@ export class EmployeeService {
       success: result.modifiedCount,
       failed: batchData.employeeIds.length - result.modifiedCount,
     };
+  }
+
+  /**
+   * Helper to check if setting managerId for employeeId creates a cycle
+   */
+  async checkReportingCycle(employeeId: string, managerId: string): Promise<void> {
+    if (!managerId) return;
+    
+    let currentId = managerId;
+    const visited = new Set<string>();
+    
+    while (currentId) {
+      if (currentId.toString() === employeeId.toString()) {
+        throw new Error('Cyclic reporting relationship detected: An employee cannot report to themselves or a direct/indirect report.');
+      }
+      
+      if (visited.has(currentId.toString())) {
+        break;
+      }
+      visited.add(currentId.toString());
+      
+      const managerEmployee = await EmployeeRepository.findById(currentId);
+      if (!managerEmployee || !managerEmployee.managerId) {
+        break;
+      }
+      
+      currentId = (managerEmployee.managerId as any)._id 
+        ? (managerEmployee.managerId as any)._id.toString() 
+        : managerEmployee.managerId.toString();
+    }
   }
 }
 

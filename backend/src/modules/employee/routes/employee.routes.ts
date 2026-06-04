@@ -14,7 +14,7 @@ import {
   bulkUpdateSchema,
   employeeListSchema,
 } from '../validators/employee.validator';
-import { requirePermission } from '../middlewares/rbac.middleware';
+import { requirePermission, requireEmployeeAccess } from '../middlewares/rbac.middleware';
 
 const router = Router();
 
@@ -85,14 +85,14 @@ router.get(
 // Get employee by ID
 router.get(
   '/:id',
-  requirePermission('read:employee'),
+  requireEmployeeAccess(),
   EmployeeController.getEmployee.bind(EmployeeController)
 );
 
 // Update employee
 router.put(
   '/:id',
-  requirePermission('update:employee'),
+  requireEmployeeAccess(),
   validateBody(updateEmployeeSchema),
   EmployeeController.updateEmployee.bind(EmployeeController)
 );

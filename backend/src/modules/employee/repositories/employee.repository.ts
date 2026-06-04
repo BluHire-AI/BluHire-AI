@@ -244,6 +244,18 @@ export class EmployeeRepository {
   }
 
   /**
+   * Get employee count by designation
+   */
+  async countByDesignation(
+    designationId: string
+  ): Promise<number> {
+    return await EmployeeModel.countDocuments({
+      designationId,
+      isDeleted: false,
+    });
+  }
+
+  /**
    * Check if employee code exists
    */
   async codeExists(employeeCode: string): Promise<boolean> {

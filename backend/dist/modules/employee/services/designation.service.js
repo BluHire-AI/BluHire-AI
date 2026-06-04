@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.DesignationService = void 0;
 const designation_repository_1 = __importDefault(require("../repositories/designation.repository"));
 const department_repository_1 = __importDefault(require("../repositories/department.repository"));
+const employee_repository_1 = __importDefault(require("../repositories/employee.repository"));
 const common_dto_1 = require("../dtos/common.dto");
 class DesignationService {
     /**
@@ -85,8 +86,11 @@ class DesignationService {
         if (!designation) {
             throw new Error('Designation not found');
         }
-        // Note: You may want to add additional checks here to prevent deletion
-        // if employees are assigned to this designation
+        // Prevent deletion if employees are assigned to this designation
+        const employeeCount = await employee_repository_1.default.countByDesignation(designationId);
+        if (employeeCount > 0) {
+            throw new Error('Cannot delete designation with active employees');
+        }
         await designation_repository_1.default.delete(designationId);
     }
     /**

@@ -213,6 +213,15 @@ class EmployeeRepository {
         });
     }
     /**
+     * Get employee count by designation
+     */
+    async countByDesignation(designationId) {
+        return await Employee_1.default.countDocuments({
+            designationId,
+            isDeleted: false,
+        });
+    }
+    /**
      * Check if employee code exists
      */
     async codeExists(employeeCode) {

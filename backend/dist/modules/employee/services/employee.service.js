@@ -115,6 +115,7 @@ class EmployeeService {
             if (!manager) {
                 throw new Error('Manager not found');
             }
+            await this.checkReportingCycle(employeeId, updateData.managerId);
         }
         // Update employee
         const updatedEmployee = await employee_repository_1.default.update(employeeId, {
@@ -124,22 +125,62 @@ class EmployeeService {
         if (!updatedEmployee) {
             throw new Error('Failed to update employee');
         }
-        // Log activity
-        await employee_activity_repository_1.default.create({
-            employeeId,
-            activityType: EmployeeActivity_1.ActivityType.PROFILE_UPDATED,
-            title: 'Profile Updated',
-            description: `${employee.firstName} ${employee.lastName}'s profile was updated`,
-            previousValue: {
-                phone: employee.phone,
-                location: employee.workLocation,
-            },
-            newValue: {
-                phone: updateData.phone || employee.phone,
-                location: updateData.workLocation || employee.workLocation,
-            },
-            createdBy: userId,
+        // Log timeline changes
+        if (updateData.managerId && String(employee.managerId?._id || employee.managerId || '') !== String(updateData.managerId)) {
+            await employee_activity_repository_1.default.create({
+                employeeId,
+                activityType: EmployeeActivity_1.ActivityType.MANAGER_CHANGED,
+                title: 'Manager Changed',
+                description: `${employee.firstName} ${employee.lastName}'s reporting manager was changed`,
+                previousValue: { managerId: employee.managerId?._id || employee.managerId || null },
+                newValue: { managerId: updateData.managerId },
+                createdBy: userId,
+            });
+        }
+        if (updateData.departmentId && String(employee.departmentId?._id || employee.departmentId || '') !== String(updateData.departmentId)) {
+            await employee_activity_repository_1.default.create({
+                employeeId,
+                activityType: EmployeeActivity_1.ActivityType.DEPARTMENT_CHANGED,
+                title: 'Department Changed',
+                description: `${employee.firstName} ${employee.lastName}'s department was changed`,
+                previousValue: { departmentId: employee.departmentId?._id || employee.departmentId || null },
+                newValue: { departmentId: updateData.departmentId },
+                createdBy: userId,
+            });
+        }
+        if (updateData.designationId && String(employee.designationId?._id || employee.designationId || '') !== String(updateData.designationId)) {
+            await employee_activity_repository_1.default.create({
+                employeeId,
+                activityType: EmployeeActivity_1.ActivityType.DESIGNATION_CHANGED,
+                title: 'Designation Changed',
+                description: `${employee.firstName} ${employee.lastName}'s designation was changed`,
+                previousValue: { designationId: employee.designationId?._id || employee.designationId || null },
+                newValue: { designationId: updateData.designationId },
+                createdBy: userId,
+            });
+        }
+        // Log other profile updates
+        const profileFields = ['firstName', 'lastName', 'email', 'phone', 'workLocation', 'experience', 'salaryGrade', 'gender', 'dateOfBirth'];
+        const profileChanges = {};
+        const profilePrevious = {};
+        profileFields.forEach((field) => {
+            const val = updateData[field];
+            if (val !== undefined && String(val) !== String(employee[field])) {
+                profileChanges[field] = val;
+                profilePrevious[field] = employee[field];
+            }
         });
+        if (Object.keys(profileChanges).length > 0) {
+            await employee_activity_repository_1.default.create({
+                employeeId,
+                activityType: EmployeeActivity_1.ActivityType.PROFILE_UPDATED,
+                title: 'Profile Updated',
+                description: `${employee.firstName} ${employee.lastName}'s profile fields were updated: ${Object.keys(profileChanges).join(', ')}`,
+                previousValue: profilePrevious,
+                newValue: profileChanges,
+                createdBy: userId,
+            });
+        }
         return updatedEmployee;
     }
     /**
@@ -207,6 +248,11 @@ class EmployeeService {
             updateData.designationId = transferData.designationId;
         }
         if (transferData.managerId) {
+            const manager = await employee_repository_1.default.findById(transferData.managerId);
+            if (!manager) {
+                throw new Error('Manager not found');
+            }
+            await this.checkReportingCycle(transferData.employeeId, transferData.managerId);
             updateData.managerId = transferData.managerId;
         }
         const updatedEmployee = await employee_repository_1.default.update(transferData.employeeId, updateData);
@@ -511,10 +557,10 @@ class EmployeeService {
      * Get team members of a manager
      */
     async getTeamMembers(managerId, pagination) {
-        const { employees, total } = await employee_repository_1.default.getDirectReports(managerId);
+        const { employees, total } = await employee_repository_1.default.findByManager(managerId, pagination);
         const page = pagination?.page || 1;
         const limit = pagination?.limit || 10;
-        return (0, common_dto_1.createPaginatedResponse)(employees, employees.length, page, limit);
+        return (0, common_dto_1.createPaginatedResponse)(employees, total, page, limit);
     }
     /**
      * Get employee statistics
@@ -546,6 +592,31 @@ class EmployeeService {
             success: result.modifiedCount,
             failed: batchData.employeeIds.length - result.modifiedCount,
         };
+    }
+    /**
+     * Helper to check if setting managerId for employeeId creates a cycle
+     */
+    async checkReportingCycle(employeeId, managerId) {
+        if (!managerId)
+            return;
+        let currentId = managerId;
+        const visited = new Set();
+        while (currentId) {
+            if (currentId.toString() === employeeId.toString()) {
+                throw new Error('Cyclic reporting relationship detected: An employee cannot report to themselves or a direct/indirect report.');
+            }
+            if (visited.has(currentId.toString())) {
+                break;
+            }
+            visited.add(currentId.toString());
+            const managerEmployee = await employee_repository_1.default.findById(currentId);
+            if (!managerEmployee || !managerEmployee.managerId) {
+                break;
+            }
+            currentId = managerEmployee.managerId._id
+                ? managerEmployee.managerId._id.toString()
+                : managerEmployee.managerId.toString();
+        }
     }
 }
 exports.EmployeeService = EmployeeService;

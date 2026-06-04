@@ -33,9 +33,9 @@ router.get('/', (0, rbac_middleware_1.requirePermission)('read:employee'), (0, v
  * 3. Parameterized endpoints (/:id must be defined after specific endpoints)
  */
 // Get employee by ID
-router.get('/:id', (0, rbac_middleware_1.requirePermission)('read:employee'), employee_controller_1.default.getEmployee.bind(employee_controller_1.default));
+router.get('/:id', (0, rbac_middleware_1.requireEmployeeAccess)(), employee_controller_1.default.getEmployee.bind(employee_controller_1.default));
 // Update employee
-router.put('/:id', (0, rbac_middleware_1.requirePermission)('update:employee'), (0, validate_middleware_1.validateBody)(employee_validator_1.updateEmployeeSchema), employee_controller_1.default.updateEmployee.bind(employee_controller_1.default));
+router.put('/:id', (0, rbac_middleware_1.requireEmployeeAccess)(), (0, validate_middleware_1.validateBody)(employee_validator_1.updateEmployeeSchema), employee_controller_1.default.updateEmployee.bind(employee_controller_1.default));
 // Delete employee (soft delete)
 router.delete('/:id', (0, rbac_middleware_1.requirePermission)('delete:employee'), employee_controller_1.default.deleteEmployee.bind(employee_controller_1.default));
 // Get team members (reports of manager)

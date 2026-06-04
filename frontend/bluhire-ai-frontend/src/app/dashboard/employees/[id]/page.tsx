@@ -15,15 +15,35 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import {
   ArrowLeft, Edit, ShieldAlert, Award, GraduationCap, FileText, Calendar,
-  Briefcase, MapPin, Phone, Mail, User, Info, Plus, Trash2, FileUp, RefreshCw
+  Briefcase, MapPin, Phone, Mail, User, Info, Plus, Trash2, FileUp, RefreshCw,
+  Sparkles, Brain, ArrowUpRight, Flame, Target
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { 
+  RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, 
+  ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip 
+} from 'recharts';
 
 export default function EmployeeDetailsPage() {
   const router = useRouter();
   const params = useParams();
   const id = params.id as string;
   const { user } = useAuthStore();
+
+  const skillRadarData = [
+    { subject: 'Technical Skill', A: 88, fullMark: 100 },
+    { subject: 'Communication', A: 75, fullMark: 100 },
+    { subject: 'Leadership', A: 82, fullMark: 100 },
+    { subject: 'Strategy', A: 85, fullMark: 100 },
+    { subject: 'Teamwork', A: 90, fullMark: 100 },
+  ];
+
+  const performanceTrendData = [
+    { name: 'Q1 2025', rating: 3.8 },
+    { name: 'Q2 2025', rating: 4.1 },
+    { name: 'Q3 2025', rating: 4.0 },
+    { name: 'Q4 2025', rating: 4.3 },
+  ];
 
   const [employee, setEmployee] = useState<Employee | null>(null);
   const [timeline, setTimeline] = useState<any[]>([]);
@@ -342,11 +362,16 @@ export default function EmployeeDetailsPage() {
       </div>
 
       <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList>
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="education">Education & Skills</TabsTrigger>
-          <TabsTrigger value="documents">Documents</TabsTrigger>
-          <TabsTrigger value="timeline">Career Timeline</TabsTrigger>
+        <TabsList className="bg-zinc-100 dark:bg-zinc-900/50 p-1.5 rounded-xl border border-zinc-200/40 dark:border-zinc-800/40 flex flex-wrap gap-1 w-fit">
+          <TabsTrigger value="overview" className="rounded-lg text-xs font-semibold px-4 py-2 cursor-pointer">Overview</TabsTrigger>
+          <TabsTrigger value="education" className="rounded-lg text-xs font-semibold px-4 py-2 cursor-pointer">Education & Skills</TabsTrigger>
+          <TabsTrigger value="performance" className="rounded-lg text-xs font-semibold px-4 py-2 cursor-pointer">Performance</TabsTrigger>
+          <TabsTrigger value="career-growth" className="rounded-lg text-xs font-semibold px-4 py-2 cursor-pointer">Career Growth</TabsTrigger>
+          <TabsTrigger value="ai-insights" className="rounded-lg text-xs font-semibold px-4 py-2 cursor-pointer flex items-center gap-1.5">
+            <Sparkles className="w-3.5 h-3.5 text-amber-500" /> AI Insights
+          </TabsTrigger>
+          <TabsTrigger value="documents" className="rounded-lg text-xs font-semibold px-4 py-2 cursor-pointer">Documents</TabsTrigger>
+          <TabsTrigger value="timeline" className="rounded-lg text-xs font-semibold px-4 py-2 cursor-pointer">Career Timeline</TabsTrigger>
         </TabsList>
 
         {/* Tab 1: Overview */}
@@ -582,7 +607,163 @@ export default function EmployeeDetailsPage() {
           </div>
         </TabsContent>
 
-        {/* Tab 3: Documents */}
+        {/* Tab 3: Performance */}
+        <TabsContent value="performance" className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <Card className="md:col-span-2 border-zinc-200/60 dark:border-zinc-800/80 bg-white dark:bg-[#0e1422]">
+              <CardHeader>
+                <CardTitle className="text-sm font-bold uppercase tracking-wider text-zinc-800 dark:text-zinc-100 flex items-center gap-2">
+                  <Award className="w-4.5 h-4.5 text-blue-600" /> Performance Appraisal Trend
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="h-[280px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={performanceTrendData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
+                    <XAxis dataKey="name" stroke="#64748b" fontSize={11} tickLine={false} />
+                    <YAxis domain={[0, 5]} stroke="#64748b" fontSize={11} tickLine={false} />
+                    <Tooltip contentStyle={{ backgroundColor: 'rgba(15,23,42,0.9)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)' }} />
+                    <Line type="monotone" dataKey="rating" stroke="#2563eb" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} name="Rating" />
+                  </LineChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+
+            <div className="space-y-6">
+              <Card className="border-zinc-200/60 dark:border-zinc-800/80 bg-white dark:bg-[#0e1422]">
+                <CardHeader>
+                  <CardTitle className="text-sm font-bold uppercase tracking-wider text-zinc-800 dark:text-zinc-100">Appraisal Summary</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <span className="text-xs text-zinc-400 block font-medium">Self Evaluation</span>
+                    <span className="text-lg font-bold text-zinc-950 dark:text-zinc-50">4.5 / 5.0</span>
+                  </div>
+                  <div>
+                    <span className="text-xs text-zinc-400 block font-medium">Manager Evaluation</span>
+                    <span className="text-lg font-bold text-zinc-950 dark:text-zinc-50">4.3 / 5.0</span>
+                  </div>
+                  <div>
+                    <span className="text-xs text-zinc-400 block font-medium">Last Promotion Date</span>
+                    <span className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">October 14, 2025</span>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </TabsContent>
+
+        {/* Tab 4: Career Growth */}
+        <TabsContent value="career-growth" className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <Card className="border-zinc-200/60 dark:border-zinc-800/80 bg-white dark:bg-[#0e1422]">
+              <CardHeader>
+                <CardTitle className="text-sm font-bold uppercase tracking-wider text-zinc-800 dark:text-zinc-100">Promotion Readiness</CardTitle>
+              </CardHeader>
+              <CardContent className="flex flex-col items-center justify-center py-6">
+                <div className="relative w-32 h-32 flex items-center justify-center rounded-full border-4 border-dashed border-indigo-600/30">
+                  <div className="text-center">
+                    <span className="text-3xl font-extrabold text-indigo-600 dark:text-indigo-400">82%</span>
+                    <span className="text-[10px] text-zinc-400 block font-semibold mt-1">Readiness Score</span>
+                  </div>
+                </div>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400 text-center mt-5 font-medium leading-relaxed">
+                  Excellent technical skills and strong collaboration indicators place this employee high in the promotion pool.
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="md:col-span-2 border-zinc-200/60 dark:border-zinc-800/80 bg-white dark:bg-[#0e1422]">
+              <CardHeader>
+                <CardTitle className="text-sm font-bold uppercase tracking-wider text-zinc-800 dark:text-zinc-100">Career Ladder Pathway</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="flex items-center justify-between p-4 rounded-xl border border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-800/10">
+                  <div>
+                    <span className="text-xs text-zinc-400 block font-semibold">Current Designation</span>
+                    <span className="text-sm font-bold text-zinc-800 dark:text-zinc-100">{employee.designationId?.title || 'Unassigned'}</span>
+                  </div>
+                  <ArrowUpRight className="w-5 h-5 text-indigo-600" />
+                  <div>
+                    <span className="text-xs text-zinc-400 block font-semibold">Target Next Level</span>
+                    <span className="text-sm font-bold text-indigo-600 dark:text-indigo-400">Lead Specialist</span>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-zinc-500">Skills to Master for Level Up</h4>
+                  <ul className="space-y-2">
+                    {[
+                      { skill: "Distributed Cloud Architecture", status: "In progress", color: "text-amber-500" },
+                      { skill: "Leadership & Strategy Appraisals", status: "Pending", color: "text-zinc-400" },
+                      { skill: "Project Management Certifications", status: "In progress", color: "text-amber-500" }
+                    ].map((item, idx) => (
+                      <li key={idx} className="flex justify-between items-center text-xs p-2 rounded bg-zinc-50/30 dark:bg-zinc-900/30">
+                        <span className="font-semibold text-zinc-700 dark:text-zinc-300">{item.skill}</span>
+                        <span className={`text-[10px] font-bold ${item.color}`}>{item.status}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        {/* Tab 5: AI Insights */}
+        <TabsContent value="ai-insights" className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* AI Profile Summary */}
+            <Card className="md:col-span-2 border-zinc-200/60 dark:border-zinc-800/80 bg-white dark:bg-[#0e1422] relative overflow-hidden">
+              <div className="absolute top-0 right-0 p-4 opacity-15">
+                <Brain className="w-20 h-20 text-purple-600" />
+              </div>
+              <CardHeader>
+                <CardTitle className="text-sm font-bold uppercase tracking-wider text-zinc-800 dark:text-zinc-100 flex items-center gap-2">
+                  <Sparkles className="w-4.5 h-4.5 text-amber-500" /> AI-Generated Employee Executive Summary
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-5">
+                <p className="text-xs leading-relaxed text-zinc-600 dark:text-zinc-300 font-medium">
+                  {employee.firstName} has consistently demonstrated strong project delivery outputs, achieving an average rating of 4.15/5.0. Their technical competency ranks in the top 15% of the company database.
+                </p>
+                <p className="text-xs leading-relaxed text-zinc-600 dark:text-zinc-300 font-medium">
+                  <strong>Risk Assessment:</strong> Attrition risk is classified as <span className="text-emerald-500 font-bold">Low (15%)</span>, supported by a healthy attendance record, high participation in technical skill upgrades, and consistent appraisals.
+                </p>
+
+                <div className="grid grid-cols-2 gap-4 pt-2 border-t border-zinc-100 dark:border-zinc-800">
+                  <div>
+                    <span className="text-xs text-zinc-400 block font-semibold">Retention Priority</span>
+                    <Badge variant="outline" className="mt-1 bg-emerald-500/10 text-emerald-500 border-emerald-500/20">Standard Support</Badge>
+                  </div>
+                  <div>
+                    <span className="text-xs text-zinc-400 block font-semibold">Leadership Fit Score</span>
+                    <span className="text-sm font-extrabold text-indigo-600 dark:text-indigo-400">88% (Excellent)</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Competency Assessment Radar */}
+            <Card className="border-zinc-200/60 dark:border-zinc-800/80 bg-white dark:bg-[#0e1422]">
+              <CardHeader>
+                <CardTitle className="text-sm font-bold uppercase tracking-wider text-zinc-800 dark:text-zinc-100">Competency Radar</CardTitle>
+              </CardHeader>
+              <CardContent className="h-[220px] flex items-center justify-center">
+                <ResponsiveContainer width="100%" height="100%">
+                  <RadarChart cx="50%" cy="50%" outerRadius="75%" data={skillRadarData}>
+                    <PolarGrid stroke="rgba(255,255,255,0.05)" />
+                    <PolarAngleAxis dataKey="subject" stroke="#64748b" fontSize={9} />
+                    <PolarRadiusAxis angle={30} domain={[0, 100]} stroke="#64748b" fontSize={8} />
+                    <Radar name={employee.firstName} dataKey="A" stroke="#8b5cf6" fill="#8b5cf6" fillOpacity={0.3} />
+                  </RadarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        {/* Tab 6: Documents */}
         <TabsContent value="documents">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">

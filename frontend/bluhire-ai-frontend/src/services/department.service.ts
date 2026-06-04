@@ -25,7 +25,10 @@ export interface DepartmentListResponse {
 export const departmentService = {
   list: async (query?: { page?: number; limit?: number; search?: string }): Promise<DepartmentListResponse> => {
     const response = await api.get('/departments', { params: query });
-    return response.data.data;
+    return {
+      departments: response.data.data.data || [],
+      total: response.data.data.pagination?.total || 0,
+    };
   },
 
   get: async (id: string): Promise<Department> => {

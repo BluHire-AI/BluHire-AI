@@ -23,7 +23,10 @@ export interface DesignationListResponse {
 export const designationService = {
   list: async (query?: { page?: number; limit?: number; search?: string }): Promise<DesignationListResponse> => {
     const response = await api.get('/designations', { params: query });
-    return response.data.data;
+    return {
+      designations: response.data.data.data || [],
+      total: response.data.data.pagination?.total || 0,
+    };
   },
 
   getAll: async (): Promise<Designation[]> => {
@@ -38,7 +41,10 @@ export const designationService = {
 
   getByDepartment: async (departmentId: string): Promise<DesignationListResponse> => {
     const response = await api.get(`/designations/by-department/${departmentId}`);
-    return response.data.data;
+    return {
+      designations: response.data.data.data || [],
+      total: response.data.data.pagination?.total || 0,
+    };
   },
 
   getLevels: async (): Promise<number[]> => {

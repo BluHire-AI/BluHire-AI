@@ -313,11 +313,9 @@ export default function EmployeeListPage() {
                     </TableCell>
                     <TableCell>
                       <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" className="h-8 w-8 p-0">
-                            <span className="sr-only">Open menu</span>
-                            <span className="font-bold">•••</span>
-                          </Button>
+                        <DropdownMenuTrigger className="group/button inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none hover:bg-muted hover:text-foreground active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 h-8 w-8 p-0 cursor-pointer">
+                          <span className="sr-only">Open menu</span>
+                          <span className="font-bold">•••</span>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-44">
                           <DropdownMenuLabel>Actions</DropdownMenuLabel>

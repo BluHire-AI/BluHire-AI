@@ -95,7 +95,10 @@ export interface EmployeeQuery {
 export const employeeService = {
   list: async (query?: EmployeeQuery): Promise<EmployeeListResponse> => {
     const response = await api.get('/employees', { params: query });
-    return response.data.data;
+    return {
+      employees: response.data.data.data || [],
+      total: response.data.data.pagination?.total || 0,
+    };
   },
 
   get: async (id: string): Promise<Employee> => {
@@ -119,7 +122,10 @@ export const employeeService = {
 
   getDirectory: async (query?: { page?: number; limit?: number }): Promise<EmployeeListResponse> => {
     const response = await api.get('/employees/directory', { params: query });
-    return response.data.data;
+    return {
+      employees: response.data.data.data || [],
+      total: response.data.data.pagination?.total || 0,
+    };
   },
 
   getHierarchy: async (): Promise<any> => {

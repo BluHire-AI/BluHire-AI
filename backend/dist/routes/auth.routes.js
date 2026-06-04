@@ -1,0 +1,15 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const auth_controller_1 = require("../controllers/auth.controller");
+const validate_middleware_1 = require("../middlewares/validate.middleware");
+const auth_middleware_1 = require("../middlewares/auth.middleware");
+const authValidators_1 = require("../validators/authValidators");
+const router = (0, express_1.Router)();
+router.post('/register', (0, validate_middleware_1.validateRequest)(authValidators_1.registerSchema), auth_controller_1.authController.register);
+router.post('/login', (0, validate_middleware_1.validateRequest)(authValidators_1.loginSchema), auth_controller_1.authController.login);
+router.post('/logout', auth_middleware_1.authenticate, auth_controller_1.authController.logout);
+router.post('/refresh', (0, validate_middleware_1.validateRequest)(authValidators_1.refreshTokenSchema), auth_controller_1.authController.refresh);
+router.post('/change-password', auth_middleware_1.authenticate, (0, validate_middleware_1.validateRequest)(authValidators_1.changePasswordSchema), auth_controller_1.authController.changePassword);
+// Forgot and Reset password can be added similarly
+exports.default = router;

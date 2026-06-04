@@ -76,6 +76,34 @@ class AuthController {
             next(error);
         }
     }
+    async forgotPassword(req, res, next) {
+        try {
+            const result = await auth_service_1.authService.forgotPassword(req.body.email);
+            res.status(200).json({
+                success: true,
+                message: 'Password reset link generated',
+                data: result,
+            });
+        }
+        catch (error) {
+            next(error);
+        }
+    }
+    async resetPassword(req, res, next) {
+        try {
+            await auth_service_1.authService.resetPassword(req.body);
+            res.status(200).json({
+                success: true,
+                message: 'Password reset successfully',
+            });
+        }
+        catch (error) {
+            res.status(400).json({
+                success: false,
+                message: error.message || 'Failed to reset password',
+            });
+        }
+    }
 }
 exports.AuthController = AuthController;
 exports.authController = new AuthController();

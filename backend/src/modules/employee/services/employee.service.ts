@@ -1,0 +1,733 @@
+import { IEmployee, EmploymentStatus, EmploymentType } from '../../../models/Employee';
+import EmployeeRepository from '../repositories/employee.repository';
+import EmployeeActivityRepository from '../repositories/employee-activity.repository';
+import DepartmentRepository from '../repositories/department.repository';
+import DesignationRepository from '../repositories/designation.repository';
+import {
+  CreateEmployeeDTO,
+  UpdateEmployeeDTO,
+  PromoteEmployeeDTO,
+  TransferEmployeeDTO,
+  ChangeStatusDTO,
+  EmployeeQueryDTO,
+  AddSkillDTO,
+  RemoveSkillDTO,
+  AddEducationDTO,
+  AddCertificationDTO,
+  UploadDocumentDTO,
+  BatchUpdateEmployeeDTO,
+} from '../dtos/employee.dto';
+import { PaginationDTO, createPaginatedResponse } from '../dtos/common.dto';
+import { ActivityType } from '../../../models/EmployeeActivity';
+import { IHierarchyNode, IOrganizationChart, IEmployeeDirectory } from '../employee.types';
+
+export class EmployeeService {
+  /**
+   * Create a new employee
+   */
+  async createEmployee(
+    employeeData: CreateEmployeeDTO,
+    userId: string
+  ): Promise<IEmployee> {
+    // Check if employee code already exists
+    const codeExists = await EmployeeRepository.codeExists(employeeData.employeeCode);
+    if (codeExists) {
+      throw new Error(`Employee code ${employeeData.employeeCode} already exists`);
+    }
+
+    // Check if user already has an employee record
+    if (employeeData.userId) {
+      const userExists = await EmployeeRepository.userIdExists(employeeData.userId);
+      if (userExists) {
+        throw new Error('User already has an employee record');
+      }
+    }
+
+    // Verify department exists
+    const department = await DepartmentRepository.findById(employeeData.departmentId);
+    if (!department) {
+      throw new Error('Department not found');
+    }
+
+    // Verify designation exists
+    const designation = await DesignationRepository.findById(employeeData.designationId);
+    if (!designation) {
+      throw new Error('Designation not found');
+    }
+
+    // Verify manager exists if provided
+    if (employeeData.managerId) {
+      const manager = await EmployeeRepository.findById(employeeData.managerId);
+      if (!manager) {
+        throw new Error('Manager not found');
+      }
+    }
+
+    // Create employee
+    const employee = await EmployeeRepository.create({
+      ...employeeData,
+      employeeCode: employeeData.employeeCode.toUpperCase(),
+      createdBy: userId,
+      employmentStatus: EmploymentStatus.PROBATION,
+    });
+
+    // Log activity
+    await EmployeeActivityRepository.create({
+      employeeId: employee._id.toString(),
+      activityType: ActivityType.JOINED,
+      title: 'Employee Joined',
+      description: `${employeeData.firstName} ${employeeData.lastName} joined the company`,
+      newValue: {
+        joinDate: employeeData.joiningDate,
+        department: employeeData.departmentId,
+        designation: employeeData.designationId,
+      },
+      createdBy: userId,
+    });
+
+    return employee;
+  }
+
+  /**
+   * Get employee by ID
+   */
+  async getEmployee(employeeId: string): Promise<IEmployee> {
+    const employee = await EmployeeRepository.findById(employeeId);
+    if (!employee) {
+      throw new Error('Employee not found');
+    }
+    return employee;
+  }
+
+  /**
+   * Get employee by code
+   */
+  async getEmployeeByCode(employeeCode: string): Promise<IEmployee> {
+    const employee = await EmployeeRepository.findByCode(employeeCode);
+    if (!employee) {
+      throw new Error('Employee not found');
+    }
+    return employee;
+  }
+
+  /**
+   * Update employee
+   */
+  async updateEmployee(
+    employeeId: string,
+    updateData: UpdateEmployeeDTO,
+    userId: string
+  ): Promise<IEmployee> {
+    const employee = await EmployeeRepository.findById(employeeId);
+    if (!employee) {
+      throw new Error('Employee not found');
+    }
+
+    // Verify new department if provided
+    if (updateData.departmentId) {
+      const department = await DepartmentRepository.findById(updateData.departmentId);
+      if (!department) {
+        throw new Error('Department not found');
+      }
+    }
+
+    // Verify new designation if provided
+    if (updateData.designationId) {
+      const designation = await DesignationRepository.findById(updateData.designationId);
+      if (!designation) {
+        throw new Error('Designation not found');
+      }
+    }
+
+    // Verify new manager if provided
+    if (updateData.managerId) {
+      const manager = await EmployeeRepository.findById(updateData.managerId);
+      if (!manager) {
+        throw new Error('Manager not found');
+      }
+    }
+
+    // Update employee
+    const updatedEmployee = await EmployeeRepository.update(employeeId, {
+      ...updateData,
+      updatedBy: userId,
+    });
+
+    if (!updatedEmployee) {
+      throw new Error('Failed to update employee');
+    }
+
+    // Log activity
+    await EmployeeActivityRepository.create({
+      employeeId,
+      activityType: ActivityType.PROFILE_UPDATED,
+      title: 'Profile Updated',
+      description: `${employee.firstName} ${employee.lastName}'s profile was updated`,
+      previousValue: {
+        phone: employee.phone,
+        location: employee.workLocation,
+      },
+      newValue: {
+        phone: updateData.phone || employee.phone,
+        location: updateData.workLocation || employee.workLocation,
+      },
+      createdBy: userId,
+    });
+
+    return updatedEmployee;
+  }
+
+  /**
+   * Promote employee to new designation
+   */
+  async promoteEmployee(
+    promotionData: PromoteEmployeeDTO,
+    userId: string
+  ): Promise<IEmployee> {
+    const employee = await EmployeeRepository.findById(promotionData.employeeId);
+    if (!employee) {
+      throw new Error('Employee not found');
+    }
+
+    // Verify new designation exists
+    const designation = await DesignationRepository.findById(promotionData.designationId);
+    if (!designation) {
+      throw new Error('Designation not found');
+    }
+
+    const oldDesignation = designation.title;
+
+    // Update employee
+    const updateData: any = {
+      designationId: promotionData.designationId,
+      updatedBy: userId,
+    };
+
+    if (promotionData.departmentId) {
+      updateData.departmentId = promotionData.departmentId;
+    }
+
+    if (promotionData.salaryGrade) {
+      updateData.salaryGrade = promotionData.salaryGrade;
+    }
+
+    const updatedEmployee = await EmployeeRepository.update(
+      promotionData.employeeId,
+      updateData
+    );
+
+    if (!updatedEmployee) {
+      throw new Error('Failed to promote employee');
+    }
+
+    // Log activity
+    await EmployeeActivityRepository.create({
+      employeeId: promotionData.employeeId,
+      activityType: ActivityType.PROMOTION,
+      title: 'Employee Promoted',
+      description: `${employee.firstName} ${employee.lastName} was promoted to ${designation.title}`,
+      previousValue: { designation: oldDesignation },
+      newValue: { designation: designation.title },
+      metadata: { promotionDate: new Date() },
+      createdBy: userId,
+    });
+
+    return updatedEmployee;
+  }
+
+  /**
+   * Transfer employee to different department
+   */
+  async transferEmployee(
+    transferData: TransferEmployeeDTO,
+    userId: string
+  ): Promise<IEmployee> {
+    const employee = await EmployeeRepository.findById(transferData.employeeId);
+    if (!employee) {
+      throw new Error('Employee not found');
+    }
+
+    // Verify new department exists
+    const department = await DepartmentRepository.findById(transferData.departmentId);
+    if (!department) {
+      throw new Error('Department not found');
+    }
+
+    const oldDepartment = employee.departmentId;
+
+    // Update employee
+    const updateData: any = {
+      departmentId: transferData.departmentId,
+      updatedBy: userId,
+    };
+
+    if (transferData.designationId) {
+      updateData.designationId = transferData.designationId;
+    }
+
+    if (transferData.managerId) {
+      updateData.managerId = transferData.managerId;
+    }
+
+    const updatedEmployee = await EmployeeRepository.update(
+      transferData.employeeId,
+      updateData
+    );
+
+    if (!updatedEmployee) {
+      throw new Error('Failed to transfer employee');
+    }
+
+    // Log activity
+    await EmployeeActivityRepository.create({
+      employeeId: transferData.employeeId,
+      activityType: ActivityType.DEPARTMENT_CHANGED,
+      title: 'Department Changed',
+      description: `${employee.firstName} ${employee.lastName} was transferred to ${department.name}`,
+      previousValue: { department: oldDepartment },
+      newValue: { department: transferData.departmentId },
+      metadata: { transferDate: new Date() },
+      createdBy: userId,
+    });
+
+    return updatedEmployee;
+  }
+
+  /**
+   * Change employee status
+   */
+  async changeEmployeeStatus(
+    statusData: ChangeStatusDTO,
+    userId: string
+  ): Promise<IEmployee> {
+    const employee = await EmployeeRepository.findById(statusData.employeeId);
+    if (!employee) {
+      throw new Error('Employee not found');
+    }
+
+    const oldStatus = employee.employmentStatus;
+
+    // Update employee
+    const updatedEmployee = await EmployeeRepository.update(
+      statusData.employeeId,
+      {
+        employmentStatus: statusData.employmentStatus,
+        updatedBy: userId,
+      }
+    );
+
+    if (!updatedEmployee) {
+      throw new Error('Failed to change employee status');
+    }
+
+    // Determine activity type
+    let activityType = ActivityType.STATUS_CHANGED;
+    let title = 'Status Changed';
+
+    if (statusData.employmentStatus === EmploymentStatus.RESIGNED) {
+      activityType = ActivityType.RESIGNED;
+      title = 'Employee Resigned';
+    } else if (statusData.employmentStatus === EmploymentStatus.TERMINATED) {
+      activityType = ActivityType.TERMINATED;
+      title = 'Employee Terminated';
+    }
+
+    // Log activity
+    await EmployeeActivityRepository.create({
+      employeeId: statusData.employeeId,
+      activityType,
+      title,
+      description: `${employee.firstName} ${employee.lastName}'s status changed to ${statusData.employmentStatus}. Reason: ${statusData.reason || 'N/A'}`,
+      previousValue: { status: oldStatus },
+      newValue: { status: statusData.employmentStatus },
+      metadata: {
+        effectiveDate: statusData.effectiveDate || new Date(),
+        reason: statusData.reason,
+      },
+      createdBy: userId,
+    });
+
+    return updatedEmployee;
+  }
+
+  /**
+   * Delete employee (soft delete)
+   */
+  async deleteEmployee(employeeId: string, userId: string): Promise<void> {
+    const employee = await EmployeeRepository.findById(employeeId);
+    if (!employee) {
+      throw new Error('Employee not found');
+    }
+
+    await EmployeeRepository.softDelete(employeeId);
+
+    // Log activity
+    await EmployeeActivityRepository.create({
+      employeeId,
+      activityType: ActivityType.TERMINATED,
+      title: 'Record Deleted',
+      description: `${employee.firstName} ${employee.lastName}'s employee record was deleted`,
+      createdBy: userId,
+    });
+  }
+
+  /**
+   * List employees with pagination and filters
+   */
+  async listEmployees(
+    query: EmployeeQueryDTO,
+    pagination?: PaginationDTO
+  ): Promise<any> {
+    const { employees, total } = await EmployeeRepository.findWithPagination(
+      query,
+      pagination
+    );
+
+    const page = pagination?.page || 1;
+    const limit = pagination?.limit || 10;
+
+    return createPaginatedResponse(employees, total, page, limit);
+  }
+
+  /**
+   * Search employees
+   */
+  async searchEmployees(
+    searchTerm: string,
+    pagination?: PaginationDTO
+  ): Promise<any> {
+    const { employees, total } = await EmployeeRepository.search(
+      searchTerm,
+      pagination
+    );
+
+    const page = pagination?.page || 1;
+    const limit = pagination?.limit || 10;
+
+    return createPaginatedResponse(employees, total, page, limit);
+  }
+
+  /**
+   * Get employee directory
+   */
+  async getEmployeeDirectory(pagination?: PaginationDTO): Promise<any> {
+    const { employees, total } = await EmployeeRepository.findWithPagination(
+      { employmentStatus: EmploymentStatus.ACTIVE },
+      pagination
+    );
+
+    const directory: IEmployeeDirectory[] = employees.map((emp) => ({
+      _id: emp._id.toString(),
+      employeeCode: emp.employeeCode,
+      firstName: emp.firstName,
+      lastName: emp.lastName,
+      email: emp.email,
+      phone: emp.phone,
+      departmentId: emp.departmentId.toString(),
+      designationId: emp.designationId.toString(),
+      profileImage: emp.profileImage,
+      workLocation: emp.workLocation,
+    }));
+
+    const page = pagination?.page || 1;
+    const limit = pagination?.limit || 10;
+
+    return createPaginatedResponse(directory, total, page, limit);
+  }
+
+  /**
+   * Add skill to employee
+   */
+  async addSkill(skillData: AddSkillDTO, userId: string): Promise<IEmployee> {
+    const employee = await EmployeeRepository.findById(skillData.employeeId);
+    if (!employee) {
+      throw new Error('Employee not found');
+    }
+
+    const updated = await EmployeeRepository.addSkill(
+      skillData.employeeId,
+      skillData.skill
+    );
+
+    if (!updated) {
+      throw new Error('Failed to add skill');
+    }
+
+    // Log activity
+    await EmployeeActivityRepository.create({
+      employeeId: skillData.employeeId,
+      activityType: ActivityType.SKILL_ADDED,
+      title: 'Skill Added',
+      description: `Added skill: ${skillData.skill}`,
+      newValue: { skill: skillData.skill },
+      createdBy: userId,
+    });
+
+    return updated;
+  }
+
+  /**
+   * Remove skill from employee
+   */
+  async removeSkill(skillData: RemoveSkillDTO, userId: string): Promise<IEmployee> {
+    const employee = await EmployeeRepository.findById(skillData.employeeId);
+    if (!employee) {
+      throw new Error('Employee not found');
+    }
+
+    const updated = await EmployeeRepository.removeSkill(
+      skillData.employeeId,
+      skillData.skill
+    );
+
+    if (!updated) {
+      throw new Error('Failed to remove skill');
+    }
+
+    return updated;
+  }
+
+  /**
+   * Add education to employee
+   */
+  async addEducation(
+    educationData: AddEducationDTO,
+    userId: string
+  ): Promise<IEmployee> {
+    const employee = await EmployeeRepository.findById(educationData.employeeId);
+    if (!employee) {
+      throw new Error('Employee not found');
+    }
+
+    const updated = await EmployeeRepository.addEducation(educationData.employeeId, {
+      institution: educationData.institution,
+      degree: educationData.degree,
+      field: educationData.field,
+      graduationYear: educationData.graduationYear,
+    });
+
+    if (!updated) {
+      throw new Error('Failed to add education');
+    }
+
+    // Log activity
+    await EmployeeActivityRepository.create({
+      employeeId: educationData.employeeId,
+      activityType: ActivityType.PROFILE_UPDATED,
+      title: 'Education Added',
+      description: `Added education: ${educationData.degree} from ${educationData.institution}`,
+      newValue: {
+        degree: educationData.degree,
+        institution: educationData.institution,
+      },
+      createdBy: userId,
+    });
+
+    return updated;
+  }
+
+  /**
+   * Add certification to employee
+   */
+  async addCertification(
+    certData: AddCertificationDTO,
+    userId: string
+  ): Promise<IEmployee> {
+    const employee = await EmployeeRepository.findById(certData.employeeId);
+    if (!employee) {
+      throw new Error('Employee not found');
+    }
+
+    const updated = await EmployeeRepository.addCertification(certData.employeeId, {
+      name: certData.name,
+      issuer: certData.issuer,
+      issueDate: certData.issueDate,
+      expiryDate: certData.expiryDate,
+      certificateUrl: certData.certificateUrl,
+    });
+
+    if (!updated) {
+      throw new Error('Failed to add certification');
+    }
+
+    // Log activity
+    await EmployeeActivityRepository.create({
+      employeeId: certData.employeeId,
+      activityType: ActivityType.CERTIFICATION_ADDED,
+      title: 'Certification Added',
+      description: `Added certification: ${certData.name}`,
+      newValue: {
+        certification: certData.name,
+        issuer: certData.issuer,
+      },
+      createdBy: userId,
+    });
+
+    return updated;
+  }
+
+  /**
+   * Upload document for employee
+   */
+  async uploadDocument(
+    docData: UploadDocumentDTO,
+    userId: string
+  ): Promise<IEmployee> {
+    const employee = await EmployeeRepository.findById(docData.employeeId);
+    if (!employee) {
+      throw new Error('Employee not found');
+    }
+
+    const updated = await EmployeeRepository.addDocument(docData.employeeId, {
+      fileName: docData.fileName,
+      fileType: docData.fileType,
+      fileUrl: docData.fileUrl,
+      uploadedAt: new Date(),
+    });
+
+    if (!updated) {
+      throw new Error('Failed to upload document');
+    }
+
+    // Log activity
+    await EmployeeActivityRepository.create({
+      employeeId: docData.employeeId,
+      activityType: ActivityType.DOCUMENT_ADDED,
+      title: 'Document Uploaded',
+      description: `Uploaded document: ${docData.fileName}`,
+      newValue: {
+        fileName: docData.fileName,
+        fileType: docData.fileType,
+      },
+      createdBy: userId,
+    });
+
+    return updated;
+  }
+
+  /**
+   * Get organization hierarchy
+   */
+  async getOrganizationHierarchy(): Promise<IOrganizationChart> {
+    const employees = await EmployeeRepository.findByMultipleCriteria({
+      statuses: [EmploymentStatus.ACTIVE],
+    });
+
+    // Find CEO (employee with no manager)
+    const ceoList = employees.filter((emp) => !emp.managerId);
+    const ceo = ceoList.length > 0 ? ceoList[0] : null;
+
+    const nodeMap = new Map<string, IHierarchyNode>();
+
+    // Build hierarchy nodes
+    employees.forEach((emp) => {
+      nodeMap.set(emp._id.toString(), {
+        _id: emp._id.toString(),
+        firstName: emp.firstName,
+        lastName: emp.lastName,
+        employeeCode: emp.employeeCode,
+        email: emp.email,
+        designationId: emp.designationId.toString(),
+        departmentId: emp.departmentId.toString(),
+        profileImage: emp.profileImage,
+        children: [],
+      });
+    });
+
+    // Build relationships
+    employees.forEach((emp) => {
+      if (emp.managerId) {
+        const managerId = emp.managerId.toString();
+        const managerNode = nodeMap.get(managerId);
+        const empNode = nodeMap.get(emp._id.toString());
+
+        if (managerNode && empNode) {
+          if (!managerNode.children) {
+            managerNode.children = [];
+          }
+          managerNode.children.push(empNode);
+        }
+      }
+    });
+
+    const rootNode = ceo
+      ? nodeMap.get(ceo._id.toString()) || null
+      : null;
+
+    return {
+      rootNode,
+      totalEmployees: employees.length,
+      totalManagers: employees.filter((emp) =>
+        employees.some((other) => other.managerId?.toString() === emp._id.toString())
+      ).length,
+      totalDepartments: new Set(employees.map((emp) => emp.departmentId.toString())).size,
+    };
+  }
+
+  /**
+   * Get team members of a manager
+   */
+  async getTeamMembers(
+    managerId: string,
+    pagination?: PaginationDTO
+  ): Promise<any> {
+    const { employees, total } = await EmployeeRepository.getDirectReports(
+      managerId
+    ) as any;
+
+    const page = pagination?.page || 1;
+    const limit = pagination?.limit || 10;
+
+    return createPaginatedResponse(employees, employees.length, page, limit);
+  }
+
+  /**
+   * Get employee statistics
+   */
+  async getEmployeeStats(): Promise<{
+    totalEmployees: number;
+    activeEmployees: number;
+    onLeave: number;
+    probation: number;
+    resigned: number;
+    terminated: number;
+  }> {
+    const [active, onLeave, probation, resigned, terminated, total] = await Promise.all([
+      EmployeeRepository.countByStatus(EmploymentStatus.ACTIVE),
+      EmployeeRepository.countByStatus(EmploymentStatus.ON_LEAVE),
+      EmployeeRepository.countByStatus(EmploymentStatus.PROBATION),
+      EmployeeRepository.countByStatus(EmploymentStatus.RESIGNED),
+      EmployeeRepository.countByStatus(EmploymentStatus.TERMINATED),
+      EmployeeRepository.findWithPagination({}, { page: 1, limit: 1 }).then((r) => r.total),
+    ]);
+
+    return {
+      totalEmployees: total,
+      activeEmployees: active,
+      onLeave,
+      probation,
+      resigned,
+      terminated,
+    };
+  }
+
+  /**
+   * Bulk update employees
+   */
+  async bulkUpdateEmployees(
+    batchData: BatchUpdateEmployeeDTO,
+    userId: string
+  ): Promise<{ success: number; failed: number }> {
+    const result = await EmployeeRepository.bulkUpdate(
+      batchData.employeeIds,
+      { ...batchData.updates, updatedBy: userId }
+    );
+
+    return {
+      success: result.modifiedCount,
+      failed: batchData.employeeIds.length - result.modifiedCount,
+    };
+  }
+}
+
+export default new EmployeeService();

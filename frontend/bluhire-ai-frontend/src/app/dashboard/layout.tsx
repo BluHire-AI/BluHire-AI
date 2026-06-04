@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Users, UserCircle, LogOut, Building } from 'lucide-react';
+import { LayoutDashboard, Users, UserCircle, LogOut, Building, Briefcase, Network, Contact } from 'lucide-react';
 import { useAuthStore } from '@/lib/store/auth';
 import { AuthProvider } from '@/components/providers/auth-provider';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -37,7 +37,11 @@ export default function DashboardLayout({
 
   const navigation = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-    { name: 'Users', href: '/dashboard/users', icon: Users, roles: ['MANAGEMENT_ADMIN', 'HR_RECRUITER'] },
+    { name: 'Employees', href: '/dashboard/employees', icon: Users, roles: ['MANAGEMENT_ADMIN', 'HR_RECRUITER', 'SENIOR_MANAGER'] },
+    { name: 'Directory', href: '/dashboard/directory', icon: Contact },
+    { name: 'Org Chart', href: '/dashboard/org-chart', icon: Network },
+    { name: 'Departments', href: '/dashboard/departments', icon: Building, roles: ['MANAGEMENT_ADMIN', 'HR_RECRUITER', 'SENIOR_MANAGER'] },
+    { name: 'Designations', href: '/dashboard/designations', icon: Briefcase, roles: ['MANAGEMENT_ADMIN', 'HR_RECRUITER', 'SENIOR_MANAGER'] },
     { name: 'Profile', href: '/dashboard/profile', icon: UserCircle },
   ];
 
@@ -107,7 +111,7 @@ export default function DashboardLayout({
                       <AvatarFallback>{getInitials(user?.firstName, user?.lastName)}</AvatarFallback>
                     </Avatar>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56" align="end" forceMount>
+                <DropdownMenuContent className="w-56" align="end">
                   <DropdownMenuLabel className="font-normal">
                     <div className="flex flex-col space-y-1">
                       <p className="text-sm font-medium leading-none">{user?.firstName} {user?.lastName}</p>

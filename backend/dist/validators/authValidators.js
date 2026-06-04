@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.changePasswordSchema = exports.userUpdateSchema = exports.refreshTokenSchema = exports.loginSchema = exports.registerSchema = void 0;
+exports.resetPasswordSchema = exports.forgotPasswordSchema = exports.changePasswordSchema = exports.userUpdateSchema = exports.refreshTokenSchema = exports.loginSchema = exports.registerSchema = void 0;
 const joi_1 = __importDefault(require("joi"));
 const roles_1 = require("../models/roles");
 exports.registerSchema = joi_1.default.object({
@@ -35,5 +35,12 @@ exports.userUpdateSchema = joi_1.default.object({
 });
 exports.changePasswordSchema = joi_1.default.object({
     oldPassword: joi_1.default.string().required(),
+    newPassword: joi_1.default.string().min(8).required(),
+});
+exports.forgotPasswordSchema = joi_1.default.object({
+    email: joi_1.default.string().email().required(),
+});
+exports.resetPasswordSchema = joi_1.default.object({
+    token: joi_1.default.string().required(),
     newPassword: joi_1.default.string().min(8).required(),
 });

@@ -1,6 +1,6 @@
 import { userRepository } from '../repositories/user.repository';
 import { hashPassword, comparePassword } from '../utils/password.util';
-import { generateTokens, verifyRefreshToken } from '../utils/jwt.util';
+import { generateTokens, verifyRefreshToken, generateResetToken, verifyResetToken } from '../utils/jwt.util';
 import { RegisterDTO, LoginDTO } from '../dto/user.dto';
 
 export class AuthService {
@@ -71,6 +71,37 @@ export class AuthService {
 
     const hashedPassword = await hashPassword(data.newPassword);
     await userRepository.updateById(userId, { passwordHash: hashedPassword } as any);
+  }
+
+  async forgotPassword(email: string) {
+    const user = await userRepository.findByEmail(email);
+    if (!user) {
+      return { success: true };
+    }
+
+    const resetToken = generateResetToken(user);
+    const resetLink = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/reset-password?token=${resetToken}`;
+    
+    console.log('------------------------------------');
+    console.log(`Password reset requested for: ${email}`);
+    console.log(`Reset Link: ${resetLink}`);
+    console.log('------------------------------------');
+    
+    return { success: true, resetToken, resetLink };
+  }
+
+  async resetPassword(data: any) {
+    try {
+      const decoded = verifyResetToken(data.token);
+      const user = await userRepository.findById(decoded.id);
+      if (!user) throw new Error('User not found');
+
+      const hashedPassword = await hashPassword(data.newPassword);
+      await userRepository.updateById(user.id as string, { passwordHash: hashedPassword } as any);
+      await userRepository.updateRefreshToken(user.id as string, null);
+    } catch (error: any) {
+      throw new Error(error.message || 'Invalid or expired reset token');
+    }
   }
 }
 

@@ -11,5 +11,6 @@ router.post('/login', (0, validate_middleware_1.validateRequest)(authValidators_
 router.post('/logout', auth_middleware_1.authenticate, auth_controller_1.authController.logout);
 router.post('/refresh', (0, validate_middleware_1.validateRequest)(authValidators_1.refreshTokenSchema), auth_controller_1.authController.refresh);
 router.post('/change-password', auth_middleware_1.authenticate, (0, validate_middleware_1.validateRequest)(authValidators_1.changePasswordSchema), auth_controller_1.authController.changePassword);
-// Forgot and Reset password can be added similarly
+router.post('/forgot-password', (0, validate_middleware_1.validateRequest)(authValidators_1.forgotPasswordSchema), auth_controller_1.authController.forgotPassword);
+router.post('/reset-password', (0, validate_middleware_1.validateRequest)(authValidators_1.resetPasswordSchema), auth_controller_1.authController.resetPassword);
 exports.default = router;

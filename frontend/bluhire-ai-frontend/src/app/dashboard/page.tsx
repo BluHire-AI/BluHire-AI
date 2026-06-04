@@ -15,17 +15,19 @@ export default function DashboardPage() {
   });
 
   useEffect(() => {
-    // In a real app, this would fetch from a /api/v1/stats or similar endpoint
-    // We mock this for now to show the enterprise dashboard layout
     const fetchStats = async () => {
       try {
         if (user?.role === 'MANAGEMENT_ADMIN' || user?.role === 'HR_RECRUITER') {
-          // Attempt to fetch real user count
-          const response = await api.get('/users?limit=1');
+          // Attempt to fetch real user count and employee stats
+          const [usersResponse, empStats] = await Promise.all([
+            api.get('/users?limit=1'),
+            api.get('/employees/stats/dashboard').catch(() => ({ data: { data: null } }))
+          ]);
+          
           setStats({
-            totalUsers: response.data?.total || 12,
-            activeRoles: 4,
-            recentLogins: 24,
+            totalUsers: usersResponse.data?.data?.total || 12,
+            activeRoles: empStats.data?.data?.activeCount || 4,
+            recentLogins: empStats.data?.data?.totalDepartments || 24,
           });
         }
       } catch (error) {

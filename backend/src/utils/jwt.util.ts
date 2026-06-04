@@ -27,3 +27,22 @@ export const verifyAccessToken = (token: string) => {
 export const verifyRefreshToken = (token: string) => {
   return jwt.verify(token, env.JWT_REFRESH_SECRET);
 };
+
+export const generateResetToken = (user: IUser) => {
+  const payload = {
+    id: user._id,
+    email: user.email,
+    type: 'reset',
+  };
+  return jwt.sign(payload, env.JWT_ACCESS_SECRET, {
+    expiresIn: '1h',
+  });
+};
+
+export const verifyResetToken = (token: string) => {
+  const decoded: any = jwt.verify(token, env.JWT_ACCESS_SECRET);
+  if (decoded.type !== 'reset') {
+    throw new Error('Invalid token type');
+  }
+  return decoded;
+};

@@ -60,6 +60,33 @@ class AuthService {
         const hashedPassword = await (0, password_util_1.hashPassword)(data.newPassword);
         await user_repository_1.userRepository.updateById(userId, { passwordHash: hashedPassword });
     }
+    async forgotPassword(email) {
+        const user = await user_repository_1.userRepository.findByEmail(email);
+        if (!user) {
+            return { success: true };
+        }
+        const resetToken = (0, jwt_util_1.generateResetToken)(user);
+        const resetLink = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/reset-password?token=${resetToken}`;
+        console.log('------------------------------------');
+        console.log(`Password reset requested for: ${email}`);
+        console.log(`Reset Link: ${resetLink}`);
+        console.log('------------------------------------');
+        return { success: true, resetToken, resetLink };
+    }
+    async resetPassword(data) {
+        try {
+            const decoded = (0, jwt_util_1.verifyResetToken)(data.token);
+            const user = await user_repository_1.userRepository.findById(decoded.id);
+            if (!user)
+                throw new Error('User not found');
+            const hashedPassword = await (0, password_util_1.hashPassword)(data.newPassword);
+            await user_repository_1.userRepository.updateById(user.id, { passwordHash: hashedPassword });
+            await user_repository_1.userRepository.updateRefreshToken(user.id, null);
+        }
+        catch (error) {
+            throw new Error(error.message || 'Invalid or expired reset token');
+        }
+    }
 }
 exports.AuthService = AuthService;
 exports.authService = new AuthService();

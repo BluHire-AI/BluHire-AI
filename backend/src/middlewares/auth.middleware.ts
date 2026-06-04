@@ -5,19 +5,36 @@ export interface AuthRequest extends Request {
   user?: any;
 }
 
-export const authenticate = (req: AuthRequest, res: Response, next: NextFunction): void => {
+export const authenticate = (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+): void => {
   try {
     const authHeader = req.headers.authorization;
+
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      res.status(401).json({ success: false, message: 'Authentication required' });
+      res.status(401).json({
+        success: false,
+        message: 'Authentication required'
+      });
       return;
     }
 
     const token = authHeader.split(' ')[1];
-    const decoded = verifyAccessToken(token);
-    req.user = decoded; // Contains id, email, role
+    const decoded: any = verifyAccessToken(token);
+
+    req.user = {
+      _id: decoded.id,
+      email: decoded.email,
+      role: decoded.role,
+    };
+
     next();
   } catch (error) {
-    res.status(401).json({ success: false, message: 'Invalid or expired token' });
+    res.status(401).json({
+      success: false,
+      message: 'Invalid or expired token'
+    });
   }
 };

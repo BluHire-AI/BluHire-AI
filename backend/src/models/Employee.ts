@@ -58,6 +58,7 @@ export interface IEmployee extends Document {
   education?: IEducation[];
   salaryGrade?: string;
   workLocation: string;
+  shiftId?: string; // Reference to Shift _id
   employmentStatus: EmploymentStatus;
   profileImage?: string;
   emergencyContact?: {
@@ -267,6 +268,12 @@ const EmployeeSchema = new Schema<any>(
       type: String,
       required: [true, 'Work location is required'],
       trim: true,
+    },
+    shiftId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Shift',
+      default: null,
+      index: true,
     },
     employmentStatus: {
       type: String,

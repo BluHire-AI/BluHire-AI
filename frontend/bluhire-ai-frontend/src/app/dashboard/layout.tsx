@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Users, UserCircle, LogOut, Building, Briefcase, Network, Contact, Sun, Moon, Sparkles, Bot } from 'lucide-react';
+import { LayoutDashboard, Users, UserCircle, LogOut, Building, Briefcase, Network, Contact, Sun, Moon, Sparkles, Bot, CalendarDays } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { useAuthStore } from '@/lib/store/auth';
 import { AuthProvider } from '@/components/providers/auth-provider';
@@ -50,6 +50,7 @@ export default function DashboardLayout({
     { name: 'Org Chart', href: '/dashboard/org-chart', icon: Network },
     { name: 'Departments', href: '/dashboard/departments', icon: Building, roles: ['MANAGEMENT_ADMIN', 'HR_RECRUITER', 'SENIOR_MANAGER'] },
     { name: 'Designations', href: '/dashboard/designations', icon: Briefcase, roles: ['MANAGEMENT_ADMIN', 'HR_RECRUITER', 'SENIOR_MANAGER'] },
+    { name: 'Attendance & Leaves', href: '/dashboard/attendance', icon: CalendarDays },
     { name: 'Profile', href: '/dashboard/profile', icon: UserCircle },
   ];
 

@@ -144,6 +144,7 @@ export default function DashboardLayout({
                         { name: 'Employee Directory', href: '/dashboard/directory', icon: Contact },
                         { name: 'Organization Chart', href: '/dashboard/org-chart', icon: Network },
                         { name: 'Recruitment', href: '/dashboard/recruitment', icon: Compass, roles: ['MANAGEMENT_ADMIN', 'HR_RECRUITER'] },
+                        { name: 'Analytics', href: '/dashboard/analytics', icon: BarChart3, roles: ['MANAGEMENT_ADMIN', 'SENIOR_MANAGER', 'HR_RECRUITER'] },
                       ].map((item) => {
                         if (item.roles && user && !item.roles.includes(user.role)) {
                           return null;
@@ -253,7 +254,6 @@ export default function DashboardLayout({
                     >
                       {[
                         { name: 'Performance', icon: Award },
-                        { name: 'Analytics', icon: BarChart3 },
                         { name: 'AI Hub', icon: Bot },
                       ].map((item) => (
                         <div

@@ -16,7 +16,7 @@ export class UserRepository {
   }
 
   async updateById(id: string, updateData: UserUpdateDTO): Promise<IUser | null> {
-    return await User.findByIdAndUpdate(id, updateData, { new: true });
+    return await User.findByIdAndUpdate(id, updateData, { returnDocument: 'after' });
   }
 
   async updateRefreshToken(id: string, refreshToken: string | null): Promise<void> {
@@ -35,7 +35,7 @@ export class UserRepository {
   }
 
   async softDelete(id: string): Promise<IUser | null> {
-    return await User.findByIdAndUpdate(id, { isActive: false }, { new: true });
+    return await User.findByIdAndUpdate(id, { isActive: false }, { returnDocument: 'after' });
   }
 }
 

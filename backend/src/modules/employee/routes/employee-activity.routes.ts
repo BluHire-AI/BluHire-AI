@@ -12,6 +12,20 @@ const router = Router();
  * Activity query endpoints
  */
 
+// Get recent activities
+router.get(
+  '/recent',
+  requirePermission('read:employee'),
+  EmployeeActivityController.getRecent.bind(EmployeeActivityController)
+);
+
+// Get activities by date range
+router.get(
+  '/date-range',
+  requirePermission('read:employee'),
+  EmployeeActivityController.getByDateRange.bind(EmployeeActivityController)
+);
+
 // Get activity by ID
 router.get(
   '/:id',
@@ -46,20 +60,6 @@ router.get(
   '/type/:activityType',
   requirePermission('read:employee'),
   EmployeeActivityController.getByType.bind(EmployeeActivityController)
-);
-
-// Get recent activities
-router.get(
-  '/recent',
-  requirePermission('read:employee'),
-  EmployeeActivityController.getRecent.bind(EmployeeActivityController)
-);
-
-// Get activities by date range
-router.get(
-  '/date-range',
-  requirePermission('read:employee'),
-  EmployeeActivityController.getByDateRange.bind(EmployeeActivityController)
 );
 
 /**

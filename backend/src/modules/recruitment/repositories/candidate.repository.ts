@@ -53,7 +53,7 @@ export class CandidateRepository {
     return await CandidateModel.findOneAndUpdate(
       { _id: candidateId, isDeleted: false },
       { ...updateData, updatedAt: new Date() },
-      { new: true, runValidators: true }
+      { returnDocument: 'after', runValidators: true }
     );
   }
 
@@ -64,7 +64,7 @@ export class CandidateRepository {
     return await CandidateModel.findByIdAndUpdate(
       candidateId,
       { isDeleted: true, updatedAt: new Date() },
-      { new: true }
+      { returnDocument: 'after' }
     );
   }
 

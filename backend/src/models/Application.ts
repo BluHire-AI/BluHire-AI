@@ -34,7 +34,7 @@ export interface IApplication extends Document {
   matchingSkills?: string[];
   missingSkills?: string[];
   screeningSummary?: string;
-  screeningStatus?: string;
+  screeningStatus?: 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED';
   interviewStatus?: string;
   interviewScore?: number;
   interviewFeedback?: string;
@@ -144,7 +144,9 @@ const ApplicationSchema = new Schema<any>(
     },
     screeningStatus: {
       type: String,
-      default: null,
+      enum: ['PENDING', 'PROCESSING', 'COMPLETED', 'FAILED'],
+      default: 'PENDING',
+      index: true,
     },
     interviewStatus: {
       type: String,

@@ -12,6 +12,10 @@ const router = (0, express_1.Router)();
 /**
  * Activity query endpoints
  */
+// Get recent activities
+router.get('/recent', (0, rbac_middleware_1.requirePermission)('read:employee'), employee_activity_controller_1.default.getRecent.bind(employee_activity_controller_1.default));
+// Get activities by date range
+router.get('/date-range', (0, rbac_middleware_1.requirePermission)('read:employee'), employee_activity_controller_1.default.getByDateRange.bind(employee_activity_controller_1.default));
 // Get activity by ID
 router.get('/:id', (0, rbac_middleware_1.requirePermission)('read:employee'), employee_activity_controller_1.default.getActivity.bind(employee_activity_controller_1.default));
 // List activities
@@ -22,10 +26,6 @@ router.get('/employee/:employeeId/timeline', (0, rbac_middleware_1.requireEmploy
 router.get('/employee/:employeeId', (0, rbac_middleware_1.requireEmployeeAccess)(), employee_activity_controller_1.default.getByEmployee.bind(employee_activity_controller_1.default));
 // Get activities by type
 router.get('/type/:activityType', (0, rbac_middleware_1.requirePermission)('read:employee'), employee_activity_controller_1.default.getByType.bind(employee_activity_controller_1.default));
-// Get recent activities
-router.get('/recent', (0, rbac_middleware_1.requirePermission)('read:employee'), employee_activity_controller_1.default.getRecent.bind(employee_activity_controller_1.default));
-// Get activities by date range
-router.get('/date-range', (0, rbac_middleware_1.requirePermission)('read:employee'), employee_activity_controller_1.default.getByDateRange.bind(employee_activity_controller_1.default));
 /**
  * Activity analytics endpoints
  */

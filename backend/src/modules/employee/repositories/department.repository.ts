@@ -37,7 +37,7 @@ export class DepartmentRepository {
     return await DepartmentModel.findByIdAndUpdate(
       departmentId,
       { ...updateData, updatedAt: new Date() },
-      { new: true, runValidators: true }
+      { returnDocument: 'after', runValidators: true }
     )
       .populate('departmentHead', 'firstName lastName email employeeCode');
   }
@@ -144,7 +144,7 @@ export class DepartmentRepository {
     return await DepartmentModel.findByIdAndUpdate(
       departmentId,
       { isActive: !department.isActive, updatedAt: new Date() },
-      { new: true }
+      { returnDocument: 'after' }
     );
   }
 
@@ -155,7 +155,7 @@ export class DepartmentRepository {
     return await DepartmentModel.findByIdAndUpdate(
       departmentId,
       { departmentHead: employeeId, updatedAt: new Date() },
-      { new: true }
+      { returnDocument: 'after' }
     )
       .populate('departmentHead', 'firstName lastName email employeeCode');
   }
@@ -167,7 +167,7 @@ export class DepartmentRepository {
     return await DepartmentModel.findByIdAndUpdate(
       departmentId,
       { departmentHead: null, updatedAt: new Date() },
-      { new: true }
+      { returnDocument: 'after' }
     );
   }
 

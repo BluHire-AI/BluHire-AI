@@ -63,7 +63,7 @@ export class EmployeeRepository {
     return await EmployeeModel.findByIdAndUpdate(
       employeeId,
       { ...updateData, updatedAt: new Date() },
-      { new: true, runValidators: true }
+      { returnDocument: 'after', runValidators: true }
     )
       .populate('userId', 'firstName lastName email role')
       .populate('departmentId', 'name')
@@ -78,7 +78,7 @@ export class EmployeeRepository {
     return await EmployeeModel.findByIdAndUpdate(
       employeeId,
       { isDeleted: true, updatedAt: new Date() },
-      { new: true }
+      { returnDocument: 'after' }
     );
   }
 
@@ -365,7 +365,7 @@ export class EmployeeRepository {
         $addToSet: { skills: skill },
         updatedAt: new Date(),
       },
-      { new: true }
+      { returnDocument: 'after' }
     );
   }
 
@@ -379,7 +379,7 @@ export class EmployeeRepository {
         $pull: { skills: skill },
         updatedAt: new Date(),
       },
-      { new: true }
+      { returnDocument: 'after' }
     );
   }
 
@@ -401,7 +401,7 @@ export class EmployeeRepository {
         $push: { education },
         updatedAt: new Date(),
       },
-      { new: true }
+      { returnDocument: 'after' }
     );
   }
 
@@ -424,7 +424,7 @@ export class EmployeeRepository {
         $push: { certifications: certification },
         updatedAt: new Date(),
       },
-      { new: true }
+      { returnDocument: 'after' }
     );
   }
 
@@ -446,7 +446,7 @@ export class EmployeeRepository {
         $push: { documents: document },
         updatedAt: new Date(),
       },
-      { new: true }
+      { returnDocument: 'after' }
     );
   }
 
@@ -460,7 +460,7 @@ export class EmployeeRepository {
         $pull: { documents: { fileName: documentFileName } },
         updatedAt: new Date(),
       },
-      { new: true }
+      { returnDocument: 'after' }
     );
   }
 }

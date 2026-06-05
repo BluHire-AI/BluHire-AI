@@ -14,7 +14,7 @@ class UserRepository {
         return await User_1.User.findById(id);
     }
     async updateById(id, updateData) {
-        return await User_1.User.findByIdAndUpdate(id, updateData, { new: true });
+        return await User_1.User.findByIdAndUpdate(id, updateData, { returnDocument: 'after' });
     }
     async updateRefreshToken(id, refreshToken) {
         await User_1.User.findByIdAndUpdate(id, { refreshToken });
@@ -29,7 +29,7 @@ class UserRepository {
         return { users, total };
     }
     async softDelete(id) {
-        return await User_1.User.findByIdAndUpdate(id, { isActive: false }, { new: true });
+        return await User_1.User.findByIdAndUpdate(id, { isActive: false }, { returnDocument: 'after' });
     }
 }
 exports.UserRepository = UserRepository;

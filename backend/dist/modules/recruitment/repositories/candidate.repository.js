@@ -43,13 +43,13 @@ class CandidateRepository {
      * Update candidate details
      */
     async update(candidateId, updateData) {
-        return await Candidate_1.default.findOneAndUpdate({ _id: candidateId, isDeleted: false }, { ...updateData, updatedAt: new Date() }, { new: true, runValidators: true });
+        return await Candidate_1.default.findOneAndUpdate({ _id: candidateId, isDeleted: false }, { ...updateData, updatedAt: new Date() }, { returnDocument: 'after', runValidators: true });
     }
     /**
      * Soft delete candidate
      */
     async softDelete(candidateId) {
-        return await Candidate_1.default.findByIdAndUpdate(candidateId, { isDeleted: true, updatedAt: new Date() }, { new: true });
+        return await Candidate_1.default.findByIdAndUpdate(candidateId, { isDeleted: true, updatedAt: new Date() }, { returnDocument: 'after' });
     }
     /**
      * Find candidates with search filters and pagination

@@ -4,6 +4,7 @@ import { env } from './config/env';
 import { connectDB } from './config/db';
 import apiRouter from './routes';
 import { errorHandler } from './middlewares/error.middleware';
+import screeningWorker from './modules/recruitment/queue/screening.worker';
 
 const app = express();
 
@@ -31,6 +32,7 @@ app.use(errorHandler);
 // Start server
 const startServer = async () => {
   await connectDB();
+  screeningWorker.start();
   app.listen(env.PORT, () => {
     console.log(`Server is running on port ${env.PORT} in ${env.NODE_ENV} mode.`);
   });

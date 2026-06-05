@@ -86,7 +86,7 @@ class EmployeeRepository {
      * Update employee
      */
     async update(employeeId, updateData) {
-        return await Employee_1.default.findByIdAndUpdate(employeeId, { ...updateData, updatedAt: new Date() }, { new: true, runValidators: true })
+        return await Employee_1.default.findByIdAndUpdate(employeeId, { ...updateData, updatedAt: new Date() }, { returnDocument: 'after', runValidators: true })
             .populate('userId', 'firstName lastName email role')
             .populate('departmentId', 'name')
             .populate('designationId', 'title level')
@@ -96,7 +96,7 @@ class EmployeeRepository {
      * Soft delete employee
      */
     async softDelete(employeeId) {
-        return await Employee_1.default.findByIdAndUpdate(employeeId, { isDeleted: true, updatedAt: new Date() }, { new: true });
+        return await Employee_1.default.findByIdAndUpdate(employeeId, { isDeleted: true, updatedAt: new Date() }, { returnDocument: 'after' });
     }
     /**
      * Hard delete employee (only for testing/admin)
@@ -303,7 +303,7 @@ class EmployeeRepository {
         return await Employee_1.default.findByIdAndUpdate(employeeId, {
             $addToSet: { skills: skill },
             updatedAt: new Date(),
-        }, { new: true });
+        }, { returnDocument: 'after' });
     }
     /**
      * Remove skill from employee
@@ -312,7 +312,7 @@ class EmployeeRepository {
         return await Employee_1.default.findByIdAndUpdate(employeeId, {
             $pull: { skills: skill },
             updatedAt: new Date(),
-        }, { new: true });
+        }, { returnDocument: 'after' });
     }
     /**
      * Add education to employee
@@ -321,7 +321,7 @@ class EmployeeRepository {
         return await Employee_1.default.findByIdAndUpdate(employeeId, {
             $push: { education },
             updatedAt: new Date(),
-        }, { new: true });
+        }, { returnDocument: 'after' });
     }
     /**
      * Add certification to employee
@@ -330,7 +330,7 @@ class EmployeeRepository {
         return await Employee_1.default.findByIdAndUpdate(employeeId, {
             $push: { certifications: certification },
             updatedAt: new Date(),
-        }, { new: true });
+        }, { returnDocument: 'after' });
     }
     /**
      * Add document to employee
@@ -339,7 +339,7 @@ class EmployeeRepository {
         return await Employee_1.default.findByIdAndUpdate(employeeId, {
             $push: { documents: document },
             updatedAt: new Date(),
-        }, { new: true });
+        }, { returnDocument: 'after' });
     }
     /**
      * Remove document from employee
@@ -348,7 +348,7 @@ class EmployeeRepository {
         return await Employee_1.default.findByIdAndUpdate(employeeId, {
             $pull: { documents: { fileName: documentFileName } },
             updatedAt: new Date(),
-        }, { new: true });
+        }, { returnDocument: 'after' });
     }
 }
 exports.EmployeeRepository = EmployeeRepository;

@@ -148,7 +148,7 @@ export const employeeService = {
     return response.data.data;
   },
 
-  changeStatus: async (id: string, data: { status: string; date: string; reason?: string }): Promise<Employee> => {
+  changeStatus: async (id: string, data: { employmentStatus: string; effectiveDate?: string; reason?: string }): Promise<Employee> => {
     const response = await api.post(`/employees/${id}/status`, data);
     return response.data.data;
   },

@@ -99,8 +99,17 @@ export interface IHierarchyNode {
   lastName: string;
   employeeCode: string;
   email: string;
-  designationId: string;
-  departmentId: string;
+  designationId?: string;
+  departmentId?: string;
+  designation?: {
+    _id: string;
+    title: string;
+    level: number;
+  };
+  department?: {
+    _id: string;
+    name: string;
+  };
   profileImage?: string;
   children?: IHierarchyNode[];
 }

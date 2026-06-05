@@ -4,7 +4,7 @@ import { validateQuery } from '../middlewares/validate.middleware';
 import {
   activityListSchema,
 } from '../validators/employee-activity.validator';
-import { requirePermission } from '../middlewares/rbac.middleware';
+import { requirePermission, requireEmployeeAccess } from '../middlewares/rbac.middleware';
 
 const router = Router();
 
@@ -30,14 +30,14 @@ router.get(
 // Get employee timeline
 router.get(
   '/employee/:employeeId/timeline',
-  requirePermission('read:employee'),
+  requireEmployeeAccess(),
   EmployeeActivityController.getEmployeeTimeline.bind(EmployeeActivityController)
 );
 
 // Get activities by employee
 router.get(
   '/employee/:employeeId',
-  requirePermission('read:employee'),
+  requireEmployeeAccess(),
   EmployeeActivityController.getByEmployee.bind(EmployeeActivityController)
 );
 
@@ -90,7 +90,7 @@ router.get(
 // Get employee activity count
 router.get(
   '/employee/:employeeId/count',
-  requirePermission('read:employee'),
+  requireEmployeeAccess(),
   EmployeeActivityController.getEmployeeActivityCount.bind(EmployeeActivityController)
 );
 

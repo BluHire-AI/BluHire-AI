@@ -196,7 +196,7 @@ class EmployeeService {
         if (!designation) {
             throw new Error('Designation not found');
         }
-        const oldDesignation = designation.title;
+        const oldDesignation = employee.designationId?.title || 'Unassigned';
         // Update employee
         const updateData = {
             designationId: promotionData.designationId,
@@ -215,7 +215,7 @@ class EmployeeService {
         // Log activity
         await employee_activity_repository_1.default.create({
             employeeId: promotionData.employeeId,
-            activityType: EmployeeActivity_1.ActivityType.PROMOTION,
+            activityType: EmployeeActivity_1.ActivityType.PROMOTED,
             title: 'Employee Promoted',
             description: `${employee.firstName} ${employee.lastName} was promoted to ${designation.title}`,
             previousValue: { designation: oldDesignation },
@@ -238,7 +238,7 @@ class EmployeeService {
         if (!department) {
             throw new Error('Department not found');
         }
-        const oldDepartment = employee.departmentId;
+        const oldDepartment = employee.departmentId?.name || 'Unassigned';
         // Update employee
         const updateData = {
             departmentId: transferData.departmentId,
@@ -262,11 +262,11 @@ class EmployeeService {
         // Log activity
         await employee_activity_repository_1.default.create({
             employeeId: transferData.employeeId,
-            activityType: EmployeeActivity_1.ActivityType.DEPARTMENT_CHANGED,
-            title: 'Department Changed',
+            activityType: EmployeeActivity_1.ActivityType.TRANSFERRED,
+            title: 'Employee Transferred',
             description: `${employee.firstName} ${employee.lastName} was transferred to ${department.name}`,
             previousValue: { department: oldDepartment },
-            newValue: { department: transferData.departmentId },
+            newValue: { department: department.name },
             metadata: { transferDate: new Date() },
             createdBy: userId,
         });
@@ -381,6 +381,9 @@ class EmployeeService {
         if (!employee) {
             throw new Error('Employee not found');
         }
+        if (employee.skills && employee.skills.includes(skillData.skill)) {
+            return employee;
+        }
         const updated = await employee_repository_1.default.addSkill(skillData.employeeId, skillData.skill);
         if (!updated) {
             throw new Error('Failed to add skill');
@@ -408,6 +411,15 @@ class EmployeeService {
         if (!updated) {
             throw new Error('Failed to remove skill');
         }
+        // Log activity
+        await employee_activity_repository_1.default.create({
+            employeeId: skillData.employeeId,
+            activityType: EmployeeActivity_1.ActivityType.SKILL_REMOVED,
+            title: 'Skill Removed',
+            description: `Removed skill: ${skillData.skill}`,
+            previousValue: { skill: skillData.skill },
+            createdBy: userId,
+        });
         return updated;
     }
     /**
@@ -430,7 +442,7 @@ class EmployeeService {
         // Log activity
         await employee_activity_repository_1.default.create({
             employeeId: educationData.employeeId,
-            activityType: EmployeeActivity_1.ActivityType.PROFILE_UPDATED,
+            activityType: EmployeeActivity_1.ActivityType.EDUCATION_ADDED,
             title: 'Education Added',
             description: `Added education: ${educationData.degree} from ${educationData.institution}`,
             newValue: {
@@ -493,7 +505,7 @@ class EmployeeService {
         // Log activity
         await employee_activity_repository_1.default.create({
             employeeId: docData.employeeId,
-            activityType: EmployeeActivity_1.ActivityType.DOCUMENT_ADDED,
+            activityType: EmployeeActivity_1.ActivityType.DOCUMENT_UPLOADED,
             title: 'Document Uploaded',
             description: `Uploaded document: ${docData.fileName}`,
             newValue: {
@@ -511,11 +523,18 @@ class EmployeeService {
         const employees = await employee_repository_1.default.findByMultipleCriteria({
             statuses: [Employee_1.EmploymentStatus.ACTIVE],
         });
+        console.log("Employees Loaded:", employees.length);
         // Find CEO (employee with no manager)
-        const ceoList = employees.filter((emp) => !emp.managerId);
+        const ceoList = employees.filter((emp) => {
+            const managerId = emp.managerId && typeof emp.managerId === 'object' && '_id' in emp.managerId
+                ? emp.managerId._id.toString()
+                : emp.managerId?.toString();
+            return !managerId;
+        });
         const ceo = ceoList.length > 0 ? ceoList[0] : null;
+        console.log("Roots:", ceoList.length);
         const nodeMap = new Map();
-        // Build hierarchy nodes
+        // Build hierarchy nodes mapping
         employees.forEach((emp) => {
             nodeMap.set(emp._id.toString(), {
                 _id: emp._id.toString(),
@@ -523,34 +542,83 @@ class EmployeeService {
                 lastName: emp.lastName,
                 employeeCode: emp.employeeCode,
                 email: emp.email,
-                designationId: emp.designationId.toString(),
-                departmentId: emp.departmentId.toString(),
                 profileImage: emp.profileImage,
+                designation: emp.designationId && typeof emp.designationId === 'object' ? {
+                    _id: emp.designationId._id?.toString() || emp.designationId.id,
+                    title: emp.designationId.title,
+                    level: emp.designationId.level,
+                } : undefined,
+                department: emp.departmentId && typeof emp.departmentId === 'object' ? {
+                    _id: emp.departmentId._id?.toString() || emp.departmentId.id,
+                    name: emp.departmentId.name,
+                } : undefined,
                 children: [],
             });
         });
-        // Build relationships
+        // Temp children lists to build tree
+        const rawChildrenMap = new Map();
         employees.forEach((emp) => {
-            if (emp.managerId) {
-                const managerId = emp.managerId.toString();
-                const managerNode = nodeMap.get(managerId);
-                const empNode = nodeMap.get(emp._id.toString());
-                if (managerNode && empNode) {
-                    if (!managerNode.children) {
-                        managerNode.children = [];
-                    }
-                    managerNode.children.push(empNode);
+            const managerId = emp.managerId && typeof emp.managerId === 'object' && '_id' in emp.managerId
+                ? emp.managerId._id.toString()
+                : emp.managerId?.toString();
+            if (managerId) {
+                if (!rawChildrenMap.has(managerId)) {
+                    rawChildrenMap.set(managerId, []);
                 }
+                rawChildrenMap.get(managerId).push(emp._id.toString());
             }
         });
-        const rootNode = ceo
-            ? nodeMap.get(ceo._id.toString()) || null
-            : null;
+        const visited = new Set();
+        const buildTree = (nodeId) => {
+            if (visited.has(nodeId)) {
+                return null; // Cycle prevention: skip already visited node
+            }
+            visited.add(nodeId);
+            const rawNode = nodeMap.get(nodeId);
+            if (!rawNode)
+                return null;
+            const node = {
+                _id: rawNode._id,
+                firstName: rawNode.firstName,
+                lastName: rawNode.lastName,
+                employeeCode: rawNode.employeeCode,
+                email: rawNode.email,
+                profileImage: rawNode.profileImage,
+                designation: rawNode.designation,
+                department: rawNode.department,
+                children: [],
+            };
+            const childrenIds = rawChildrenMap.get(nodeId) || [];
+            for (const childId of childrenIds) {
+                console.log("Parent:", nodeId);
+                console.log("Child Match:", childId);
+                const childNode = buildTree(childId);
+                if (childNode) {
+                    node.children.push(childNode);
+                }
+            }
+            return node;
+        };
+        const rootNode = ceo ? buildTree(ceo._id.toString()) : null;
+        const totalManagers = employees.filter((emp) => employees.some((other) => {
+            const otherManagerId = other.managerId && typeof other.managerId === 'object' && '_id' in other.managerId
+                ? other.managerId._id.toString()
+                : other.managerId?.toString();
+            return otherManagerId === emp._id.toString();
+        })).length;
+        const uniqueDeptIds = new Set(employees
+            .map((emp) => {
+            if (emp.departmentId && typeof emp.departmentId === 'object' && '_id' in emp.departmentId) {
+                return emp.departmentId._id.toString();
+            }
+            return emp.departmentId?.toString();
+        })
+            .filter(Boolean));
         return {
             rootNode,
             totalEmployees: employees.length,
-            totalManagers: employees.filter((emp) => employees.some((other) => other.managerId?.toString() === emp._id.toString())).length,
-            totalDepartments: new Set(employees.map((emp) => emp.departmentId.toString())).size,
+            totalManagers,
+            totalDepartments: uniqueDeptIds.size,
         };
     }
     /**

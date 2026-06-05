@@ -27,7 +27,7 @@ exports.createEmployeeSchema = zod_1.z.object({
     dateOfBirth: zod_1.z.string().datetime().optional(),
     departmentId: zod_1.z.string().min(1, 'Department ID is required'),
     designationId: zod_1.z.string().min(1, 'Designation ID is required'),
-    managerId: zod_1.z.string().optional(),
+    managerId: zod_1.z.string().nullable().optional(),
     employmentType: zod_1.z.nativeEnum(Employee_1.EmploymentType, {
         message: 'Invalid employment type',
     }),
@@ -80,7 +80,7 @@ exports.updateEmployeeSchema = zod_1.z.object({
     dateOfBirth: zod_1.z.string().datetime().optional(),
     departmentId: zod_1.z.string().optional(),
     designationId: zod_1.z.string().optional(),
-    managerId: zod_1.z.string().optional(),
+    managerId: zod_1.z.string().nullable().optional(),
     experience: zod_1.z.number().min(0, 'Experience cannot be negative').optional(),
     skills: zod_1.z.array(zod_1.z.string()).optional(),
     salaryGrade: zod_1.z.string().optional(),
@@ -119,7 +119,7 @@ exports.promoteEmployeeSchema = zod_1.z.object({
 exports.transferEmployeeSchema = zod_1.z.object({
     departmentId: zod_1.z.string().min(1, 'Department ID is required'),
     designationId: zod_1.z.string().optional(),
-    managerId: zod_1.z.string().optional(),
+    managerId: zod_1.z.string().nullable().optional(),
 });
 // Change status schema
 exports.changeStatusSchema = zod_1.z.object({

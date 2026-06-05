@@ -17,9 +17,9 @@ router.get('/:id', (0, rbac_middleware_1.requirePermission)('read:employee'), em
 // List activities
 router.get('/', (0, rbac_middleware_1.requirePermission)('read:employee'), (0, validate_middleware_1.validateQuery)(employee_activity_validator_1.activityListSchema), employee_activity_controller_1.default.listActivities.bind(employee_activity_controller_1.default));
 // Get employee timeline
-router.get('/employee/:employeeId/timeline', (0, rbac_middleware_1.requirePermission)('read:employee'), employee_activity_controller_1.default.getEmployeeTimeline.bind(employee_activity_controller_1.default));
+router.get('/employee/:employeeId/timeline', (0, rbac_middleware_1.requireEmployeeAccess)(), employee_activity_controller_1.default.getEmployeeTimeline.bind(employee_activity_controller_1.default));
 // Get activities by employee
-router.get('/employee/:employeeId', (0, rbac_middleware_1.requirePermission)('read:employee'), employee_activity_controller_1.default.getByEmployee.bind(employee_activity_controller_1.default));
+router.get('/employee/:employeeId', (0, rbac_middleware_1.requireEmployeeAccess)(), employee_activity_controller_1.default.getByEmployee.bind(employee_activity_controller_1.default));
 // Get activities by type
 router.get('/type/:activityType', (0, rbac_middleware_1.requirePermission)('read:employee'), employee_activity_controller_1.default.getByType.bind(employee_activity_controller_1.default));
 // Get recent activities
@@ -36,7 +36,7 @@ router.get('/summary/dashboard', (0, rbac_middleware_1.requirePermission)('read:
 // Get activity distribution
 router.get('/distribution', (0, rbac_middleware_1.requirePermission)('read:employee'), employee_activity_controller_1.default.getDistribution.bind(employee_activity_controller_1.default));
 // Get employee activity count
-router.get('/employee/:employeeId/count', (0, rbac_middleware_1.requirePermission)('read:employee'), employee_activity_controller_1.default.getEmployeeActivityCount.bind(employee_activity_controller_1.default));
+router.get('/employee/:employeeId/count', (0, rbac_middleware_1.requireEmployeeAccess)(), employee_activity_controller_1.default.getEmployeeActivityCount.bind(employee_activity_controller_1.default));
 /**
  * Search endpoints
  */

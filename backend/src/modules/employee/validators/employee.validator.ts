@@ -28,7 +28,7 @@ export const createEmployeeSchema = z.object({
   dateOfBirth: z.string().datetime().optional(),
   departmentId: z.string().min(1, 'Department ID is required'),
   designationId: z.string().min(1, 'Designation ID is required'),
-  managerId: z.string().optional(),
+  managerId: z.string().nullable().optional(),
   employmentType: z.nativeEnum(EmploymentType, {
     message: 'Invalid employment type',
   }),
@@ -85,7 +85,7 @@ export const updateEmployeeSchema = z.object({
   dateOfBirth: z.string().datetime().optional(),
   departmentId: z.string().optional(),
   designationId: z.string().optional(),
-  managerId: z.string().optional(),
+  managerId: z.string().nullable().optional(),
   experience: z.number().min(0, 'Experience cannot be negative').optional(),
   skills: z.array(z.string()).optional(),
   salaryGrade: z.string().optional(),
@@ -126,7 +126,7 @@ export const promoteEmployeeSchema = z.object({
 export const transferEmployeeSchema = z.object({
   departmentId: z.string().min(1, 'Department ID is required'),
   designationId: z.string().optional(),
-  managerId: z.string().optional(),
+  managerId: z.string().nullable().optional(),
 });
 
 // Change status schema

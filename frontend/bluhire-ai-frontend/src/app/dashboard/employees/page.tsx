@@ -413,8 +413,20 @@ export default function EmployeeListPage() {
           </div>
         ) : employees.length === 0 ? (
           <div className="text-center py-20 space-y-4">
-            <p className="text-zinc-500 dark:text-zinc-400 text-sm font-medium">No workforce records matched the query criteria.</p>
-            <Button variant="outline" onClick={resetFilters} className="rounded-xl border-zinc-200">Clear All Filters</Button>
+            <p className="text-zinc-500 dark:text-zinc-400 text-sm font-medium">
+              {total === 0 && !search && selectedDept === 'all' && selectedDesg === 'all' && selectedStatus === 'all' && selectedType === 'all' && selectedLocation === 'all'
+                ? "No employee records established yet."
+                : "No workforce records matched the query criteria."}
+            </p>
+            {total === 0 && !search && selectedDept === 'all' && selectedDesg === 'all' && selectedStatus === 'all' && selectedType === 'all' && selectedLocation === 'all' ? (
+              isHRorAdmin && (
+                <Link href="/dashboard/employees/create">
+                  <Button className="bg-blue-600 text-white rounded-xl">Create your first Employee</Button>
+                </Link>
+              )
+            ) : (
+              <Button variant="outline" onClick={resetFilters} className="rounded-xl border-zinc-200">Clear All Filters</Button>
+            )}
           </div>
         ) : (
           <>

@@ -149,45 +149,7 @@ export default function DepartmentsPage() {
         )}
       </div>
 
-      {/* Department Analytics Cards Grid */}
-      <div className="grid gap-5 md:grid-cols-3">
-        <Card className="border-zinc-200/60 dark:border-zinc-800/80 bg-gradient-to-br from-blue-600/5 to-indigo-600/5">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-bold uppercase tracking-wider text-zinc-500 flex items-center justify-between">
-              Total Budget Share <DollarSign className="w-4 h-4 text-blue-600" />
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-extrabold">$2.4M</div>
-            <p className="text-[10px] text-zinc-400 font-bold mt-1">Operational target limits</p>
-          </CardContent>
-        </Card>
 
-        <Card className="border-zinc-200/60 dark:border-zinc-800/80 bg-gradient-to-br from-purple-600/5 to-pink-600/5">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-bold uppercase tracking-wider text-zinc-500 flex items-center justify-between">
-              Avg Headcount Growth <TrendingUp className="w-4 h-4 text-purple-600" />
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-extrabold">+18.5%</div>
-            <p className="text-[10px] text-zinc-400 font-bold mt-1">Growth rate quarter-on-quarter</p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-zinc-200/60 dark:border-zinc-800/80 bg-gradient-to-br from-amber-600/5 to-orange-600/5">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-bold uppercase tracking-wider text-zinc-500 flex items-center justify-between">
-              AI recommendations <Sparkles className="w-4 h-4 text-amber-500" />
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-sm font-semibold text-zinc-800 dark:text-zinc-200 leading-relaxed">
-              Design is currently running at 94% retention efficiency. Cloud engineering shows skill gap warnings.
-            </div>
-          </CardContent>
-        </Card>
-      </div>
 
       <div className="bg-white dark:bg-[#0e1422] border border-zinc-200/60 dark:border-zinc-800/80 rounded-2xl overflow-hidden shadow-sm">
         {loading ? (

@@ -241,7 +241,7 @@ export class EmployeeService {
       throw new Error('Designation not found');
     }
 
-    const oldDesignation = designation.title;
+    const oldDesignation = (employee.designationId as any)?.title || 'Unassigned';
 
     // Update employee
     const updateData: any = {
@@ -269,7 +269,7 @@ export class EmployeeService {
     // Log activity
     await EmployeeActivityRepository.create({
       employeeId: promotionData.employeeId,
-      activityType: ActivityType.PROMOTION,
+      activityType: ActivityType.PROMOTED,
       title: 'Employee Promoted',
       description: `${employee.firstName} ${employee.lastName} was promoted to ${designation.title}`,
       previousValue: { designation: oldDesignation },
@@ -299,7 +299,7 @@ export class EmployeeService {
       throw new Error('Department not found');
     }
 
-    const oldDepartment = employee.departmentId;
+    const oldDepartment = (employee.departmentId as any)?.name || 'Unassigned';
 
     // Update employee
     const updateData: any = {
@@ -332,11 +332,11 @@ export class EmployeeService {
     // Log activity
     await EmployeeActivityRepository.create({
       employeeId: transferData.employeeId,
-      activityType: ActivityType.DEPARTMENT_CHANGED,
-      title: 'Department Changed',
+      activityType: ActivityType.TRANSFERRED,
+      title: 'Employee Transferred',
       description: `${employee.firstName} ${employee.lastName} was transferred to ${department.name}`,
       previousValue: { department: oldDepartment },
-      newValue: { department: transferData.departmentId },
+      newValue: { department: department.name },
       metadata: { transferDate: new Date() },
       createdBy: userId,
     });
@@ -495,6 +495,10 @@ export class EmployeeService {
       throw new Error('Employee not found');
     }
 
+    if (employee.skills && employee.skills.includes(skillData.skill)) {
+      return employee;
+    }
+
     const updated = await EmployeeRepository.addSkill(
       skillData.employeeId,
       skillData.skill
@@ -535,6 +539,16 @@ export class EmployeeService {
       throw new Error('Failed to remove skill');
     }
 
+    // Log activity
+    await EmployeeActivityRepository.create({
+      employeeId: skillData.employeeId,
+      activityType: ActivityType.SKILL_REMOVED,
+      title: 'Skill Removed',
+      description: `Removed skill: ${skillData.skill}`,
+      previousValue: { skill: skillData.skill },
+      createdBy: userId,
+    });
+
     return updated;
   }
 
@@ -564,7 +578,7 @@ export class EmployeeService {
     // Log activity
     await EmployeeActivityRepository.create({
       employeeId: educationData.employeeId,
-      activityType: ActivityType.PROFILE_UPDATED,
+      activityType: ActivityType.EDUCATION_ADDED,
       title: 'Education Added',
       description: `Added education: ${educationData.degree} from ${educationData.institution}`,
       newValue: {
@@ -643,7 +657,7 @@ export class EmployeeService {
     // Log activity
     await EmployeeActivityRepository.create({
       employeeId: docData.employeeId,
-      activityType: ActivityType.DOCUMENT_ADDED,
+      activityType: ActivityType.DOCUMENT_UPLOADED,
       title: 'Document Uploaded',
       description: `Uploaded document: ${docData.fileName}`,
       newValue: {
@@ -664,13 +678,22 @@ export class EmployeeService {
       statuses: [EmploymentStatus.ACTIVE],
     });
 
+    console.log("Employees Loaded:", employees.length);
+
     // Find CEO (employee with no manager)
-    const ceoList = employees.filter((emp) => !emp.managerId);
+    const ceoList = employees.filter((emp) => {
+      const managerId = emp.managerId && typeof emp.managerId === 'object' && '_id' in emp.managerId
+        ? (emp.managerId as any)._id.toString()
+        : emp.managerId?.toString();
+      return !managerId;
+    });
     const ceo = ceoList.length > 0 ? ceoList[0] : null;
+
+    console.log("Roots:", ceoList.length);
 
     const nodeMap = new Map<string, IHierarchyNode>();
 
-    // Build hierarchy nodes
+    // Build hierarchy nodes mapping
     employees.forEach((emp) => {
       nodeMap.set(emp._id.toString(), {
         _id: emp._id.toString(),
@@ -678,40 +701,98 @@ export class EmployeeService {
         lastName: emp.lastName,
         employeeCode: emp.employeeCode,
         email: emp.email,
-        designationId: emp.designationId.toString(),
-        departmentId: emp.departmentId.toString(),
         profileImage: emp.profileImage,
+        designation: emp.designationId && typeof emp.designationId === 'object' ? {
+          _id: (emp.designationId as any)._id?.toString() || (emp.designationId as any).id,
+          title: (emp.designationId as any).title,
+          level: (emp.designationId as any).level,
+        } : undefined,
+        department: emp.departmentId && typeof emp.departmentId === 'object' ? {
+          _id: (emp.departmentId as any)._id?.toString() || (emp.departmentId as any).id,
+          name: (emp.departmentId as any).name,
+        } : undefined,
         children: [],
       });
     });
 
-    // Build relationships
+    // Temp children lists to build tree
+    const rawChildrenMap = new Map<string, string[]>();
     employees.forEach((emp) => {
-      if (emp.managerId) {
-        const managerId = emp.managerId.toString();
-        const managerNode = nodeMap.get(managerId);
-        const empNode = nodeMap.get(emp._id.toString());
-
-        if (managerNode && empNode) {
-          if (!managerNode.children) {
-            managerNode.children = [];
-          }
-          managerNode.children.push(empNode);
+      const managerId = emp.managerId && typeof emp.managerId === 'object' && '_id' in emp.managerId
+        ? (emp.managerId as any)._id.toString()
+        : emp.managerId?.toString();
+      
+      if (managerId) {
+        if (!rawChildrenMap.has(managerId)) {
+          rawChildrenMap.set(managerId, []);
         }
+        rawChildrenMap.get(managerId)!.push(emp._id.toString());
       }
     });
 
-    const rootNode = ceo
-      ? nodeMap.get(ceo._id.toString()) || null
-      : null;
+    const visited = new Set<string>();
+
+    const buildTree = (nodeId: string): IHierarchyNode | null => {
+      if (visited.has(nodeId)) {
+        return null; // Cycle prevention: skip already visited node
+      }
+      visited.add(nodeId);
+
+      const rawNode = nodeMap.get(nodeId);
+      if (!rawNode) return null;
+
+      const node: IHierarchyNode = {
+        _id: rawNode._id,
+        firstName: rawNode.firstName,
+        lastName: rawNode.lastName,
+        employeeCode: rawNode.employeeCode,
+        email: rawNode.email,
+        profileImage: rawNode.profileImage,
+        designation: rawNode.designation,
+        department: rawNode.department,
+        children: [],
+      };
+
+      const childrenIds = rawChildrenMap.get(nodeId) || [];
+      for (const childId of childrenIds) {
+        console.log("Parent:", nodeId);
+        console.log("Child Match:", childId);
+        const childNode = buildTree(childId);
+        if (childNode) {
+          node.children!.push(childNode);
+        }
+      }
+
+      return node;
+    };
+
+    const rootNode = ceo ? buildTree(ceo._id.toString()) : null;
+
+    const totalManagers = employees.filter((emp) =>
+      employees.some((other) => {
+        const otherManagerId = other.managerId && typeof other.managerId === 'object' && '_id' in other.managerId
+          ? (other.managerId as any)._id.toString()
+          : other.managerId?.toString();
+        return otherManagerId === emp._id.toString();
+      })
+    ).length;
+
+    const uniqueDeptIds = new Set(
+      employees
+        .map((emp) => {
+          if (emp.departmentId && typeof emp.departmentId === 'object' && '_id' in emp.departmentId) {
+            return (emp.departmentId as any)._id.toString();
+          }
+          return emp.departmentId?.toString();
+        })
+        .filter(Boolean)
+    );
 
     return {
       rootNode,
       totalEmployees: employees.length,
-      totalManagers: employees.filter((emp) =>
-        employees.some((other) => other.managerId?.toString() === emp._id.toString())
-      ).length,
-      totalDepartments: new Set(employees.map((emp) => emp.departmentId.toString())).size,
+      totalManagers,
+      totalDepartments: uniqueDeptIds.size,
     };
   }
 

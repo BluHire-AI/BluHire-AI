@@ -230,7 +230,7 @@ export default function OrgChartPage() {
       ) : !root ? (
         <div className="text-center py-20 bg-white dark:bg-[#0e1422] border rounded-2xl border-zinc-200/60 dark:border-zinc-800/80 shadow-sm">
           <Network className="w-12 h-12 text-zinc-300 dark:text-zinc-700 mx-auto mb-3" />
-          <p className="text-sm text-zinc-500 dark:text-zinc-400 font-medium">Hierarchy database structure is currently unassigned.</p>
+          <p className="text-sm text-zinc-500 dark:text-zinc-400 font-medium">No reporting hierarchy configured yet.</p>
         </div>
       ) : (
         <div className="bg-white dark:bg-[#0e1422] border border-zinc-200/60 dark:border-zinc-800/80 rounded-2xl p-10 shadow-sm overflow-x-auto min-h-[550px] flex items-center justify-center">

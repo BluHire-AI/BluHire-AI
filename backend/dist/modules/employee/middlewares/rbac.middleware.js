@@ -199,7 +199,7 @@ const requireEmployeeAccess = () => {
             userRole === EmployeeModuleRoles.HR_RECRUITER) {
             return next();
         }
-        const { id } = req.params;
+        const id = req.params.id || req.params.employeeId;
         if (!id) {
             return res.status(400).json({
                 success: false,

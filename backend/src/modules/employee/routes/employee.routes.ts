@@ -138,7 +138,7 @@ router.post(
 // Add skill
 router.post(
   '/:id/skills',
-  requirePermission('update:employee'),
+  requireEmployeeAccess(),
   validateBody(addSkillSchema),
   EmployeeController.addSkill.bind(EmployeeController)
 );
@@ -146,14 +146,14 @@ router.post(
 // Remove skill
 router.delete(
   '/:id/skills/:skillName',
-  requirePermission('update:employee'),
+  requireEmployeeAccess(),
   EmployeeController.removeSkill.bind(EmployeeController)
 );
 
 // Add education
 router.post(
   '/:id/education',
-  requirePermission('update:employee'),
+  requireEmployeeAccess(),
   validateBody(addEducationSchema),
   EmployeeController.addEducation.bind(EmployeeController)
 );
@@ -161,7 +161,7 @@ router.post(
 // Add certification
 router.post(
   '/:id/certifications',
-  requirePermission('update:employee'),
+  requireEmployeeAccess(),
   validateBody(addCertificationSchema),
   EmployeeController.addCertification.bind(EmployeeController)
 );
@@ -169,7 +169,7 @@ router.post(
 // Upload document
 router.post(
   '/:id/documents',
-  requirePermission('update:employee'),
+  requireEmployeeAccess(),
   validateBody(uploadDocumentSchema),
   EmployeeController.uploadDocument.bind(EmployeeController)
 );

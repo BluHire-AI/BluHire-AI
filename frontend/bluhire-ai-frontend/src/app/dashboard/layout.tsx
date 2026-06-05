@@ -143,6 +143,7 @@ export default function DashboardLayout({
                         { name: 'Employees', href: '/dashboard/employees', icon: Users, roles: ['MANAGEMENT_ADMIN', 'HR_RECRUITER', 'SENIOR_MANAGER'] },
                         { name: 'Employee Directory', href: '/dashboard/directory', icon: Contact },
                         { name: 'Organization Chart', href: '/dashboard/org-chart', icon: Network },
+                        { name: 'Recruitment', href: '/dashboard/recruitment', icon: Compass, roles: ['MANAGEMENT_ADMIN', 'HR_RECRUITER'] },
                       ].map((item) => {
                         if (item.roles && user && !item.roles.includes(user.role)) {
                           return null;
@@ -251,7 +252,6 @@ export default function DashboardLayout({
                       className="overflow-hidden space-y-1 mt-1 pl-1"
                     >
                       {[
-                        { name: 'Recruitment', icon: Compass },
                         { name: 'Performance', icon: Award },
                         { name: 'Analytics', icon: BarChart3 },
                         { name: 'AI Hub', icon: Bot },
@@ -297,6 +297,7 @@ export default function DashboardLayout({
                  pathname === '/dashboard/org-chart' ? 'Organization Chart' : 
                  pathname === '/dashboard/departments' ? 'Departments' : 
                  pathname === '/dashboard/designations' ? 'Designations' : 
+                 pathname.startsWith('/dashboard/recruitment') ? 'Recruitment' : 
                  pathname === '/dashboard/profile' ? 'Profile' : 'HRMinds AI'}
               </h2>
             </div>

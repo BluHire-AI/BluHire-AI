@@ -65,7 +65,7 @@ class JobRepository {
      * Update job
      */
     async update(jobId, updateData) {
-        return await Job_1.default.findOneAndUpdate({ _id: jobId, isDeleted: false }, { ...updateData, updatedAt: new Date() }, { new: true, runValidators: true })
+        return await Job_1.default.findOneAndUpdate({ _id: jobId, isDeleted: false }, { ...updateData, updatedAt: new Date() }, { returnDocument: 'after', runValidators: true })
             .populate('departmentId', 'name')
             .populate('designationId', 'title');
     }
@@ -73,7 +73,7 @@ class JobRepository {
      * Soft delete job
      */
     async softDelete(jobId) {
-        return await Job_1.default.findByIdAndUpdate(jobId, { isDeleted: true, updatedAt: new Date() }, { new: true });
+        return await Job_1.default.findByIdAndUpdate(jobId, { isDeleted: true, updatedAt: new Date() }, { returnDocument: 'after' });
     }
     /**
      * List jobs with pagination and filters

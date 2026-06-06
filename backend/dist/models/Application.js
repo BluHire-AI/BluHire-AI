@@ -137,7 +137,9 @@ const ApplicationSchema = new mongoose_1.Schema({
     },
     screeningStatus: {
         type: String,
-        default: null,
+        enum: ['PENDING', 'PROCESSING', 'COMPLETED', 'FAILED'],
+        default: 'PENDING',
+        index: true,
     },
     interviewStatus: {
         type: String,

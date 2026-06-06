@@ -80,7 +80,7 @@ class ApplicationRepository {
      * Update application fields
      */
     async update(applicationId, updateData) {
-        return await Application_1.default.findOneAndUpdate({ _id: applicationId, isDeleted: false }, { ...updateData, updatedAt: new Date() }, { new: true, runValidators: true })
+        return await Application_1.default.findOneAndUpdate({ _id: applicationId, isDeleted: false }, { ...updateData, updatedAt: new Date() }, { returnDocument: 'after', runValidators: true })
             .populate('candidateId')
             .populate('jobId');
     }
@@ -113,7 +113,7 @@ class ApplicationRepository {
         else if (stage === Application_1.ApplicationStage.REJECTED) {
             updateFields.status = 'REJECTED';
         }
-        return await Application_1.default.findOneAndUpdate({ _id: applicationId, isDeleted: false }, updateFields, { new: true })
+        return await Application_1.default.findOneAndUpdate({ _id: applicationId, isDeleted: false }, updateFields, { returnDocument: 'after' })
             .populate('candidateId')
             .populate('jobId');
     }
@@ -121,7 +121,7 @@ class ApplicationRepository {
      * Soft delete application
      */
     async softDelete(applicationId) {
-        return await Application_1.default.findByIdAndUpdate(applicationId, { isDeleted: true, updatedAt: new Date() }, { new: true });
+        return await Application_1.default.findByIdAndUpdate(applicationId, { isDeleted: true, updatedAt: new Date() }, { returnDocument: 'after' });
     }
     /**
      * List applications with filtering and search

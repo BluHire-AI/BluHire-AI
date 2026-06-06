@@ -31,7 +31,7 @@ class DepartmentRepository {
      * Update department
      */
     async update(departmentId, updateData) {
-        return await Department_1.default.findByIdAndUpdate(departmentId, { ...updateData, updatedAt: new Date() }, { new: true, runValidators: true })
+        return await Department_1.default.findByIdAndUpdate(departmentId, { ...updateData, updatedAt: new Date() }, { returnDocument: 'after', runValidators: true })
             .populate('departmentHead', 'firstName lastName email employeeCode');
     }
     /**
@@ -118,20 +118,20 @@ class DepartmentRepository {
         const department = await Department_1.default.findById(departmentId);
         if (!department)
             return null;
-        return await Department_1.default.findByIdAndUpdate(departmentId, { isActive: !department.isActive, updatedAt: new Date() }, { new: true });
+        return await Department_1.default.findByIdAndUpdate(departmentId, { isActive: !department.isActive, updatedAt: new Date() }, { returnDocument: 'after' });
     }
     /**
      * Assign department head
      */
     async assignHead(departmentId, employeeId) {
-        return await Department_1.default.findByIdAndUpdate(departmentId, { departmentHead: employeeId, updatedAt: new Date() }, { new: true })
+        return await Department_1.default.findByIdAndUpdate(departmentId, { departmentHead: employeeId, updatedAt: new Date() }, { returnDocument: 'after' })
             .populate('departmentHead', 'firstName lastName email employeeCode');
     }
     /**
      * Remove department head
      */
     async removeHead(departmentId) {
-        return await Department_1.default.findByIdAndUpdate(departmentId, { departmentHead: null, updatedAt: new Date() }, { new: true });
+        return await Department_1.default.findByIdAndUpdate(departmentId, { departmentHead: null, updatedAt: new Date() }, { returnDocument: 'after' });
     }
     /**
      * Bulk update departments

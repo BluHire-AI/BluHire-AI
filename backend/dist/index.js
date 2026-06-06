@@ -9,6 +9,7 @@ const env_1 = require("./config/env");
 const db_1 = require("./config/db");
 const routes_1 = __importDefault(require("./routes"));
 const error_middleware_1 = require("./middlewares/error.middleware");
+const screening_worker_1 = __importDefault(require("./modules/recruitment/queue/screening.worker"));
 const app = (0, express_1.default)();
 // Middlewares
 app.use(express_1.default.json());
@@ -30,6 +31,7 @@ app.use(error_middleware_1.errorHandler);
 // Start server
 const startServer = async () => {
     await (0, db_1.connectDB)();
+    screening_worker_1.default.start();
     app.listen(env_1.env.PORT, () => {
         console.log(`Server is running on port ${env_1.env.PORT} in ${env_1.env.NODE_ENV} mode.`);
     });

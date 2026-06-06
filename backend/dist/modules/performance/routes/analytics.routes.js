@@ -1,0 +1,12 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const analytics_controller_1 = require("../controllers/analytics.controller");
+const router = (0, express_1.Router)();
+router.get('/overview', analytics_controller_1.analyticsController.getOverview);
+router.get('/top-performers', analytics_controller_1.analyticsController.getTopPerformers);
+router.get('/promotion-ready', analytics_controller_1.analyticsController.getPromotionReady);
+router.get('/skill-gaps', analytics_controller_1.analyticsController.getSkillGaps);
+router.get('/goal-completion', analytics_controller_1.analyticsController.getGoalCompletion);
+router.get('/manager-effectiveness', analytics_controller_1.analyticsController.getManagerEffectiveness);
+exports.default = router;

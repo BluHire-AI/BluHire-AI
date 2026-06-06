@@ -199,6 +199,26 @@ export const recruitmentService = {
     return response.data.data;
   },
 
+  getAIAnalytics: async (): Promise<any> => {
+    const response = await api.get('/ai/analytics');
+    return response.data.data;
+  },
+
+  screenApplication: async (applicationId: string): Promise<any> => {
+    const response = await api.post('/ai/screen', { applicationId });
+    return response.data;
+  },
+
+  screenApplicationBulk: async (applicationIds?: string[], jobId?: string): Promise<any> => {
+    const response = await api.post('/ai/screen/bulk', { applicationIds, jobId });
+    return response.data;
+  },
+
+  getScreeningResult: async (applicationId: string): Promise<any> => {
+    const response = await api.get(`/ai/screen/${applicationId}`);
+    return response.data.data;
+  },
+
   // Helper for generating local secure download url
   getResumeDownloadUrl: (filename: string): string => {
     const baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';

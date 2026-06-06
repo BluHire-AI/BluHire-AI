@@ -50,10 +50,10 @@ api.interceptors.response.use(
           refreshToken
         });
         
-        const { accessToken } = response.data.data;
+        const { accessToken, refreshToken: newRefreshToken } = response.data.data;
         
         // Update the token in our store
-        useAuthStore.getState().setTokens(accessToken, refreshToken);
+        useAuthStore.getState().setTokens(accessToken, newRefreshToken || refreshToken);
         
         // Retry the original request
         originalRequest.headers.Authorization = `Bearer ${accessToken}`;

@@ -34,7 +34,7 @@ class DesignationRepository {
      * Update designation
      */
     async update(designationId, updateData) {
-        return await Designation_1.default.findByIdAndUpdate(designationId, { ...updateData, updatedAt: new Date() }, { new: true, runValidators: true })
+        return await Designation_1.default.findByIdAndUpdate(designationId, { ...updateData, updatedAt: new Date() }, { returnDocument: 'after', runValidators: true })
             .populate('departmentId', 'name');
     }
     /**

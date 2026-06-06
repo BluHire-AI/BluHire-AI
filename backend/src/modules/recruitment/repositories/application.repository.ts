@@ -64,7 +64,7 @@ export class ApplicationRepository {
     return await ApplicationModel.findOneAndUpdate(
       { _id: applicationId, isDeleted: false },
       { ...updateData, updatedAt: new Date() },
-      { new: true, runValidators: true }
+      { returnDocument: 'after', runValidators: true }
     )
       .populate('candidateId')
       .populate('jobId');
@@ -106,7 +106,7 @@ export class ApplicationRepository {
     return await ApplicationModel.findOneAndUpdate(
       { _id: applicationId, isDeleted: false },
       updateFields,
-      { new: true }
+      { returnDocument: 'after' }
     )
       .populate('candidateId')
       .populate('jobId');
@@ -119,7 +119,7 @@ export class ApplicationRepository {
     return await ApplicationModel.findByIdAndUpdate(
       applicationId,
       { isDeleted: true, updatedAt: new Date() },
-      { new: true }
+      { returnDocument: 'after' }
     );
   }
 

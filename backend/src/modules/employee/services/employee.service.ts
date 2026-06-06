@@ -474,10 +474,19 @@ export class EmployeeService {
       lastName: emp.lastName,
       email: emp.email,
       phone: emp.phone,
-      departmentId: emp.departmentId.toString(),
-      designationId: emp.designationId.toString(),
+      departmentId: emp.departmentId ? (
+        typeof emp.departmentId === 'object' && '_id' in emp.departmentId
+          ? { _id: (emp.departmentId as any)._id.toString(), name: (emp.departmentId as any).name }
+          : { _id: emp.departmentId.toString(), name: 'Department Team' }
+      ) : null,
+      designationId: emp.designationId ? (
+        typeof emp.designationId === 'object' && '_id' in emp.designationId
+          ? { _id: (emp.designationId as any)._id.toString(), title: (emp.designationId as any).title, level: (emp.designationId as any).level }
+          : { _id: emp.designationId.toString(), title: 'Team Member' }
+      ) : null,
       profileImage: emp.profileImage,
       workLocation: emp.workLocation,
+      skills: emp.skills || []
     }));
 
     const page = pagination?.page || 1;

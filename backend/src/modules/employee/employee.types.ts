@@ -128,10 +128,18 @@ export interface IEmployeeDirectory {
   lastName: string;
   email: string;
   phone: string;
-  departmentId: string;
-  designationId: string;
+  departmentId?: {
+    _id: string;
+    name: string;
+  } | null;
+  designationId?: {
+    _id: string;
+    title: string;
+    level?: number;
+  } | null;
   profileImage?: string;
   workLocation: string;
+  skills?: string[];
 }
 
 export interface IPaginatedResponse<T> {

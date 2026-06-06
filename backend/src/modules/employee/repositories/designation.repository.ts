@@ -43,7 +43,7 @@ export class DesignationRepository {
     return await DesignationModel.findByIdAndUpdate(
       designationId,
       { ...updateData, updatedAt: new Date() },
-      { new: true, runValidators: true }
+      { returnDocument: 'after', runValidators: true }
     )
       .populate('departmentId', 'name');
   }

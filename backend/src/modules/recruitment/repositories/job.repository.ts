@@ -48,7 +48,7 @@ export class JobRepository {
     return await JobModel.findOneAndUpdate(
       { _id: jobId, isDeleted: false },
       { ...updateData, updatedAt: new Date() },
-      { new: true, runValidators: true }
+      { returnDocument: 'after', runValidators: true }
     )
       .populate('departmentId', 'name')
       .populate('designationId', 'title');
@@ -61,7 +61,7 @@ export class JobRepository {
     return await JobModel.findByIdAndUpdate(
       jobId,
       { isDeleted: true, updatedAt: new Date() },
-      { new: true }
+      { returnDocument: 'after' }
     );
   }
 

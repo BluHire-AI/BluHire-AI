@@ -295,6 +295,50 @@ export default function PipelineBoard() {
     setSelectedIds([]);
   };
 
+  const handleBulkScreen = async () => {
+    try {
+      setLoading(true);
+      await recruitmentService.screenApplicationBulk(selectedIds);
+      toast.success(`Successfully queued ${selectedIds.length} candidates for AI Resume screening.`);
+      setSelectedIds([]);
+      setTimeout(() => fetchApplications(), 2000);
+    } catch (error) {
+      toast.error('Failed to trigger bulk AI screening.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleTriggerScreening = async (appId: string) => {
+    try {
+      setSubmittingStage(true);
+      await recruitmentService.screenApplication(appId);
+      toast.success('Queued candidate for AI resume screening.');
+      setTimeout(async () => {
+        await fetchApplications();
+        try {
+          const response = await recruitmentService.getScreeningResult(appId);
+          setSelectedApp(prev => prev ? {
+            ...prev,
+            screeningStatus: response.screeningStatus,
+            aiScore: response.aiScore,
+            aiRecommendation: response.aiRecommendation,
+            matchingSkills: response.matchingSkills,
+            missingSkills: response.missingSkills,
+            screeningSummary: response.screeningSummary,
+            notes: response.notes
+          } : null);
+        } catch (err) {
+          console.error(err);
+        }
+      }, 3000);
+    } catch (error) {
+      toast.error('Failed to start AI screening.');
+    } finally {
+      setSubmittingStage(false);
+    }
+  };
+
   // Star Rating helper
   const renderStars = (score?: number) => {
     const cleanScore = score || 0;
@@ -771,7 +815,13 @@ export default function PipelineBoard() {
 
                       {/* AI Score */}
                       <TableCell>
-                        {app.aiScore !== undefined && app.aiScore !== null ? (
+                        {app.screeningStatus === 'PENDING' ? (
+                          <span className="text-[9px] font-extrabold text-amber-500 bg-amber-500/10 border border-amber-500/25 px-2 py-0.5 rounded-full animate-pulse">Queued</span>
+                        ) : app.screeningStatus === 'PROCESSING' ? (
+                          <span className="text-[9px] font-extrabold text-blue-500 bg-blue-500/10 border border-blue-500/25 px-2 py-0.5 rounded-full animate-pulse">Screening...</span>
+                        ) : app.screeningStatus === 'FAILED' ? (
+                          <span className="text-[9px] font-extrabold text-rose-500 bg-rose-500/10 border border-rose-500/25 px-2 py-0.5 rounded-full" title={app.notes || 'Screening failed'}>Failed</span>
+                        ) : app.aiScore !== undefined && app.aiScore !== null ? (
                           <div className="flex items-center gap-1.5 min-w-[70px]">
                             <span className="text-[10px] font-black text-blue-450">{app.aiScore}%</span>
                             <div className="w-12 h-1.5 bg-zinc-800 rounded-full overflow-hidden border border-zinc-850/80">
@@ -782,7 +832,7 @@ export default function PipelineBoard() {
                             </div>
                           </div>
                         ) : (
-                          <span className="text-[10px] text-zinc-550 italic font-semibold">Pending</span>
+                          <span className="text-[10px] text-zinc-550 italic font-semibold">Not Run</span>
                         )}
                       </TableCell>
 
@@ -1208,26 +1258,142 @@ export default function PipelineBoard() {
               {/* AI Resume Analysis Tab */}
               {drawerTab === 'ai' && (
                 <div className="space-y-5">
-                  <h4 className="font-extrabold uppercase text-zinc-500 text-[9px] tracking-wider mb-1">AI Resume Scoring & Analysis</h4>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="bg-gradient-to-br from-blue-500/5 to-indigo-500/5 p-4 rounded-xl border border-blue-500/10">
-                      <p className="text-[9px] text-zinc-500 font-extrabold uppercase tracking-wider">Match Score</p>
-                      <div className="flex items-baseline gap-1 mt-1">
-                        <span className="text-2xl font-black text-blue-400">{selectedApp.aiScore || 0}%</span>
-                        <span className="text-[9px] text-zinc-550 font-bold">Match rating</span>
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-extrabold uppercase text-zinc-500 text-[9px] tracking-wider">AI Resume Scoring & Analysis</h4>
+                    <span className="text-[10px] font-extrabold text-zinc-400">
+                      Status: <span className="uppercase text-blue-450">{selectedApp.screeningStatus || 'PENDING'}</span>
+                    </span>
+                  </div>
+
+                  {/* Queued / Processing States */}
+                  {selectedApp.screeningStatus === 'PENDING' && (
+                    <div className="bg-zinc-950/40 border border-zinc-800 p-4 rounded-xl text-center space-y-3">
+                      <div className="w-8 h-8 rounded-full border-2 border-amber-500 border-t-transparent animate-spin mx-auto" />
+                      <p className="font-bold text-zinc-300">Queued for AI Screening</p>
+                      <p className="text-[10px] text-zinc-550">The background worker queue is picking up this document shortly. Please wait...</p>
+                    </div>
+                  )}
+
+                  {selectedApp.screeningStatus === 'PROCESSING' && (
+                    <div className="bg-zinc-950/40 border border-zinc-800 p-4 rounded-xl text-center space-y-3">
+                      <div className="w-8 h-8 rounded-full border-2 border-blue-500 border-t-transparent animate-spin mx-auto" />
+                      <p className="font-bold text-zinc-300">AI Screening in Progress...</p>
+                      <p className="text-[10px] text-zinc-550">FastAPI parser is reading text content and running OpenRouter analysis templates. Please wait...</p>
+                    </div>
+                  )}
+
+                  {selectedApp.screeningStatus === 'FAILED' && (() => {
+                    const getActionableErrorMessage = (notes: string) => {
+                      if (!notes) return {
+                        title: "AI Sourcing Match Failed",
+                        desc: "An error occurred during resume text processing or LLM evaluation.",
+                        action: "Please check your network connection and try running the analysis again."
+                      };
+                      const lowerNotes = notes.toLowerCase();
+                      if (lowerNotes.includes("unauthorized") || lowerNotes.includes("authentication") || lowerNotes.includes("401")) {
+                        return {
+                          title: "Authentication Error",
+                          desc: "The AI screening request could not be authenticated. Please log out and sign back in to renew your session.",
+                          action: "Contact system administrators if access issues persist."
+                        };
+                      }
+                      if (lowerNotes.includes("offline") || lowerNotes.includes("fetch failed") || lowerNotes.includes("connection refused") || lowerNotes.includes("econnrefused") || lowerNotes.includes("503") || lowerNotes.includes("service offline")) {
+                        return {
+                          title: "AI Service Offline",
+                          desc: "The background AI parsing microservice is currently offline or unreachable.",
+                          action: "Please verify that the FastAPI server is running on port 8000."
+                        };
+                      }
+                      if (lowerNotes.includes("api key") || lowerNotes.includes("missing api key") || lowerNotes.includes("your_openrouter_api_key_here")) {
+                        return {
+                          title: "Missing API Key",
+                          desc: "OpenRouter API Key is missing or set to the default placeholder in the environment variables.",
+                          action: "Please set the OPENROUTER_API_KEY inside 'ai-service/.env'."
+                        };
+                      }
+                      if (lowerNotes.includes("rate limit") || lowerNotes.includes("429") || lowerNotes.includes("too many requests")) {
+                        return {
+                          title: "Rate Limit Exceeded",
+                          desc: "OpenRouter API free-tier rate limits have been exceeded.",
+                          action: "Please wait a moment before retrying, or configure a paid model tier."
+                        };
+                      }
+                      if (lowerNotes.includes("openrouter") || lowerNotes.includes("llm") || lowerNotes.includes("choices")) {
+                        return {
+                          title: "OpenRouter Error",
+                          desc: `The OpenRouter LLM service failed to process the request. Details: ${notes}`,
+                          action: "Verify OpenRouter API status or check the model fallback config."
+                        };
+                      }
+                      if (lowerNotes.includes("extract") || lowerNotes.includes("parse") || lowerNotes.includes("pdf") || lowerNotes.includes("docx") || lowerNotes.includes("empty")) {
+                        return {
+                          title: "Invalid Resume",
+                          desc: "The document parser was unable to extract readable text content from the uploaded resume file.",
+                          action: "Ensure the file is not password-protected, corrupted, or fully scanned image-based without OCR text."
+                        };
+                      }
+                      return {
+                        title: "AI Screening Error",
+                        desc: notes,
+                        action: "Please check the server logs for detailed traceback information."
+                      };
+                    };
+
+                    const errInfo = getActionableErrorMessage(selectedApp.notes || '');
+                    return (
+                      <div className="bg-red-950/20 border border-red-900/40 p-4 rounded-xl text-center space-y-3">
+                        <AlertCircle className="w-8 h-8 text-rose-500 mx-auto" />
+                        <div>
+                          <p className="font-extrabold text-sm text-rose-400">{errInfo.title}</p>
+                          <p className="text-[10px] text-zinc-400 mt-1 font-medium leading-normal">{errInfo.desc}</p>
+                        </div>
+                        <div className="bg-zinc-950/40 border border-zinc-850 p-2.5 rounded-lg text-left text-[9px] leading-relaxed">
+                          <span className="font-extrabold uppercase text-rose-500 tracking-wide block mb-0.5">Actionable step:</span>
+                          <span className="text-zinc-350 font-medium">{errInfo.action}</span>
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  {/* Score & Recommendation */}
+                  {selectedApp.screeningStatus !== 'PENDING' && selectedApp.screeningStatus !== 'PROCESSING' && (
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="bg-gradient-to-br from-blue-500/5 to-indigo-500/5 p-4 rounded-xl border border-blue-500/10">
+                        <p className="text-[9px] text-zinc-500 font-extrabold uppercase tracking-wider">Match Score</p>
+                        <div className="flex items-baseline gap-1 mt-1">
+                          <span className="text-2xl font-black text-blue-400">{selectedApp.aiScore || 0}%</span>
+                          <span className="text-[9px] text-zinc-550 font-bold">Match rating</span>
+                        </div>
+                      </div>
+                      <div className="bg-gradient-to-br from-purple-500/5 to-indigo-500/5 p-4 rounded-xl border border-purple-500/10">
+                        <p className="text-[9px] text-zinc-500 font-extrabold uppercase tracking-wider">AI Sourcing Grade</p>
+                        <p className="text-xs font-black text-purple-400 mt-2.5 flex items-center gap-1.5">
+                          <Sparkles className="w-4 h-4 text-purple-400" />
+                          {selectedApp.aiRecommendation || 'Sourcing grade pending'}
+                        </p>
                       </div>
                     </div>
-                    <div className="bg-gradient-to-br from-purple-500/5 to-indigo-500/5 p-4 rounded-xl border border-purple-500/10">
-                      <p className="text-[9px] text-zinc-500 font-extrabold uppercase tracking-wider">AI Sourcing Grade</p>
-                      <p className="text-xs font-black text-purple-400 mt-2.5 flex items-center gap-1.5">
-                        <Sparkles className="w-4 h-4 text-purple-400" />
-                        {selectedApp.aiRecommendation || 'Sourcing grade pending'}
-                      </p>
+                  )}
+
+                  {/* Summary */}
+                  {selectedApp.screeningStatus !== 'PENDING' && selectedApp.screeningStatus !== 'PROCESSING' && (
+                    <div className="bg-zinc-950/25 p-4 rounded-xl border border-zinc-850">
+                      <p className="text-[9px] text-zinc-500 font-extrabold uppercase mb-1">AI Screening Insights Summary</p>
+                      <p className="text-xs leading-relaxed text-zinc-300 font-medium">{selectedApp.screeningSummary || 'Screening insights uncomputed.'}</p>
                     </div>
-                  </div>
-                  <div className="bg-zinc-950/25 p-4 rounded-xl border border-zinc-850">
-                    <p className="text-[9px] text-zinc-500 font-extrabold uppercase mb-1">AI Screening Insights Summary</p>
-                    <p className="text-xs leading-relaxed text-zinc-300 font-medium">{selectedApp.screeningSummary || 'Screening insights uncomputed.'}</p>
+                  )}
+
+                  {/* Run / Re-run Trigger Actions */}
+                  <div className="pt-2">
+                    <Button
+                      onClick={() => handleTriggerScreening(selectedApp._id)}
+                      disabled={submittingStage || selectedApp.screeningStatus === 'PROCESSING'}
+                      size="sm"
+                      className="bg-blue-600 hover:bg-blue-700 text-white font-bold w-full text-xs rounded-lg flex items-center justify-center gap-1.5 h-9"
+                    >
+                      <Sparkles className="w-4 h-4" />
+                      {selectedApp.screeningStatus === 'COMPLETED' ? 'Re-run Screening Analysis' : 'Run AI Resume Screening'}
+                    </Button>
                   </div>
                 </div>
               )}
@@ -1373,6 +1539,17 @@ export default function PipelineBoard() {
                 Apply
               </Button>
             </div>
+
+            {/* Bulk AI Screening */}
+            <Button
+              onClick={handleBulkScreen}
+              size="sm"
+              variant="outline"
+              className="text-[10px] border-blue-500/20 text-blue-400 hover:bg-blue-500/10 rounded-lg h-8 px-2"
+            >
+              <Sparkles className="w-3.5 h-3.5 mr-1 shrink-0" />
+              AI Screen
+            </Button>
 
             {/* Reject Bulk */}
             <Button

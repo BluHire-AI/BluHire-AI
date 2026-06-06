@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation';
 import { 
   LayoutDashboard, Users, UserCircle, LogOut, Building, Briefcase, 
   Network, Contact, Sun, Moon, ChevronDown, ChevronRight,
-  Compass, Award, BarChart3, Bot, ClipboardList, TrendingUp, CheckSquare
+  Compass, Award, BarChart3, Bot, ClipboardList, TrendingUp, CheckSquare, CalendarDays
 } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { useAuthStore } from '@/lib/store/auth';
@@ -177,6 +177,7 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
                         { name: 'Employees', href: '/dashboard/employees', icon: Users, roles: ['MANAGEMENT_ADMIN', 'HR_RECRUITER', 'SENIOR_MANAGER'] },
                         { name: 'Employee Directory', href: '/dashboard/directory', icon: Contact, roles: ['MANAGEMENT_ADMIN', 'HR_RECRUITER', 'SENIOR_MANAGER', 'EMPLOYEE'] },
                         { name: 'Organization Chart', href: '/dashboard/org-chart', icon: Network, roles: ['MANAGEMENT_ADMIN', 'HR_RECRUITER', 'SENIOR_MANAGER', 'EMPLOYEE'] },
+                        { name: 'Attendance & Leaves', href: '/dashboard/attendance', icon: CalendarDays },
                         { name: 'Recruitment Hub', href: '/dashboard/recruitment', icon: Compass, roles: ['MANAGEMENT_ADMIN', 'HR_RECRUITER'] },
                         { name: 'Executive Analytics', href: '/dashboard/analytics', icon: TrendingUp, roles: ['MANAGEMENT_ADMIN', 'SENIOR_MANAGER'] },
                       ].map((item) => {

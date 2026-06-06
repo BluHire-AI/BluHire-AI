@@ -215,35 +215,35 @@ export default function KnowledgeBasePage() {
   return (
     <div className="space-y-8 min-h-screen pb-16">
       {/* Header Banner */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-r from-blue-600/10 via-indigo-600/5 to-purple-600/10 border border-blue-500/20 rounded-3xl p-8 shadow-sm">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-r from-[#8B5CF6]/10 to-[#A855F7]/10 border border-[#8B5CF6]/20 rounded-[24px] p-8 shadow-sm">
         <div>
           <div className="flex items-center gap-3 mb-2">
-            <div className="p-2.5 rounded-2xl bg-blue-600/10 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400">
+            <div className="p-2.5 rounded-2xl bg-[#8B5CF6]/10 text-[#8B5CF6]">
               <BookOpen className="w-6 h-6" />
             </div>
-            <span className="text-xs font-extrabold uppercase tracking-wider text-blue-600 dark:text-blue-400">Knowledge Hub</span>
+            <span className="text-small-label text-[#8B5CF6]">Knowledge Hub</span>
           </div>
-          <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50 select-none">Enterprise Knowledge Base</h1>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400 max-w-xl mt-1 select-none">
+          <h1 className="text-h1 text-white select-none">Enterprise Knowledge Base</h1>
+          <p className="text-body-copy text-white/60 mt-3 max-w-xl select-none leading-relaxed">
             Upload organizational handbooks, leaves policy drafts, or standard SOPs. Powered by MongoDB Atlas Vector Search for semantically cited HR Copilot answers.
           </p>
         </div>
 
         {/* Quick Stats Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-2 lg:grid-cols-3 gap-3">
-          <div className="px-4 py-3 rounded-2xl bg-white dark:bg-[#0e1422] border border-zinc-200/50 dark:border-zinc-800/60 shadow-sm flex flex-col justify-center min-w-[120px]">
-            <span className="text-xs font-medium text-zinc-400">Documents</span>
-            <span className="text-xl font-bold text-zinc-900 dark:text-zinc-100">{documents.length}</span>
+          <div className="px-4 py-3 rounded-xl bg-white/[0.03] backdrop-blur-xl border border-white/10 shadow-sm flex flex-col justify-center min-w-[120px]">
+            <span className="text-small-label text-white/40">Documents</span>
+            <span className="text-h2 text-white">{documents.length}</span>
           </div>
-          <div className="px-4 py-3 rounded-2xl bg-white dark:bg-[#0e1422] border border-zinc-200/50 dark:border-zinc-800/60 shadow-sm flex flex-col justify-center min-w-[120px]">
-            <span className="text-xs font-medium text-zinc-400">Total Chunks</span>
-            <span className="text-xl font-bold text-zinc-900 dark:text-zinc-100">
+          <div className="px-4 py-3 rounded-xl bg-white/[0.03] backdrop-blur-xl border border-white/10 shadow-sm flex flex-col justify-center min-w-[120px]">
+            <span className="text-small-label text-white/40">Total Chunks</span>
+            <span className="text-h2 text-white">
               {documents.reduce((acc, doc) => acc + (doc.chunkCount || 0), 0)}
             </span>
           </div>
-          <div className="px-4 py-3 rounded-2xl bg-white dark:bg-[#0e1422] border border-zinc-200/50 dark:border-zinc-800/60 shadow-sm flex flex-col justify-center min-w-[120px] col-span-2 sm:col-span-1 md:col-span-2 lg:col-span-1">
-            <span className="text-xs font-medium text-zinc-400">Search Speed</span>
-            <span className="text-xl font-bold text-zinc-900 dark:text-zinc-100">
+          <div className="px-4 py-3 rounded-xl bg-white/[0.03] backdrop-blur-xl border border-white/10 shadow-sm flex flex-col justify-center min-w-[120px] col-span-2 sm:col-span-1 md:col-span-2 lg:col-span-1">
+            <span className="text-small-label text-white/40">Search Speed</span>
+            <span className="text-h2 text-white">
               {analytics?.averageRetrievalTime ? `${analytics.averageRetrievalTime}ms` : '120ms'}
             </span>
           </div>
@@ -251,13 +251,13 @@ export default function KnowledgeBasePage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex border-b border-zinc-200/60 dark:border-zinc-800/60 gap-4">
+      <div className="flex border-b border-white/10 gap-4">
         <button
           onClick={() => setActiveTab('search')}
           className={`flex items-center gap-2 pb-3.5 px-1.5 text-sm font-semibold border-b-2 transition-all cursor-pointer ${
             activeTab === 'search'
-              ? 'border-blue-600 text-blue-600 dark:border-blue-500 dark:text-blue-400'
-              : 'border-transparent text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200'
+              ? 'border-[#8B5CF6] text-[#8B5CF6]'
+              : 'border-transparent text-white/60 hover:text-white'
           }`}
         >
           <Search className="w-4.5 h-4.5" />
@@ -269,8 +269,8 @@ export default function KnowledgeBasePage() {
             onClick={() => setActiveTab('documents')}
             className={`flex items-center gap-2 pb-3.5 px-1.5 text-sm font-semibold border-b-2 transition-all cursor-pointer ${
               activeTab === 'documents'
-                ? 'border-blue-600 text-blue-600 dark:border-blue-500 dark:text-blue-400'
-                : 'border-transparent text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200'
+                ? 'border-[#8B5CF6] text-[#8B5CF6]'
+                : 'border-transparent text-white/60 hover:text-white'
             }`}
           >
             <FileText className="w-4.5 h-4.5" />
@@ -283,8 +283,8 @@ export default function KnowledgeBasePage() {
             onClick={() => setActiveTab('analytics')}
             className={`flex items-center gap-2 pb-3.5 px-1.5 text-sm font-semibold border-b-2 transition-all cursor-pointer ${
               activeTab === 'analytics'
-                ? 'border-blue-600 text-blue-600 dark:border-blue-500 dark:text-blue-400'
-                : 'border-transparent text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200'
+                ? 'border-[#8B5CF6] text-[#8B5CF6]'
+                : 'border-transparent text-white/60 hover:text-white'
             }`}
           >
             <BarChart2 className="w-4.5 h-4.5" />
@@ -307,22 +307,22 @@ export default function KnowledgeBasePage() {
               className="space-y-6"
             >
               {/* Search Form */}
-              <div className="bg-white dark:bg-[#0e1422] border border-zinc-200/50 dark:border-zinc-800/60 rounded-3xl p-6 shadow-sm">
+              <div className="bg-white/[0.03] backdrop-blur-xl border border-white/10 rounded-[24px] p-6 shadow-2xl">
                 <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-3">
                   <div className="relative flex-1">
-                    <Search className="absolute left-4 top-3.5 w-5 h-5 text-zinc-400" />
+                    <Search className="absolute left-4 top-3.5 w-5 h-5 text-white/30" />
                     <input
                       type="text"
                       placeholder="Ask the knowledge base (e.g. 'What is the maternity leave policy duration?')"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200 dark:border-zinc-800 rounded-2xl py-3 pl-12 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-zinc-800 dark:text-zinc-100"
+                      className="w-full bg-white/[0.02] border border-white/10 rounded-2xl py-3 pl-12 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#8B5CF6]/30 text-white placeholder:text-white/30"
                     />
                   </div>
                   <button
                     type="submit"
                     disabled={searching || !searchQuery.trim()}
-                    className="bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm px-6 py-3 rounded-2xl flex items-center justify-center gap-2 cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="bg-[#8B5CF6] hover:bg-[#A855F7] text-white font-medium text-sm px-6 py-3 rounded-2xl flex items-center justify-center gap-2 cursor-pointer transition-all disabled:opacity-50 disabled:cursor-not-allowed border-0 shadow-lg shadow-[#8B5CF6]/10"
                   >
                     {searching ? (
                       <RefreshCw className="w-4.5 h-4.5 animate-spin" />
@@ -337,28 +337,28 @@ export default function KnowledgeBasePage() {
               {/* Search results */}
               {searching ? (
                 <div className="flex flex-col items-center justify-center py-12 space-y-3">
-                  <RefreshCw className="w-8 h-8 text-blue-600 animate-spin" />
-                  <span className="text-sm font-medium text-zinc-500">Querying vector embeddings & similarity indexes...</span>
+                  <RefreshCw className="w-8 h-8 text-[#8B5CF6] animate-spin" />
+                  <span className="text-sm font-medium text-white/40">Querying vector embeddings & similarity indexes...</span>
                 </div>
               ) : searchError ? (
-                <div className="bg-white dark:bg-[#0e1422] border border-zinc-200/50 dark:border-zinc-800/60 rounded-3xl p-12 text-center flex flex-col items-center justify-center">
+                <div className="bg-white/[0.03] border border-white/10 rounded-[24px] p-12 text-center flex flex-col items-center justify-center">
                   <AlertTriangle className="w-12 h-12 text-red-500 mb-3" />
-                  <h3 className="text-lg font-bold text-zinc-800 dark:text-zinc-200">Search Failed</h3>
-                  <p className="text-sm text-red-500 mt-1 max-w-md">
+                  <h3 className="text-h2 text-white">Search Failed</h3>
+                  <p className="text-body-copy text-red-400 mt-1 max-w-md">
                     {searchError}
                   </p>
                 </div>
               ) : searchTriggered && searchResults.length === 0 ? (
-                <div className="bg-white dark:bg-[#0e1422] border border-zinc-200/50 dark:border-zinc-800/60 rounded-3xl p-12 text-center flex flex-col items-center justify-center">
-                  <HelpCircle className="w-12 h-12 text-zinc-400 mb-3" />
-                  <h3 className="text-lg font-bold text-zinc-800 dark:text-zinc-200">No matching insights found</h3>
-                  <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1 max-w-md">
+                <div className="bg-white/[0.03] border border-white/10 rounded-[24px] p-12 text-center flex flex-col items-center justify-center">
+                  <HelpCircle className="w-12 h-12 text-white/20 mb-3" />
+                  <h3 className="text-h2 text-white">No matching insights found</h3>
+                  <p className="text-body-copy text-white/40 mt-1 max-w-md">
                     We couldn't find any policy document matching your search. Ensure relevant documents are uploaded and employee access is approved.
                   </p>
                 </div>
               ) : searchResults.length > 0 ? (
                 <div className="space-y-4">
-                  <h3 className="text-sm font-bold text-zinc-400 tracking-wider uppercase">Semantic Search Matches</h3>
+                  <h3 className="text-h2 text-white/40 mb-2">Semantic Search Matches</h3>
                   
                   <div className="grid grid-cols-1 gap-4">
                     {searchResults.map((result, index) => (
@@ -367,27 +367,27 @@ export default function KnowledgeBasePage() {
                         initial={{ opacity: 0, x: -10 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: index * 0.05 }}
-                        className="bg-white dark:bg-[#0e1422] border border-zinc-200/50 dark:border-zinc-800/60 rounded-3xl p-6 shadow-sm space-y-4 hover:border-blue-500/30 transition-all group"
+                        className="bg-white/[0.03] backdrop-blur-xl border border-white/10 rounded-[24px] p-6 shadow-2xl space-y-4 hover:border-[#8B5CF6]/30 transition-all group"
                       >
                         {/* Source info */}
-                        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-zinc-100 dark:border-zinc-800/60 pb-3">
+                        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-3">
                           <div className="flex items-center gap-2">
-                            <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400 tracking-wide uppercase">
+                            <span className="text-small-label bg-[#8B5CF6]/10 text-[#c084fc] border border-[#8B5CF6]/20">
                               {result.document.documentType}
                             </span>
-                            <h4 className="text-sm font-bold text-zinc-800 dark:text-zinc-100">
+                            <h4 className="text-grid font-bold text-white">
                               {result.document.title}
                             </h4>
                           </div>
 
                           <div className="flex items-center gap-3">
-                            <span className="text-xs font-semibold px-2 py-0.5 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-500">
+                            <span className="text-small-label px-2 py-0.5 rounded-lg bg-white/[0.04] text-white/60 border border-white/10 normal-case">
                               Page {result.pageNumber || 1}
                             </span>
-                            <span className="text-xs font-semibold px-2 py-0.5 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-500">
+                            <span className="text-small-label px-2 py-0.5 rounded-lg bg-white/[0.04] text-white/60 border border-white/10 normal-case">
                               Section: {result.sectionTitle || 'General'}
                             </span>
-                            <span className="text-xs font-extrabold px-2.5 py-0.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/10 shadow-sm flex items-center gap-1">
+                            <span className="text-small-label px-2.5 py-0.5 rounded-lg bg-emerald-500/10 text-emerald-450 border border-emerald-500/20 shadow-sm flex items-center gap-1">
                               <ShieldCheck className="w-3.5 h-3.5" />
                               Match: {Math.round(result.score * 100)}%
                             </span>
@@ -395,17 +395,17 @@ export default function KnowledgeBasePage() {
                         </div>
 
                         {/* Content text */}
-                        <p className="text-sm text-zinc-600 dark:text-zinc-300 leading-relaxed font-normal">
+                        <p className="text-body-copy text-white/80 leading-relaxed font-normal">
                           {result.content}
                         </p>
 
                         {/* Source reference footer */}
                         <div className="flex items-center justify-between pt-2">
-                          <span className="text-xs text-zinc-400 flex items-center gap-1">
-                            <FileText className="w-3.5 h-3.5" />
+                          <span className="text-small-label text-white/40 flex items-center gap-1 normal-case">
+                            <FileText className="w-3.5 h-3.5 text-white/20" />
                             {result.document.fileName}
                           </span>
-                          <button className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 hover:underline flex items-center gap-1 group-hover:translate-x-0.5 transition-transform cursor-pointer">
+                          <button className="text-small-label text-[#8B5CF6] hover:text-[#A855F7] hover:underline flex items-center gap-1 group-hover:translate-x-0.5 transition-transform cursor-pointer border-0 bg-transparent normal-case font-bold">
                             View context snippet
                             <ArrowRight className="w-3.5 h-3.5" />
                           </button>
@@ -415,10 +415,10 @@ export default function KnowledgeBasePage() {
                   </div>
                 </div>
               ) : (
-                <div className="bg-zinc-100/50 dark:bg-zinc-900/10 border border-zinc-200/50 dark:border-zinc-800/30 rounded-3xl p-12 text-center">
-                  <Sparkles className="w-10 h-10 text-blue-500/40 mx-auto mb-3" />
-                  <h3 className="text-base font-bold text-zinc-700 dark:text-zinc-300">Semantic RAG Search</h3>
-                  <p className="text-xs text-zinc-400 mt-1 max-w-sm mx-auto">
+                <div className="bg-white/[0.02] border border-white/10 rounded-[24px] p-12 text-center">
+                  <Sparkles className="w-10 h-10 text-[#8B5CF6]/40 mx-auto mb-3 animate-pulse" />
+                  <h3 className="text-h2 text-white/90">Semantic RAG Search</h3>
+                  <p className="text-body-copy text-white/40 mt-1 max-w-sm mx-auto">
                     Type a query above to retrieve relevant policy chunks. The search engine resolves semantic context automatically.
                   </p>
                 </div>
@@ -438,10 +438,10 @@ export default function KnowledgeBasePage() {
             >
               {/* Left side: Upload Form */}
               {(isAdminOrManager) ? (
-                <div className="bg-white dark:bg-[#0e1422] border border-zinc-200/50 dark:border-zinc-800/60 rounded-3xl p-6 shadow-sm h-fit space-y-6">
-                  <div className="border-b border-zinc-100 dark:border-zinc-800/60 pb-3">
-                    <h3 className="text-base font-bold text-zinc-900 dark:text-zinc-100">Upload Policy Document</h3>
-                    <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">PDF or Word files. Size Cap: 15MB.</p>
+                <div className="bg-white/[0.03] backdrop-blur-xl border border-white/10 rounded-[24px] p-6 shadow-2xl h-fit space-y-6">
+                  <div className="border-b border-white/10 pb-3">
+                    <h3 className="text-h2 text-white">Upload Policy Document</h3>
+                    <p className="text-body-copy text-white/40 mt-0.5">PDF or Word files. Size Cap: 15MB.</p>
                   </div>
 
                   <form onSubmit={handleUpload} className="space-y-4">
@@ -454,8 +454,8 @@ export default function KnowledgeBasePage() {
                       onClick={() => fileInputRef.current?.click()}
                       className={`border-2 border-dashed rounded-2xl p-6 text-center cursor-pointer transition-all flex flex-col items-center justify-center min-h-[140px] ${
                         dragActive 
-                          ? 'border-blue-500 bg-blue-50/20' 
-                          : 'border-zinc-200 hover:border-zinc-400 dark:border-zinc-800 dark:hover:border-zinc-700 bg-zinc-50/50 dark:bg-zinc-900/20'
+                          ? 'border-[#8B5CF6] bg-[#8B5CF6]/10' 
+                          : 'border-white/10 hover:border-[#8B5CF6]/30 bg-white/[0.01] hover:bg-white/[0.03]'
                       }`}
                     >
                       <input
@@ -465,71 +465,71 @@ export default function KnowledgeBasePage() {
                         accept=".pdf,.docx,.doc,.txt"
                         className="hidden"
                       />
-                      <UploadCloud className="w-10 h-10 text-zinc-400 mb-2 animate-bounce" />
+                      <UploadCloud className="w-10 h-10 text-white/30 mb-2 animate-bounce" />
                       {uploadFile ? (
                         <div className="space-y-1">
-                          <span className="text-xs font-bold text-zinc-800 dark:text-zinc-100 block truncate max-w-[200px]">
+                          <span className="text-xs font-bold text-white block truncate max-w-[200px]">
                             {uploadFile.name}
                           </span>
-                          <span className="text-[10px] text-zinc-400 block">{formatBytes(uploadFile.size)}</span>
+                          <span className="text-[10px] text-white/40 block">{formatBytes(uploadFile.size)}</span>
                         </div>
                       ) : (
                         <div>
-                          <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-300 block">Drag & Drop file here</span>
-                          <span className="text-[10px] text-zinc-400 block mt-0.5">or click to browse local folders</span>
+                          <span className="text-xs font-semibold text-white/80 block">Drag & Drop file here</span>
+                          <span className="text-[10px] text-white/40 block mt-0.5">or click to browse local folders</span>
                         </div>
                       )}
                     </div>
 
                     {/* Title input */}
                     <div className="space-y-1">
-                      <label className="text-xs font-bold text-zinc-400 uppercase">Document Title</label>
+                      <label className="text-small-label text-white/40">Document Title</label>
                       <input
                         type="text"
                         placeholder="e.g. Employee Maternity Policy 2026"
                         value={uploadTitle}
                         onChange={(e) => setUploadTitle(e.target.value)}
-                        className="w-full bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200 dark:border-zinc-800 rounded-xl py-2 px-3.5 text-xs text-zinc-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                        className="w-full bg-white/[0.02] border border-white/10 rounded-xl py-2 px-3.5 text-xs text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-[#8B5CF6]/30"
                         required
                       />
                     </div>
 
                     {/* Type select */}
                     <div className="space-y-1">
-                      <label className="text-xs font-bold text-zinc-400 uppercase">Category Type</label>
+                      <label className="text-small-label text-white/40">Category Type</label>
                       <select
                         value={uploadType}
                         onChange={(e) => setUploadType(e.target.value)}
-                        className="w-full bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200 dark:border-zinc-800 rounded-xl py-2 px-3 text-xs text-zinc-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                        className="w-full bg-white/[0.02] border border-white/10 rounded-xl py-2 px-3 text-xs text-white/80 focus:outline-none focus:ring-2 focus:ring-[#8B5CF6]/30 cursor-pointer"
                       >
-                        <option value="POLICY">POLICY</option>
-                        <option value="HANDBOOK">HANDBOOK</option>
-                        <option value="SOP">SOP</option>
-                        <option value="TRAINING">TRAINING</option>
-                        <option value="BENEFITS">BENEFITS</option>
-                        <option value="LEAVE">LEAVE</option>
-                        <option value="PAYROLL">PAYROLL</option>
-                        <option value="COMPLIANCE">COMPLIANCE</option>
-                        <option value="OTHER">OTHER</option>
+                        <option value="POLICY" className="bg-[#0a0a0a]">POLICY</option>
+                        <option value="HANDBOOK" className="bg-[#0a0a0a]">HANDBOOK</option>
+                        <option value="SOP" className="bg-[#0a0a0a]">SOP</option>
+                        <option value="TRAINING" className="bg-[#0a0a0a]">TRAINING</option>
+                        <option value="BENEFITS" className="bg-[#0a0a0a]">BENEFITS</option>
+                        <option value="LEAVE" className="bg-[#0a0a0a]">LEAVE</option>
+                        <option value="PAYROLL" className="bg-[#0a0a0a]">PAYROLL</option>
+                        <option value="COMPLIANCE" className="bg-[#0a0a0a]">COMPLIANCE</option>
+                        <option value="OTHER" className="bg-[#0a0a0a]">OTHER</option>
                       </select>
                     </div>
 
                     {/* Employee Approved switch */}
-                    <div className="flex items-center justify-between bg-zinc-50 dark:bg-zinc-900/30 p-3 rounded-xl border border-zinc-200/50 dark:border-zinc-800/40">
+                    <div className="flex items-center justify-between bg-white/[0.02] p-3 rounded-xl border border-white/10">
                       <div>
-                        <span className="text-xs font-bold text-zinc-700 dark:text-zinc-300 block">Approve for Employees</span>
-                        <span className="text-[10px] text-zinc-400 block">Allow read access for Employee role</span>
+                        <span className="text-grid font-bold text-white/80 block">Approve for Employees</span>
+                        <span className="text-small-label text-white/40 block normal-case">Allow read access for Employee role</span>
                       </div>
                       <input
                         type="checkbox"
                         checked={isApproved}
                         onChange={(e) => setIsApproved(e.target.checked)}
-                        className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 cursor-pointer"
+                        className="w-4 h-4 rounded text-[#8B5CF6] focus:ring-[#8B5CF6] cursor-pointer"
                       />
                     </div>
 
                     {uploadError && (
-                      <span className="text-xs text-red-500 font-semibold flex items-center gap-1 bg-red-50 dark:bg-red-950/20 p-2.5 rounded-lg border border-red-500/10">
+                      <span className="text-xs text-red-400 font-semibold flex items-center gap-1 bg-red-500/10 p-2.5 rounded-lg border border-red-500/20">
                         <AlertTriangle className="w-4 h-4 flex-shrink-0" />
                         {uploadError}
                       </span>
@@ -538,7 +538,7 @@ export default function KnowledgeBasePage() {
                     <button
                       type="submit"
                       disabled={uploading || !uploadFile || !uploadTitle}
-                      className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs py-2.5 rounded-xl flex items-center justify-center gap-2 cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-full bg-[#8B5CF6] hover:bg-[#A855F7] text-white font-semibold text-xs py-2.5 rounded-xl flex items-center justify-center gap-2 cursor-pointer transition-all disabled:opacity-50 disabled:cursor-not-allowed border-0"
                     >
                       {uploading ? (
                         <>
@@ -555,42 +555,42 @@ export default function KnowledgeBasePage() {
                   </form>
                 </div>
               ) : (
-                <div className="bg-white dark:bg-[#0e1422] border border-zinc-200/50 dark:border-zinc-800/60 rounded-3xl p-6 shadow-sm h-fit text-center">
-                  <ShieldCheck className="w-10 h-10 text-zinc-400 mx-auto mb-2" />
-                  <h3 className="text-sm font-bold text-zinc-700 dark:text-zinc-300">Recruiter Role View</h3>
-                  <p className="text-xs text-zinc-400 mt-1">
+                <div className="bg-white/[0.03] backdrop-blur-xl border border-white/10 rounded-[24px] p-6 shadow-2xl h-fit text-center">
+                  <ShieldCheck className="w-10 h-10 text-white/30 mx-auto mb-2" />
+                  <h3 className="text-h2 text-white">Recruiter Role View</h3>
+                  <p className="text-body-copy text-white/40 mt-1 leading-relaxed">
                     You have view access to documents. Adding, deleting or editing requires administrator permissions.
                   </p>
                 </div>
               )}
 
               {/* Right side: List of Documents */}
-              <div className="bg-white dark:bg-[#0e1422] border border-zinc-200/50 dark:border-zinc-800/60 rounded-3xl p-6 shadow-sm lg:col-span-2 space-y-4">
-                <div className="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800/60 pb-3">
-                  <h3 className="text-base font-bold text-zinc-900 dark:text-zinc-100">Indexed Files</h3>
+              <div className="bg-white/[0.03] backdrop-blur-xl border border-white/10 rounded-[24px] p-6 shadow-2xl lg:col-span-2 space-y-4">
+                <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                  <h3 className="text-h2 text-white">Indexed Files</h3>
                   <button 
                     onClick={loadData}
-                    className="p-1.5 rounded-lg border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors"
+                    className="p-1.5 rounded-lg border border-white/10 bg-white/[0.02] hover:bg-white/[0.06] transition-colors cursor-pointer"
                   >
-                    <RefreshCw className="w-4.5 h-4.5 text-zinc-400" />
+                    <RefreshCw className="w-4.5 h-4.5 text-white/40" />
                   </button>
                 </div>
 
                 {loadingDocs ? (
                   <div className="flex flex-col items-center justify-center py-16 space-y-3">
-                    <RefreshCw className="w-8 h-8 text-blue-600 animate-spin" />
-                    <span className="text-xs text-zinc-400">Loading document indices...</span>
+                    <RefreshCw className="w-8 h-8 text-[#8B5CF6] animate-spin" />
+                    <span className="text-xs text-white/40">Loading document indices...</span>
                   </div>
                 ) : documents.length === 0 ? (
-                  <div className="text-center py-16 text-zinc-400">
-                    <FileText className="w-12 h-12 mx-auto mb-2 text-zinc-300 dark:text-zinc-800" />
+                  <div className="text-center py-16 text-white/40">
+                    <FileText className="w-12 h-12 mx-auto mb-2 text-white/10" />
                     <span className="text-sm">No files uploaded yet.</span>
                   </div>
                 ) : (
                   <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                       <thead>
-                        <tr className="border-b border-zinc-100 dark:border-zinc-800 text-[10px] uppercase text-zinc-400 font-extrabold tracking-wider">
+                        <tr className="border-b border-white/10 text-small-label text-white/40">
                           <th className="pb-3">Title / Name</th>
                           <th className="pb-3">Type</th>
                           <th className="pb-3">Chunks</th>
@@ -599,76 +599,81 @@ export default function KnowledgeBasePage() {
                           {isAdminOrManager && <th className="pb-3 text-right">Actions</th>}
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800/60 text-xs">
-                        {documents.map((doc) => (
-                          <tr key={doc._id} className="hover:bg-zinc-50/50 dark:hover:bg-zinc-900/10 transition-colors">
-                            {/* File title */}
-                            <td className="py-3.5 pr-2">
-                              <div className="flex flex-col">
-                                <span className="font-semibold text-zinc-800 dark:text-zinc-100">{doc.title}</span>
-                                <span className="text-[10px] text-zinc-400 truncate max-w-[200px]">{doc.fileName}</span>
-                              </div>
-                            </td>
-                            {/* Category badge */}
-                            <td className="py-3.5 pr-2">
-                              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-700 dark:bg-blue-950/30 dark:text-blue-400 tracking-wide uppercase">
-                                {doc.documentType}
-                              </span>
-                            </td>
-                            {/* Chunks count */}
-                            <td className="py-3.5 pr-2 text-zinc-500 font-medium">
-                              {doc.status === 'READY' || doc.status === 'INDEXED' ? doc.chunkCount : '--'}
-                            </td>
-                            {/* Employee checkbox toggle */}
-                            <td className="py-3.5 pr-2">
-                              <button
-                                onClick={() => isAdminOrManager && handleToggleApproved(doc)}
-                                disabled={!isAdminOrManager}
-                                className={`px-2 py-0.5 rounded text-[10px] font-bold tracking-wide uppercase border ${
-                                  doc.isApprovedForEmployees
-                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-500/10'
-                                    : 'bg-zinc-50 text-zinc-500 border-zinc-200 dark:bg-zinc-900 dark:border-zinc-800'
-                                } ${isAdminOrManager ? 'cursor-pointer hover:opacity-80' : 'cursor-not-allowed'}`}
-                              >
-                                {doc.isApprovedForEmployees ? 'Approved' : 'Restricted'}
-                              </button>
-                            </td>
-                            {/* Ingestion status badge */}
-                            <td className="py-3.5 pr-2">
-                              <span className={`px-2 py-0.5 rounded text-[10px] font-bold tracking-wide uppercase flex items-center w-fit gap-1 ${
-                                doc.status === 'READY' || doc.status === 'INDEXED'
-                                  ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/20 dark:text-emerald-400'
-                                  : doc.status === 'PROCESSING' || doc.status === 'INDEXING' || doc.status === 'UPLOADING'
-                                  ? 'bg-blue-50 text-blue-700 dark:bg-blue-950/20 dark:text-blue-400 animate-pulse'
-                                  : 'bg-red-50 text-red-700 dark:bg-red-950/20 dark:text-red-400'
-                              }`}>
-                                {(doc.status === 'READY' || doc.status === 'INDEXED') && <CheckCircle className="w-3 h-3" />}
-                                {(doc.status === 'PROCESSING' || doc.status === 'INDEXING' || doc.status === 'UPLOADING') && <Clock className="w-3 h-3 animate-spin" />}
-                                {doc.status === 'FAILED' && <AlertTriangle className="w-3 h-3" />}
-                                {doc.status}
-                              </span>
-                            </td>
-                            {/* Actions buttons */}
-                            {isAdminOrManager && (
-                              <td className="py-3.5 text-right space-x-1.5 whitespace-nowrap">
+                      <tbody className="divide-y divide-white/10 text-grid">
+                        {documents.map((doc) => {
+                          let statusStyle = 'bg-white/[0.04] border-white/10 text-white/60';
+                          if (doc.status === 'READY' || doc.status === 'INDEXED') {
+                            statusStyle = 'bg-emerald-500/10 border-emerald-500/20 text-emerald-450';
+                          } else if (doc.status === 'PROCESSING' || doc.status === 'INDEXING' || doc.status === 'UPLOADING') {
+                            statusStyle = 'bg-blue-500/10 border-blue-500/20 text-blue-400 animate-pulse';
+                          } else if (doc.status === 'FAILED') {
+                            statusStyle = 'bg-red-500/10 border-red-500/20 text-red-400';
+                          }
+
+                          return (
+                            <tr key={doc._id} className="hover:bg-white/[0.015] transition-colors">
+                              {/* File title */}
+                              <td className="py-3.5 pr-2">
+                                <div className="flex flex-col">
+                                  <span className="font-semibold text-white text-grid">{doc.title}</span>
+                                  <span className="text-small-label text-white/40 truncate max-w-[200px] normal-case font-mono">{doc.fileName}</span>
+                                </div>
+                              </td>
+                              {/* Category badge */}
+                              <td className="py-3.5 pr-2">
+                                <span className="px-2 py-0.5 rounded text-small-label bg-[#8B5CF6]/10 text-[#c084fc] border border-[#8B5CF6]/20 font-bold">
+                                  {doc.documentType}
+                                </span>
+                              </td>
+                              {/* Chunks count */}
+                              <td className="py-3.5 pr-2 text-white/60 font-medium">
+                                {doc.status === 'READY' || doc.status === 'INDEXED' ? doc.chunkCount : '--'}
+                              </td>
+                              {/* Employee checkbox toggle */}
+                              <td className="py-3.5 pr-2">
                                 <button
-                                  onClick={() => handleReindex(doc._id)}
-                                  title="Re-run text parsing and embeddings"
-                                  className="p-1 rounded-lg border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors text-zinc-500 cursor-pointer"
+                                  onClick={() => isAdminOrManager && handleToggleApproved(doc)}
+                                  disabled={!isAdminOrManager}
+                                  className={`px-2 py-0.5 rounded text-small-label border ${
+                                    doc.isApprovedForEmployees
+                                      ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                                      : 'bg-white/[0.04] text-white/60 border-white/10'
+                                  } ${isAdminOrManager ? 'cursor-pointer hover:opacity-80' : 'cursor-not-allowed'}`}
                                 >
-                                  <RefreshCw className="w-3.5 h-3.5" />
-                                </button>
-                                <button
-                                  onClick={() => handleDelete(doc._id)}
-                                  title="Delete document and chunks"
-                                  className="p-1 rounded-lg border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900 hover:text-red-500 transition-colors text-zinc-500 cursor-pointer"
-                                >
-                                  <Trash2 className="w-3.5 h-3.5" />
+                                  {doc.isApprovedForEmployees ? 'Approved' : 'Restricted'}
                                 </button>
                               </td>
-                            )}
-                          </tr>
-                        ))}
+                              {/* Ingestion status badge */}
+                              <td className="py-3.5 pr-2">
+                                <span className={`px-2 py-0.5 rounded text-small-label border flex items-center w-fit gap-1 ${statusStyle}`}>
+                                  {(doc.status === 'READY' || doc.status === 'INDEXED') && <CheckCircle className="w-3 h-3" />}
+                                  {(doc.status === 'PROCESSING' || doc.status === 'INDEXING' || doc.status === 'UPLOADING') && <Clock className="w-3 h-3 animate-spin" />}
+                                  {doc.status === 'FAILED' && <AlertTriangle className="w-3 h-3" />}
+                                  {doc.status}
+                                </span>
+                              </td>
+                              {/* Actions buttons */}
+                              {isAdminOrManager && (
+                                <td className="py-3.5 text-right space-x-1.5 whitespace-nowrap">
+                                  <button
+                                    onClick={() => handleReindex(doc._id)}
+                                    title="Re-run text parsing and embeddings"
+                                    className="p-1 rounded-lg border border-white/10 bg-white/[0.02] hover:bg-white/[0.06] transition-colors text-white/60 cursor-pointer"
+                                  >
+                                    <RefreshCw className="w-3.5 h-3.5" />
+                                  </button>
+                                  <button
+                                    onClick={() => handleDelete(doc._id)}
+                                    title="Delete document and chunks"
+                                    className="p-1 rounded-lg border border-white/10 bg-white/[0.02] hover:bg-white/[0.06] hover:text-red-400 transition-colors text-white/60 cursor-pointer"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
+                                </td>
+                              )}
+                            </tr>
+                          );
+                        })}
                       </tbody>
                     </table>
                   </div>
@@ -689,49 +694,49 @@ export default function KnowledgeBasePage() {
             >
               {/* Analytics Summary Stats */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div className="bg-white dark:bg-[#0e1422] border border-zinc-200/50 dark:border-zinc-800/60 rounded-3xl p-6 shadow-sm flex items-center gap-4">
-                  <div className="p-3 bg-blue-600/10 text-blue-600 dark:bg-blue-500/20 rounded-2xl">
+                <div className="bg-white/[0.03] backdrop-blur-xl border border-white/10 rounded-[24px] p-6 shadow-sm flex items-center gap-4">
+                  <div className="p-3 bg-[#8B5CF6]/10 text-[#8B5CF6] rounded-2xl">
                     <FileText className="w-6 h-6" />
                   </div>
                   <div>
-                    <span className="text-xs font-semibold text-zinc-400 block">Total Documents</span>
-                    <span className="text-2xl font-bold text-zinc-800 dark:text-zinc-100">
+                    <span className="text-xs font-semibold text-white/40 block">Total Documents</span>
+                    <span className="text-2xl font-bold text-white">
                       {analytics?.totalDocuments || documents.length}
                     </span>
                   </div>
                 </div>
 
-                <div className="bg-white dark:bg-[#0e1422] border border-zinc-200/50 dark:border-zinc-800/60 rounded-3xl p-6 shadow-sm flex items-center gap-4">
-                  <div className="p-3 bg-purple-600/10 text-purple-600 dark:bg-purple-500/20 rounded-2xl">
+                <div className="bg-white/[0.03] backdrop-blur-xl border border-white/10 rounded-[24px] p-6 shadow-sm flex items-center gap-4">
+                  <div className="p-3 bg-[#A855F7]/10 text-[#A855F7] rounded-2xl">
                     <Layers className="w-6 h-6" />
                   </div>
                   <div>
-                    <span className="text-xs font-semibold text-zinc-400 block">Knowledge Chunks</span>
-                    <span className="text-2xl font-bold text-zinc-800 dark:text-zinc-100">
+                    <span className="text-xs font-semibold text-white/40 block">Knowledge Chunks</span>
+                    <span className="text-2xl font-bold text-white">
                       {analytics?.totalChunks || documents.reduce((acc, d) => acc + d.chunkCount, 0)}
                     </span>
                   </div>
                 </div>
 
-                <div className="bg-white dark:bg-[#0e1422] border border-zinc-200/50 dark:border-zinc-800/60 rounded-3xl p-6 shadow-sm flex items-center gap-4">
-                  <div className="p-3 bg-red-600/10 text-red-600 dark:bg-red-500/20 rounded-2xl">
+                <div className="bg-white/[0.03] backdrop-blur-xl border border-white/10 rounded-[24px] p-6 shadow-sm flex items-center gap-4">
+                  <div className="p-3 bg-red-500/10 text-red-400 rounded-2xl">
                     <AlertTriangle className="w-6 h-6" />
                   </div>
                   <div>
-                    <span className="text-xs font-semibold text-zinc-400 block">Failed Jobs</span>
-                    <span className="text-2xl font-bold text-zinc-800 dark:text-zinc-100">
+                    <span className="text-xs font-semibold text-white/40 block">Failed Jobs</span>
+                    <span className="text-2xl font-bold text-white">
                       {analytics?.failedProcessingJobs || 0}
                     </span>
                   </div>
                 </div>
 
-                <div className="bg-white dark:bg-[#0e1422] border border-zinc-200/50 dark:border-zinc-800/60 rounded-3xl p-6 shadow-sm flex items-center gap-4">
-                  <div className="p-3 bg-emerald-600/10 text-emerald-600 dark:bg-emerald-500/20 rounded-2xl">
+                <div className="bg-white/[0.03] backdrop-blur-xl border border-white/10 rounded-[24px] p-6 shadow-sm flex items-center gap-4">
+                  <div className="p-3 bg-emerald-500/10 text-emerald-450 rounded-2xl">
                     <Clock className="w-6 h-6" />
                   </div>
                   <div>
-                    <span className="text-xs font-semibold text-zinc-400 block">Avg Query Latency</span>
-                    <span className="text-2xl font-bold text-zinc-800 dark:text-zinc-100">
+                    <span className="text-xs font-semibold text-white/40 block">Avg Query Latency</span>
+                    <span className="text-2xl font-bold text-white">
                       {analytics?.averageRetrievalTime ? `${analytics.averageRetrievalTime}ms` : '120ms'}
                     </span>
                   </div>
@@ -741,8 +746,8 @@ export default function KnowledgeBasePage() {
               {/* Visual Charts Section */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {/* Document Type Distribution Chart */}
-                <div className="bg-white dark:bg-[#0e1422] border border-zinc-200/50 dark:border-zinc-800/60 rounded-3xl p-6 shadow-sm">
-                  <h3 className="text-sm font-bold text-zinc-800 dark:text-zinc-200 mb-4 uppercase tracking-wider">Document Categories</h3>
+                <div className="bg-white/[0.03] backdrop-blur-xl border border-white/10 rounded-[24px] p-6 shadow-sm">
+                  <h3 className="text-h2 text-white mb-4">Document Categories</h3>
                   <div className="h-[240px] flex items-center justify-center">
                     {documents.length > 0 ? (
                       <ResponsiveContainer width="100%" height="100%">
@@ -762,43 +767,44 @@ export default function KnowledgeBasePage() {
                           </Pie>
                           <Tooltip 
                             contentStyle={{ 
-                              background: '#fff', 
-                              border: '1px solid #e2e8f0', 
-                              borderRadius: '12px' 
+                              background: '#0a0a0a', 
+                              border: '1px solid rgba(255, 255, 255, 0.1)', 
+                              borderRadius: '12px',
+                              color: '#fff'
                             }} 
                           />
                           <Legend layout="horizontal" align="center" verticalAlign="bottom" />
                         </PieChart>
                       </ResponsiveContainer>
                     ) : (
-                      <span className="text-xs text-zinc-400">No chart data available</span>
+                      <span className="text-xs text-white/40">No chart data available</span>
                     )}
                   </div>
                 </div>
 
                 {/* Popular Queries / Terms */}
-                <div className="bg-white dark:bg-[#0e1422] border border-zinc-200/50 dark:border-zinc-800/60 rounded-3xl p-6 shadow-sm space-y-4">
-                  <h3 className="text-sm font-bold text-zinc-800 dark:text-zinc-200 uppercase tracking-wider">Top Search Terms</h3>
+                <div className="bg-white/[0.03] backdrop-blur-xl border border-white/10 rounded-[24px] p-6 shadow-sm space-y-4">
+                  <h3 className="text-h2 text-white">Top Search Terms</h3>
                   {analytics?.topSearchTerms && analytics.topSearchTerms.length > 0 ? (
                     <div className="h-[240px] flex flex-col justify-center space-y-3">
                       {analytics.topSearchTerms.map((term, index) => (
                         <div key={term.term} className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
-                            <span className="w-5 h-5 rounded-full bg-blue-50 text-blue-600 text-[10px] font-bold flex items-center justify-center border border-blue-500/10">
+                            <span className="w-5 h-5 rounded-full bg-[#8B5CF6]/10 text-[#8B5CF6] text-[10px] font-bold flex items-center justify-center border border-[#8B5CF6]/20">
                               {index + 1}
                             </span>
-                            <span className="text-xs text-zinc-700 dark:text-zinc-300 font-medium capitalize">
+                            <span className="text-xs text-white/80 font-medium capitalize">
                               "{term.term}"
                             </span>
                           </div>
-                          <span className="text-xs font-bold text-zinc-500 bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 rounded-lg">
+                          <span className="text-xs font-bold text-white/60 bg-white/[0.04] border border-white/10 px-2 py-0.5 rounded-lg">
                             {term.count} queries
                           </span>
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <div className="h-[240px] flex items-center justify-center text-zinc-400 text-xs">
+                    <div className="h-[240px] flex items-center justify-center text-white/40 text-xs">
                       No query term metrics logged yet.
                     </div>
                   )}
@@ -806,31 +812,31 @@ export default function KnowledgeBasePage() {
               </div>
 
               {/* Popular Documents Table */}
-              <div className="bg-white dark:bg-[#0e1422] border border-zinc-200/50 dark:border-zinc-800/60 rounded-3xl p-6 shadow-sm space-y-4">
-                <h3 className="text-sm font-bold text-zinc-800 dark:text-zinc-200 uppercase tracking-wider">Most Queried Documents</h3>
+              <div className="bg-white/[0.03] backdrop-blur-xl border border-white/10 rounded-[24px] p-6 shadow-sm space-y-4">
+                <h3 className="text-sm font-bold text-white uppercase tracking-wider">Most Queried Documents</h3>
                 {analytics?.mostQueriedDocuments && analytics.mostQueriedDocuments.length > 0 ? (
                   <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse text-xs">
                       <thead>
-                        <tr className="border-b border-zinc-100 dark:border-zinc-800/60 font-extrabold uppercase text-zinc-400 text-[10px] tracking-wider">
+                        <tr className="border-b border-white/10 font-extrabold uppercase text-white/40 text-[10px] tracking-wider">
                           <th className="pb-2">Document Title</th>
                           <th className="pb-2">Filename</th>
                           <th className="pb-2 text-right">RAG Context Hits</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800/40">
+                      <tbody className="divide-y divide-white/10">
                         {analytics.mostQueriedDocuments.map((doc) => (
-                          <tr key={doc.id} className="hover:bg-zinc-50/30">
-                            <td className="py-2.5 font-semibold text-zinc-800 dark:text-zinc-100">{doc.title}</td>
-                            <td className="py-2.5 text-zinc-400">{doc.fileName}</td>
-                            <td className="py-2.5 text-right font-extrabold text-blue-600 dark:text-blue-400">{doc.queries} times</td>
+                          <tr key={doc.id} className="hover:bg-white/[0.015] transition-colors">
+                            <td className="py-2.5 font-semibold text-white">{doc.title}</td>
+                            <td className="py-2.5 text-white/40">{doc.fileName}</td>
+                            <td className="py-2.5 text-right font-extrabold text-[#8B5CF6]">{doc.queries} times</td>
                           </tr>
                         ))}
                       </tbody>
                     </table>
                   </div>
                 ) : (
-                  <div className="py-6 text-center text-zinc-400 text-xs">
+                  <div className="py-6 text-center text-white/40 text-xs">
                     No document query records resolved yet.
                   </div>
                 )}
@@ -842,3 +848,4 @@ export default function KnowledgeBasePage() {
     </div>
   );
 }
+

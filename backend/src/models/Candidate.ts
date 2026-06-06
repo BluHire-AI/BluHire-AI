@@ -27,6 +27,7 @@ export interface ICandidate extends Document {
   noticePeriod?: string;
   status: string;
   isDeleted: boolean;
+  isTestData?: boolean;
   createdBy?: string;
   updatedBy?: string;
   createdAt: Date;
@@ -137,6 +138,11 @@ const CandidateSchema = new Schema<any>(
       index: true,
     },
     isDeleted: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+    isTestData: {
       type: Boolean,
       default: false,
       index: true,

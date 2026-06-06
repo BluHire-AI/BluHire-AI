@@ -153,7 +153,7 @@ export class ApplicationRepository {
     if (query.aiScoreMax !== undefined && query.aiScoreMax !== null && (query.aiScoreMax as any) !== '') {
       matchStage.aiScore = { ...matchStage.aiScore, $lte: Number(query.aiScoreMax) };
     }
-    
+
     // Date Range Filters
     if (query.startDate || query.endDate) {
       matchStage.appliedAt = {};

@@ -56,41 +56,45 @@ export default function DirectoryPage() {
   };
 
   return (
-    <div className="space-y-8 select-none">
-      <div>
-        <h1 className="text-3xl font-extrabold tracking-tight text-zinc-900 dark:text-white">Workspace Directory</h1>
-        <p className="text-zinc-500 dark:text-zinc-400 mt-1.5 text-sm font-medium">View and connect with colleagues across all active department teams.</p>
+    <div className="space-y-6 select-none">
+      <div className="pb-6 border-b border-white/10">
+        <h1 className="text-h1 text-white">
+          Workspace Directory
+        </h1>
+        <p className="text-body-copy text-white/60 mt-2">
+          View and connect with colleagues across all active department teams.
+        </p>
       </div>
 
       {/* Search & Filters */}
-      <div className="flex flex-col sm:flex-row gap-4 bg-white dark:bg-[#0e1422] p-5 border border-zinc-200/60 dark:border-zinc-800/80 rounded-2xl shadow-sm">
+      <div className="flex flex-col sm:flex-row gap-4 bg-white/[0.03] backdrop-blur-xl p-5 border border-white/10 rounded-[24px] shadow-2xl">
         <div className="relative flex-1">
-          <Search className="absolute left-3.5 top-3 h-4 w-4 text-zinc-400" />
+          <Search className="absolute left-3.5 top-3 h-3.5 w-3.5 text-white/30" />
           <Input
             placeholder="Search colleagues by name, email or active credentials..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-10 h-10 bg-zinc-50 dark:bg-zinc-950 border-zinc-200/80 dark:border-zinc-800/80 rounded-xl text-sm"
+            className="pl-10 h-10 bg-white/[0.02] border-white/10 focus:border-[#8B5CF6]/50 focus:ring-[#8B5CF6]/20 text-white rounded-xl text-grid placeholder:text-white/30"
           />
         </div>
         
         <div className="w-full sm:w-64">
           <Select value={selectedDept} onValueChange={setSelectedDept}>
-            <SelectTrigger className="h-10 bg-zinc-50 dark:bg-zinc-950 border-zinc-200/80 dark:border-zinc-800/80 rounded-xl text-xs">
+            <SelectTrigger className="h-10 bg-white/[0.02] border-white/10 hover:bg-white/[0.06] rounded-xl text-grid text-white/80">
               <SelectValue placeholder="All Departments" />
             </SelectTrigger>
-            <SelectContent className="rounded-xl">
-              <SelectItem value="all" className="text-xs">All Departments</SelectItem>
+            <SelectContent className="rounded-xl border-white/10 bg-[#0a0a0a]/95 backdrop-blur-xl text-white text-xs">
+              <SelectItem value="all">All Departments</SelectItem>
               {departments.map((d) => (
-                <SelectItem key={d._id} value={d._id} className="text-xs">{d.name}</SelectItem>
+                <SelectItem key={d._id} value={d._id}>{d.name}</SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
 
         {(search || selectedDept !== 'all') && (
-          <Button variant="ghost" onClick={resetFilters} className="text-zinc-500 hover:text-zinc-900 rounded-xl">
-            <X className="w-4 h-4 mr-1" /> Clear
+          <Button variant="ghost" onClick={resetFilters} className="text-white/40 hover:text-white rounded-xl text-xs gap-1 cursor-pointer">
+            <X className="w-3.5 h-3.5" /> Clear
           </Button>
         )}
       </div>
@@ -98,75 +102,77 @@ export default function DirectoryPage() {
       {/* Directory Grid */}
       {loading ? (
         <div className="flex flex-col items-center justify-center py-20 space-y-4">
-          <RefreshCw className="w-8 h-8 text-blue-600 animate-spin" />
-          <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">Scanning organizational directory...</p>
+          <RefreshCw className="w-6 h-6 text-[#8B5CF6] animate-spin" />
+          <p className="text-xs text-white/45 font-medium">Scanning organizational directory...</p>
         </div>
       ) : filteredEmployees.length === 0 ? (
-        <div className="text-center py-20 bg-white dark:bg-[#0e1422] rounded-2xl border border-zinc-200/60 dark:border-zinc-800/80 shadow-sm">
-          <Contact className="w-12 h-12 text-zinc-300 dark:text-zinc-700 mx-auto mb-3" />
-          <p className="text-zinc-500 dark:text-zinc-400 text-sm font-medium">No colleagues match the specified filters.</p>
+        <div className="text-center py-20 bg-white/[0.03] backdrop-blur-xl rounded-[24px] border border-white/10 shadow-2xl">
+          <Contact className="w-12 h-12 text-white/20 mx-auto mb-3" />
+          <p className="text-white/40 text-xs font-medium">No colleagues match the specified filters.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredEmployees.map((emp, index) => (
             <motion.div
               key={emp._id}
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.05 }}
+              transition={{ delay: index * 0.02 }}
+              whileHover={{ y: -2 }}
+              className="transition-all duration-300"
             >
-              <Card className="overflow-hidden bg-white dark:bg-[#0e1422] hover:shadow-lg transition-all duration-300 border-zinc-200/60 dark:border-zinc-800/80 group rounded-2xl relative">
+              <Card className="overflow-hidden bg-white/[0.03] border-white/10 hover:border-[#8B5CF6]/30 shadow-2xl group rounded-[24px] relative">
                 {/* Accent ribbon banner background */}
-                <div className="h-16 bg-gradient-to-r from-blue-600/10 via-indigo-600/10 to-purple-600/10" />
+                <div className="h-16 bg-gradient-to-r from-[#8B5CF6]/10 via-[#A855F7]/10 to-[#8B5CF6]/10" />
                 
-                <CardContent className="p-6 pt-0 space-y-4 relative">
+                <CardContent className="p-5 pt-0 space-y-4 relative">
                   {/* Photo Profile */}
                   <div className="flex justify-between items-end -mt-8">
-                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 border-4 border-white dark:border-[#0e1422] flex items-center justify-center font-extrabold text-white text-lg shadow-sm">
+                    <div className="w-14 h-14 rounded-xl bg-gradient-to-tr from-[#8B5CF6] to-[#A855F7] border-4 border-[#050505] flex items-center justify-center font-extrabold text-white text-base shadow-lg">
                       {emp.firstName.charAt(0)}{emp.lastName.charAt(0)}
                     </div>
-                    <Badge variant="outline" className="rounded-lg text-[10px] font-bold px-2 py-0.5 tracking-wider uppercase bg-zinc-50 dark:bg-zinc-950/40 border-zinc-200/50 dark:border-zinc-800/50">
+                    <Badge variant="outline" className="rounded-lg text-small-label px-2 py-0.5 bg-white/[0.04] border-white/10 text-white/60">
                       {emp.workLocation}
                     </Badge>
                   </div>
 
                   <div>
-                    <h3 className="font-bold text-zinc-900 dark:text-white text-base leading-snug group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                    <h3 className="text-grid text-white group-hover:text-[#8B5CF6] transition-colors font-bold">
                       {emp.firstName} {emp.lastName}
                     </h3>
-                    <p className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 mt-0.5">
+                    <p className="text-small-label text-white/40 mt-0.5">
                       {emp.designationId?.title || 'Team Member'}
                     </p>
-                    <p className="text-xs text-indigo-600 dark:text-indigo-400 font-semibold mt-1 flex items-center">
-                      <Sparkles className="w-3 h-3 mr-1 text-amber-500 animate-pulse" /> {emp.departmentId?.name || 'Department Team'}
+                    <p className="text-small-label text-[#8B5CF6] mt-1 flex items-center">
+                      <Sparkles className="w-3 h-3 mr-1 text-amber-300 animate-pulse" /> {emp.departmentId?.name || 'Department Team'}
                     </p>
                   </div>
 
                   {/* Skills Pills */}
                   {emp.skills && emp.skills.length > 0 && (
-                    <div className="flex flex-wrap gap-1 pt-1.5 border-t border-zinc-100 dark:border-zinc-800/60">
+                    <div className="flex flex-wrap gap-1 pt-3 border-t border-white/10">
                       {emp.skills.slice(0, 3).map((skill) => (
-                        <Badge key={skill} variant="secondary" className="rounded text-[9px] font-semibold px-2 py-0.5 bg-zinc-100/60 dark:bg-zinc-800/40 text-zinc-600 dark:text-zinc-300">
+                        <Badge key={skill} variant="secondary" className="rounded text-small-label px-2 py-0.5 bg-white/[0.04] text-white/80 border border-white/10">
                           {skill}
                         </Badge>
                       ))}
                       {emp.skills.length > 3 && (
-                        <Badge variant="outline" className="rounded text-[9px] font-semibold px-1 py-0.5">
+                        <Badge variant="outline" className="rounded text-small-label px-1 py-0.5 border-white/10 text-white/40">
                           +{emp.skills.length - 3}
                         </Badge>
                       )}
                     </div>
                   )}
 
-                  <div className="border-t border-zinc-100 dark:border-zinc-800/60 pt-4 flex items-center justify-between gap-2">
-                    <div className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate flex-1">
-                      <Mail className="w-3.5 h-3.5 inline mr-1 text-zinc-400" /> {emp.email}
+                  <div className="border-t border-white/10 pt-4 flex items-center justify-between gap-2">
+                    <div className="text-grid text-white/40 truncate flex-1 flex items-center">
+                      <Mail className="w-3.5 h-3.5 mr-1 text-white/20 shrink-0" /> <span className="truncate">{emp.email}</span>
                     </div>
                     <Button
                       size="sm"
                       variant="ghost"
                       onClick={() => handleQuickContact(emp.email)}
-                      className="h-8 rounded-lg cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-950/20 text-blue-600 dark:text-blue-400 gap-1.5 font-bold text-xs"
+                      className="h-8 rounded-xl cursor-pointer hover:bg-white/[0.06] text-[#8B5CF6] hover:text-white gap-1.5 text-small-label font-bold"
                     >
                       <Send className="w-3 h-3" /> Connect
                     </Button>

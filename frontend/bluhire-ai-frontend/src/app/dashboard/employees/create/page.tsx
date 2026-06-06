@@ -194,28 +194,30 @@ export default function CreateEmployeePage() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      <div className="flex items-center space-x-4">
+    <div className="max-w-4xl mx-auto space-y-8 pb-16">
+      {/* Header */}
+      <div className="flex items-center space-x-4 p-6 rounded-2xl bg-card/60 backdrop-blur-md border border-border/60 shadow-xl relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-48 h-48 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
         <Link href="/dashboard/employees">
-          <Button variant="ghost" size="icon">
-            <ArrowLeft className="w-5 h-5" />
+          <Button variant="ghost" size="icon" className="hover:bg-muted/60 rounded-xl transition-all h-9 w-9">
+            <ArrowLeft className="w-4 h-4 text-muted-foreground hover:text-foreground" />
           </Button>
         </Link>
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-white">Create Employee</h1>
-          <p className="text-zinc-500 dark:text-zinc-400">Establish a new workforce record linked to a system user account.</p>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Create Employee</h1>
+          <p className="text-sm text-muted-foreground mt-1">Establish a new workforce record linked to a system user account.</p>
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex border-b border-zinc-200 dark:border-zinc-800">
+      {/* Tabs / Step indicators */}
+      <div className="flex bg-muted/30 p-1.5 rounded-2xl border border-border/55 gap-1.5 w-fit">
         <button
           type="button"
           onClick={() => setActiveTab('basic')}
-          className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${
+          className={`px-4.5 py-2 font-bold text-xs rounded-xl cursor-pointer transition-all ${
             activeTab === 'basic'
-              ? 'border-blue-600 text-blue-600'
-              : 'border-transparent text-zinc-500 hover:text-zinc-950'
+              ? 'bg-primary text-white shadow-md'
+              : 'text-muted-foreground hover:text-foreground hover:bg-muted/30'
           }`}
         >
           1. Basic Details
@@ -223,10 +225,10 @@ export default function CreateEmployeePage() {
         <button
           type="button"
           onClick={() => setActiveTab('job')}
-          className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${
+          className={`px-4.5 py-2 font-bold text-xs rounded-xl cursor-pointer transition-all ${
             activeTab === 'job'
-              ? 'border-blue-600 text-blue-600'
-              : 'border-transparent text-zinc-500 hover:text-zinc-950'
+              ? 'bg-primary text-white shadow-md'
+              : 'text-muted-foreground hover:text-foreground hover:bg-muted/30'
           }`}
         >
           2. Employment & Role
@@ -234,115 +236,120 @@ export default function CreateEmployeePage() {
         <button
           type="button"
           onClick={() => setActiveTab('extra')}
-          className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${
+          className={`px-4.5 py-2 font-bold text-xs rounded-xl cursor-pointer transition-all ${
             activeTab === 'extra'
-              ? 'border-blue-600 text-blue-600'
-              : 'border-transparent text-zinc-500 hover:text-zinc-950'
+              ? 'bg-primary text-white shadow-md'
+              : 'text-muted-foreground hover:text-foreground hover:bg-muted/30'
           }`}
         >
           3. Address & Emergency
         </button>
       </div>
 
-      <form onSubmit={handleSubmit} className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-6 shadow-sm space-y-6">
+      <form onSubmit={handleSubmit} className="bg-card/60 backdrop-blur-md border border-border/80 rounded-2xl p-6.5 shadow-xl space-y-6">
         {activeTab === 'basic' && (
           <div className="space-y-6">
-            <div className="flex items-center gap-2 pb-2 border-b border-zinc-100 dark:border-zinc-800">
-              <UserPlus className="w-5 h-5 text-blue-600" />
-              <h3 className="font-semibold text-lg text-zinc-900 dark:text-white">Basic Information</h3>
+            <div className="flex items-center gap-2 pb-3 border-b border-border/60">
+              <UserPlus className="w-5 h-5 text-primary" />
+              <h3 className="font-bold text-lg text-foreground">Basic Information</h3>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5.5">
               <div className="space-y-2">
-                <label className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">Link User Account (Optional)</label>
+                <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">Link User Account (Optional)</label>
                 <Select value={selectedUserId} onValueChange={handleUserSelect}>
-                  <SelectTrigger className="w-full h-10">
+                  <SelectTrigger className="w-full h-10 rounded-xl border border-border/60 bg-muted/20">
                     <SelectValue placeholder="Select a user account..." />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-card border border-border">
                     {users.map((u) => (
-                      <SelectItem key={u._id} value={u._id}>
+                      <SelectItem key={u._id} value={u._id} className="text-foreground hover:bg-muted cursor-pointer">
                         {u.firstName} {u.lastName} ({u.email} - {u.role})
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
-                <p className="text-xs text-zinc-400">Only users without existing employee profiles are shown.</p>
+                <p className="text-[10px] text-muted-foreground/80 font-medium">Only users without existing employee profiles are shown.</p>
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">Employee Code <span className="text-red-500">*</span></label>
+                <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">Employee Code <span className="text-destructive">*</span></label>
                 <Input
                   placeholder="e.g. EMP102"
                   value={employeeCode}
                   onChange={(e) => setEmployeeCode(e.target.value)}
-                  className="uppercase"
+                  className="uppercase rounded-xl border-border/60 bg-muted/20 focus:bg-transparent"
                 />
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">First Name <span className="text-red-500">*</span></label>
+                <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">First Name <span className="text-destructive">*</span></label>
                 <Input
                   placeholder="First name"
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
+                  className="rounded-xl border-border/60 bg-muted/20 focus:bg-transparent"
                 />
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">Last Name <span className="text-red-500">*</span></label>
+                <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">Last Name <span className="text-destructive">*</span></label>
                 <Input
                   placeholder="Last name"
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
+                  className="rounded-xl border-border/60 bg-muted/20 focus:bg-transparent"
                 />
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">Email Address <span className="text-red-500">*</span></label>
+                <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">Email Address <span className="text-destructive">*</span></label>
                 <Input
                   type="email"
                   placeholder="name@company.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  className="rounded-xl border-border/60 bg-muted/20 focus:bg-transparent"
                 />
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">Phone Number <span className="text-red-500">*</span></label>
+                <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">Phone Number <span className="text-destructive">*</span></label>
                 <Input
                   placeholder="10-digit number"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
+                  className="rounded-xl border-border/60 bg-muted/20 focus:bg-transparent"
                 />
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">Gender</label>
+                <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">Gender</label>
                 <Select value={gender} onValueChange={setGender}>
-                  <SelectTrigger className="w-full h-10">
+                  <SelectTrigger className="w-full h-10 rounded-xl border border-border/60 bg-muted/20">
                     <SelectValue placeholder="Select Gender..." />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="MALE">Male</SelectItem>
-                    <SelectItem value="FEMALE">Female</SelectItem>
-                    <SelectItem value="OTHER">Other</SelectItem>
+                  <SelectContent className="bg-card border border-border">
+                    <SelectItem value="MALE" className="cursor-pointer">Male</SelectItem>
+                    <SelectItem value="FEMALE" className="cursor-pointer">Female</SelectItem>
+                    <SelectItem value="OTHER" className="cursor-pointer">Other</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">Date of Birth</label>
+                <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">Date of Birth</label>
                 <Input
                   type="date"
                   value={dateOfBirth}
                   onChange={(e) => setDateOfBirth(e.target.value)}
+                  className="rounded-xl border-border/60 bg-muted/20 focus:bg-transparent cursor-pointer"
                 />
               </div>
             </div>
             
-            <div className="flex justify-end">
-              <Button type="button" onClick={() => setActiveTab('job')} className="bg-blue-600 hover:bg-blue-700 text-white">
+            <div className="flex justify-end pt-4 border-t border-border/40">
+              <Button type="button" onClick={() => setActiveTab('job')} className="bg-primary hover:bg-primary/95 text-white rounded-xl shadow-md text-xs font-semibold px-5">
                 Next: Employment details
               </Button>
             </div>
@@ -351,50 +358,50 @@ export default function CreateEmployeePage() {
 
         {activeTab === 'job' && (
           <div className="space-y-6">
-            <div className="flex items-center gap-2 pb-2 border-b border-zinc-100 dark:border-zinc-800">
-              <Building className="w-5 h-5 text-blue-600" />
-              <h3 className="font-semibold text-lg text-zinc-900 dark:text-white">Employment & Hierarchy</h3>
+            <div className="flex items-center gap-2 pb-3 border-b border-border/60">
+              <Building className="w-5 h-5 text-primary" />
+              <h3 className="font-bold text-lg text-foreground">Employment & Hierarchy</h3>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5.5">
               <div className="space-y-2">
-                <label className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">Department <span className="text-red-500">*</span></label>
+                <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">Department <span className="text-destructive">*</span></label>
                 <Select value={departmentId} onValueChange={setDepartmentId}>
-                  <SelectTrigger className="w-full h-10">
+                  <SelectTrigger className="w-full h-10 rounded-xl border border-border/60 bg-muted/20">
                     <SelectValue placeholder="Select Department..." />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-card border border-border">
                     {departments.map((d) => (
-                      <SelectItem key={d._id} value={d._id}>{d.name}</SelectItem>
+                      <SelectItem key={d._id} value={d._id} className="cursor-pointer">{d.name}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">Designation <span className="text-red-500">*</span></label>
+                <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">Designation <span className="text-destructive">*</span></label>
                 <Select value={designationId} onValueChange={setDesignationId}>
-                  <SelectTrigger className="w-full h-10">
+                  <SelectTrigger className="w-full h-10 rounded-xl border border-border/60 bg-muted/20">
                     <SelectValue placeholder="Select Designation..." />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-card border border-border">
                     {designations.map((d) => (
-                      <SelectItem key={d._id} value={d._id}>{d.title} (Level {d.level})</SelectItem>
+                      <SelectItem key={d._id} value={d._id} className="cursor-pointer">{d.title} (Level {d.level})</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">Reporting Manager</label>
+                <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">Reporting Manager</label>
                 <Select value={managerId} onValueChange={setManagerId}>
-                  <SelectTrigger className="w-full h-10">
+                  <SelectTrigger className="w-full h-10 rounded-xl border border-border/60 bg-muted/20">
                     <SelectValue placeholder="No Manager (e.g. CEO)" />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="">No Manager (e.g. CEO)</SelectItem>
+                  <SelectContent className="bg-card border border-border">
+                    <SelectItem value="" className="cursor-pointer">No Manager (e.g. CEO)</SelectItem>
                     {(managers || []).map((m) => (
-                      <SelectItem key={m._id} value={m._id}>
+                      <SelectItem key={m._id} value={m._id} className="cursor-pointer">
                         {m.firstName} {m.lastName} ({m.employeeCode})
                       </SelectItem>
                     ))}
@@ -403,69 +410,72 @@ export default function CreateEmployeePage() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">Employment Type</label>
+                <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">Employment Type</label>
                 <Select value={employmentType} onValueChange={setEmploymentType}>
-                  <SelectTrigger className="w-full h-10">
+                  <SelectTrigger className="w-full h-10 rounded-xl border border-border/60 bg-muted/20">
                     <SelectValue placeholder="Select Type..." />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="FULL_TIME">Full Time</SelectItem>
-                    <SelectItem value="PART_TIME">Part Time</SelectItem>
-                    <SelectItem value="CONTRACT">Contract</SelectItem>
-                    <SelectItem value="INTERN">Intern</SelectItem>
+                  <SelectContent className="bg-card border border-border">
+                    <SelectItem value="FULL_TIME" className="cursor-pointer">Full Time</SelectItem>
+                    <SelectItem value="PART_TIME" className="cursor-pointer">Part Time</SelectItem>
+                    <SelectItem value="CONTRACT" className="cursor-pointer">Contract</SelectItem>
+                    <SelectItem value="INTERN" className="cursor-pointer">Intern</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">Joining Date <span className="text-red-500">*</span></label>
+                <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">Joining Date <span className="text-destructive">*</span></label>
                 <Input
                   type="date"
                   value={joiningDate}
                   onChange={(e) => setJoiningDate(e.target.value)}
+                  className="rounded-xl border-border/60 bg-muted/20 focus:bg-transparent cursor-pointer"
                 />
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">Work Location <span className="text-red-500">*</span></label>
+                <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">Work Location <span className="text-destructive">*</span></label>
                 <Select value={workLocation} onValueChange={setWorkLocation}>
-                  <SelectTrigger className="w-full h-10">
+                  <SelectTrigger className="w-full h-10 rounded-xl border border-border/60 bg-muted/20">
                     <SelectValue placeholder="Select Location..." />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="OFFICE">Office</SelectItem>
-                    <SelectItem value="REMOTE">Remote</SelectItem>
-                    <SelectItem value="HYBRID">Hybrid</SelectItem>
+                  <SelectContent className="bg-card border border-border">
+                    <SelectItem value="OFFICE" className="cursor-pointer">Office</SelectItem>
+                    <SelectItem value="REMOTE" className="cursor-pointer">Remote</SelectItem>
+                    <SelectItem value="HYBRID" className="cursor-pointer">Hybrid</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">Salary Grade / Level</label>
+                <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">Salary Grade / Level</label>
                 <Input
                   placeholder="e.g. L4, M2"
                   value={salaryGrade}
                   onChange={(e) => setSalaryGrade(e.target.value)}
+                  className="rounded-xl border-border/60 bg-muted/20 focus:bg-transparent"
                 />
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">Prior Experience (Years)</label>
+                <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">Prior Experience (Years)</label>
                 <Input
                   type="number"
                   step="0.1"
                   placeholder="Prior experience"
                   value={experience}
                   onChange={(e) => setExperience(e.target.value)}
+                  className="rounded-xl border-border/60 bg-muted/20 focus:bg-transparent"
                 />
               </div>
             </div>
 
-            <div className="flex justify-between">
-              <Button type="button" variant="outline" onClick={() => setActiveTab('basic')}>
+            <div className="flex justify-between pt-4 border-t border-border/40">
+              <Button type="button" variant="outline" onClick={() => setActiveTab('basic')} className="rounded-xl border-border/60 hover:bg-muted text-xs font-semibold px-5">
                 Back to Basic
               </Button>
-              <Button type="button" onClick={() => setActiveTab('extra')} className="bg-blue-600 hover:bg-blue-700 text-white">
+              <Button type="button" onClick={() => setActiveTab('extra')} className="bg-primary hover:bg-primary/95 text-white rounded-xl shadow-md text-xs font-semibold px-5">
                 Next: Address & emergency
               </Button>
             </div>
@@ -474,58 +484,59 @@ export default function CreateEmployeePage() {
 
         {activeTab === 'extra' && (
           <div className="space-y-6">
-            <div className="flex items-center gap-2 pb-2 border-b border-zinc-100 dark:border-zinc-800">
-              <MapPin className="w-5 h-5 text-blue-600" />
-              <h3 className="font-semibold text-lg text-zinc-900 dark:text-white">Address & Emergency Contacts</h3>
+            <div className="flex items-center gap-2 pb-3 border-b border-border/60">
+              <MapPin className="w-5 h-5 text-primary" />
+              <h3 className="font-bold text-lg text-foreground">Address & Emergency Contacts</h3>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6.5">
               {/* Address Fields */}
               <div className="space-y-4">
-                <h4 className="font-medium text-sm text-zinc-900 dark:text-zinc-100">Permanent Address</h4>
-                <div className="space-y-2">
-                  <Input placeholder="Street Address" value={street} onChange={(e) => setStreet(e.target.value)} />
+                <h4 className="font-bold text-sm text-foreground uppercase tracking-wider text-muted-foreground/90">Permanent Address</h4>
+                <div className="space-y-3">
+                  <Input placeholder="Street Address" value={street} onChange={(e) => setStreet(e.target.value)} className="rounded-xl border-border/60 bg-muted/20 focus:bg-transparent" />
                 </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <Input placeholder="City" value={city} onChange={(e) => setCity(e.target.value)} />
-                  <Input placeholder="State" value={state} onChange={(e) => setState(e.target.value)} />
+                <div className="grid grid-cols-2 gap-3">
+                  <Input placeholder="City" value={city} onChange={(e) => setCity(e.target.value)} className="rounded-xl border-border/60 bg-muted/20 focus:bg-transparent" />
+                  <Input placeholder="State" value={state} onChange={(e) => setState(e.target.value)} className="rounded-xl border-border/60 bg-muted/20 focus:bg-transparent" />
                 </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <Input placeholder="Postal Code" value={postalCode} onChange={(e) => setPostalCode(e.target.value)} />
-                  <Input placeholder="Country" value={country} onChange={(e) => setCountry(e.target.value)} />
+                <div className="grid grid-cols-2 gap-3">
+                  <Input placeholder="Postal Code" value={postalCode} onChange={(e) => setPostalCode(e.target.value)} className="rounded-xl border-border/60 bg-muted/20 focus:bg-transparent" />
+                  <Input placeholder="Country" value={country} onChange={(e) => setCountry(e.target.value)} className="rounded-xl border-border/60 bg-muted/20 focus:bg-transparent" />
                 </div>
               </div>
 
               {/* Emergency Contacts */}
               <div className="space-y-4">
-                <h4 className="font-medium text-sm text-zinc-900 dark:text-zinc-100">Emergency Contact</h4>
-                <div className="space-y-2">
-                  <Input placeholder="Contact Name" value={emergencyName} onChange={(e) => setEmergencyName(e.target.value)} />
+                <h4 className="font-bold text-sm text-foreground uppercase tracking-wider text-muted-foreground/90">Emergency Contact</h4>
+                <div className="space-y-3">
+                  <Input placeholder="Contact Name" value={emergencyName} onChange={(e) => setEmergencyName(e.target.value)} className="rounded-xl border-border/60 bg-muted/20 focus:bg-transparent" />
                 </div>
-                <div className="space-y-2">
-                  <Input placeholder="Relationship" value={emergencyRelationship} onChange={(e) => setEmergencyRelationship(e.target.value)} />
+                <div className="space-y-3">
+                  <Input placeholder="Relationship" value={emergencyRelationship} onChange={(e) => setEmergencyRelationship(e.target.value)} className="rounded-xl border-border/60 bg-muted/20 focus:bg-transparent" />
                 </div>
-                <div className="space-y-2">
-                  <Input placeholder="Phone Number" value={emergencyPhone} onChange={(e) => setEmergencyPhone(e.target.value)} />
+                <div className="space-y-3">
+                  <Input placeholder="Phone Number" value={emergencyPhone} onChange={(e) => setEmergencyPhone(e.target.value)} className="rounded-xl border-border/60 bg-muted/20 focus:bg-transparent" />
                 </div>
               </div>
             </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">Notes / Remarks</label>
+            <div className="space-y-2.5">
+              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">Notes / Remarks</label>
               <Textarea
                 placeholder="Write any onboarding comments or special instructions..."
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 rows={3}
+                className="rounded-xl border-border/60 bg-muted/20 focus:bg-transparent"
               />
             </div>
 
-            <div className="flex justify-between pt-4 border-t border-zinc-100 dark:border-zinc-800">
-              <Button type="button" variant="outline" onClick={() => setActiveTab('job')}>
+            <div className="flex justify-between pt-5 border-t border-border/40">
+              <Button type="button" variant="outline" onClick={() => setActiveTab('job')} className="rounded-xl border-border/60 hover:bg-muted text-xs font-semibold px-5">
                 Back to Role
               </Button>
-              <Button type="submit" disabled={loading} className="bg-blue-600 hover:bg-blue-700 text-white min-w-32">
+              <Button type="submit" disabled={loading} className="bg-primary hover:bg-primary/95 text-white rounded-xl shadow-md text-xs font-semibold px-6 min-w-32">
                 {loading ? 'Creating...' : 'Save Employee'}
               </Button>
             </div>

@@ -107,8 +107,8 @@ export default function ApplyPage() {
 
   if (loadingJob) {
     return (
-      <div className="min-h-screen bg-zinc-50 dark:bg-[#070b13] flex items-center justify-center text-zinc-400">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mr-3" />
+      <div className="min-h-screen bg-transparent flex flex-col items-center justify-center text-muted-foreground font-sans">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-3" />
         Initialising application environment...
       </div>
     );
@@ -116,10 +116,12 @@ export default function ApplyPage() {
 
   if (!job) {
     return (
-      <div className="min-h-screen bg-zinc-50 dark:bg-[#070b13] flex flex-col items-center justify-center p-8">
-        <h2 className="text-xl font-bold text-zinc-800 dark:text-zinc-200 mb-4">Job opening not found or no longer active.</h2>
+      <div className="min-h-screen bg-transparent flex flex-col items-center justify-center p-8 font-sans">
+        <h2 className="text-h2 text-foreground mb-4">Job opening not found or no longer active.</h2>
         <Link href="/careers">
-          <Button>Back to Careers</Button>
+          <Button className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold px-6 py-2 rounded-xl transition">
+            Back to Careers
+          </Button>
         </Link>
       </div>
     );
@@ -127,19 +129,19 @@ export default function ApplyPage() {
 
   if (success) {
     return (
-      <div className="min-h-screen bg-zinc-50 dark:bg-[#070b13] flex items-center justify-center p-6 font-sans">
-        <Card className="max-w-md w-full bg-white dark:bg-[#0e1422] border-zinc-200/80 dark:border-zinc-800/80 p-8 rounded-3xl shadow-lg text-center">
-          <div className="w-16 h-16 rounded-full bg-emerald-500/10 text-emerald-500 flex items-center justify-center mx-auto mb-6">
-            <CheckCircle2 className="w-10 h-10" />
+      <div className="min-h-screen bg-transparent flex items-center justify-center p-6 font-sans">
+        <Card className="max-w-md w-full glass bg-card/40 border border-border p-8 rounded-3xl shadow-2xl text-center glow-primary/5">
+          <div className="w-16 h-16 rounded-full bg-success/10 text-success border border-success/20 flex items-center justify-center mx-auto mb-6">
+            <CheckCircle2 className="w-8 h-8" />
           </div>
-          <CardTitle className="text-2xl font-black mb-2 text-zinc-800 dark:text-zinc-100">
+          <CardTitle className="text-h2 mb-2 text-foreground">
             Application Received!
           </CardTitle>
-          <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed mb-8">
-            Thank you for applying for the **{job.title}** position. Our recruitment team will review your credentials and get back to you shortly.
+          <p className="text-body-copy text-muted-foreground mb-8">
+            Thank you for applying for the <span className="font-bold text-primary">{job.title}</span> position. Our recruitment team will review your credentials and get back to you shortly.
           </p>
           <Link href="/careers">
-            <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl">
+            <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-3 rounded-xl shadow-md shadow-primary/10 cursor-pointer">
               Back to Career Opportunities
             </Button>
           </Link>
@@ -149,23 +151,23 @@ export default function ApplyPage() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-[#070b13] text-zinc-900 dark:text-zinc-100 font-sans pb-16">
+    <div className="min-h-screen bg-transparent text-foreground font-sans pb-16">
       {/* Header */}
-      <header className="h-16 bg-white dark:bg-[#0e1422] border-b border-zinc-200/80 dark:border-zinc-800/80 flex items-center px-8 shadow-sm">
-        <Link href={`/careers/jobs/${job._id}`} className="flex items-center gap-2 text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors">
+      <header className="h-16 bg-card/40 backdrop-blur-xl border-b border-border flex items-center px-8 shadow-lg sticky top-0 z-50">
+        <Link href={`/careers/jobs/${job._id}`} className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
           <ArrowLeft className="w-4 h-4" />
-          <span className="text-xs font-bold uppercase tracking-wider">Back to Job Specifications</span>
+          <span className="text-small-label">Back to Job Specifications</span>
         </Link>
       </header>
 
       <main className="max-w-3xl mx-auto py-12 px-6">
-        <Card className="bg-white dark:bg-[#0e1422] border-zinc-200/80 dark:border-zinc-800/80 rounded-3xl overflow-hidden shadow-sm">
-          <CardHeader className="p-8 border-b border-zinc-100 dark:border-zinc-800/50 bg-zinc-50/50 dark:bg-[#111827]/10">
-            <CardTitle className="text-xl font-black text-zinc-800 dark:text-zinc-100">
+        <Card className="glass bg-card/35 border border-border rounded-3xl overflow-hidden shadow-2xl">
+          <CardHeader className="p-8 border-b border-border bg-card/25">
+            <CardTitle className="text-h2 text-foreground">
               Application Form
             </CardTitle>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1.5 font-medium">
-              You are applying for the <span className="font-bold text-zinc-700 dark:text-zinc-300">{job.title}</span> position ({job.jobCode}).
+            <p className="text-body-copy text-muted-foreground mt-1.5">
+              You are applying for the <span className="font-bold text-primary">{job.title}</span> position (<span className="font-mono">{job.jobCode}</span>).
             </p>
           </CardHeader>
           <CardContent className="p-8">
@@ -173,7 +175,7 @@ export default function ApplyPage() {
               {/* Personal Info Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="firstName" className="text-xs font-extrabold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">First Name <span className="text-red-500">*</span></Label>
+                  <Label htmlFor="firstName" className="text-small-label text-muted-foreground">First Name <span className="text-red-500">*</span></Label>
                   <Input
                     id="firstName"
                     type="text"
@@ -181,11 +183,11 @@ export default function ApplyPage() {
                     placeholder="Jane"
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
-                    className="rounded-xl"
+                    className="rounded-xl bg-muted/40 border-border text-foreground hover:bg-muted/60 focus-visible:ring-primary focus-visible:ring-offset-0 focus:outline-none"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="lastName" className="text-xs font-extrabold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Last Name <span className="text-red-500">*</span></Label>
+                  <Label htmlFor="lastName" className="text-small-label text-muted-foreground">Last Name <span className="text-red-500">*</span></Label>
                   <Input
                     id="lastName"
                     type="text"
@@ -193,14 +195,14 @@ export default function ApplyPage() {
                     placeholder="Doe"
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
-                    className="rounded-xl"
+                    className="rounded-xl bg-muted/40 border-border text-foreground hover:bg-muted/60 focus-visible:ring-primary focus-visible:ring-offset-0 focus:outline-none"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="email" className="text-xs font-extrabold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Email Address <span className="text-red-500">*</span></Label>
+                  <Label htmlFor="email" className="text-small-label text-muted-foreground">Email Address <span className="text-red-500">*</span></Label>
                   <Input
                     id="email"
                     type="email"
@@ -208,11 +210,11 @@ export default function ApplyPage() {
                     placeholder="jane.doe@example.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="rounded-xl"
+                    className="rounded-xl bg-muted/40 border-border text-foreground hover:bg-muted/60 focus-visible:ring-primary focus-visible:ring-offset-0 focus:outline-none"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="phone" className="text-xs font-extrabold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Phone Number <span className="text-red-500">*</span></Label>
+                  <Label htmlFor="phone" className="text-small-label text-muted-foreground">Phone Number <span className="text-red-500">*</span></Label>
                   <Input
                     id="phone"
                     type="tel"
@@ -220,45 +222,45 @@ export default function ApplyPage() {
                     placeholder="+1 (555) 019-2834"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
-                    className="rounded-xl"
+                    className="rounded-xl bg-muted/40 border-border text-foreground hover:bg-muted/60 focus-visible:ring-primary focus-visible:ring-offset-0 focus:outline-none"
                   />
                 </div>
               </div>
 
               {/* Skills and Background */}
               <div className="space-y-2">
-                <Label htmlFor="skills" className="text-xs font-extrabold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Key Skills (Comma-separated)</Label>
+                <Label htmlFor="skills" className="text-small-label text-muted-foreground">Key Skills (Comma-separated)</Label>
                 <Input
                   id="skills"
                   type="text"
                   placeholder="React, TypeScript, Next.js, Node.js"
                   value={skills}
                   onChange={(e) => setSkills(e.target.value)}
-                  className="rounded-xl"
+                  className="rounded-xl bg-muted/40 border-border text-foreground hover:bg-muted/60 focus-visible:ring-primary focus-visible:ring-offset-0 focus:outline-none"
                 />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="experience" className="text-xs font-extrabold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Total Experience (Years)</Label>
+                  <Label htmlFor="experience" className="text-small-label text-muted-foreground">Total Experience (Years)</Label>
                   <Input
                     id="experience"
                     type="text"
                     placeholder="4 years"
                     value={experience}
                     onChange={(e) => setExperience(e.target.value)}
-                    className="rounded-xl"
+                    className="rounded-xl bg-muted/40 border-border text-foreground hover:bg-muted/60 focus-visible:ring-primary focus-visible:ring-offset-0 focus:outline-none"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="education" className="text-xs font-extrabold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Highest Education Qualification</Label>
+                  <Label htmlFor="education" className="text-small-label text-muted-foreground">Highest Education Qualification</Label>
                   <Input
                     id="education"
                     type="text"
                     placeholder="Bachelor of Science in CS"
                     value={education}
                     onChange={(e) => setEducation(e.target.value)}
-                    className="rounded-xl"
+                    className="rounded-xl bg-muted/40 border-border text-foreground hover:bg-muted/60 focus-visible:ring-primary focus-visible:ring-offset-0 focus:outline-none"
                   />
                 </div>
               </div>
@@ -266,50 +268,50 @@ export default function ApplyPage() {
               {/* Employment details */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="currentCompany" className="text-xs font-extrabold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Current Company</Label>
+                  <Label htmlFor="currentCompany" className="text-small-label text-muted-foreground">Current Company</Label>
                   <Input
                     id="currentCompany"
                     type="text"
                     placeholder="Tech Corp Inc."
                     value={currentCompany}
                     onChange={(e) => setCurrentCompany(e.target.value)}
-                    className="rounded-xl"
+                    className="rounded-xl bg-muted/40 border-border text-foreground hover:bg-muted/60 focus-visible:ring-primary focus-visible:ring-offset-0 focus:outline-none"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="currentDesignation" className="text-xs font-extrabold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Current Designation</Label>
+                  <Label htmlFor="currentDesignation" className="text-small-label text-muted-foreground">Current Designation</Label>
                   <Input
                     id="currentDesignation"
                     type="text"
                     placeholder="Software Engineer"
                     value={currentDesignation}
                     onChange={(e) => setCurrentDesignation(e.target.value)}
-                    className="rounded-xl"
+                    className="rounded-xl bg-muted/40 border-border text-foreground hover:bg-muted/60 focus-visible:ring-primary focus-visible:ring-offset-0 focus:outline-none"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="expectedSalary" className="text-xs font-extrabold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Expected Salary (Annual USD)</Label>
+                  <Label htmlFor="expectedSalary" className="text-small-label text-muted-foreground">Expected Salary (Annual USD)</Label>
                   <Input
                     id="expectedSalary"
                     type="number"
                     placeholder="120000"
                     value={expectedSalary}
                     onChange={(e) => setExpectedSalary(e.target.value)}
-                    className="rounded-xl"
+                    className="rounded-xl bg-muted/40 border-border text-foreground hover:bg-muted/60 focus-visible:ring-primary focus-visible:ring-offset-0 focus:outline-none"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="noticePeriod" className="text-xs font-extrabold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Notice Period</Label>
+                  <Label htmlFor="noticePeriod" className="text-small-label text-muted-foreground">Notice Period</Label>
                   <Input
                     id="noticePeriod"
                     type="text"
                     placeholder="30 days"
                     value={noticePeriod}
                     onChange={(e) => setNoticePeriod(e.target.value)}
-                    className="rounded-xl"
+                    className="rounded-xl bg-muted/40 border-border text-foreground hover:bg-muted/60 focus-visible:ring-primary focus-visible:ring-offset-0 focus:outline-none"
                   />
                 </div>
               </div>
@@ -317,33 +319,33 @@ export default function ApplyPage() {
               {/* URLs */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="linkedin" className="text-xs font-extrabold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">LinkedIn Profile URL</Label>
+                  <Label htmlFor="linkedin" className="text-small-label text-muted-foreground">LinkedIn Profile URL</Label>
                   <Input
                     id="linkedin"
                     type="url"
                     placeholder="https://linkedin.com/in/username"
                     value={linkedinUrl}
                     onChange={(e) => setLinkedinUrl(e.target.value)}
-                    className="rounded-xl"
+                    className="rounded-xl bg-muted/40 border-border text-foreground hover:bg-muted/60 focus-visible:ring-primary focus-visible:ring-offset-0 focus:outline-none"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="portfolio" className="text-xs font-extrabold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Portfolio/GitHub URL</Label>
+                  <Label htmlFor="portfolio" className="text-small-label text-muted-foreground">Portfolio/GitHub URL</Label>
                   <Input
                     id="portfolio"
                     type="url"
                     placeholder="https://github.com/username"
                     value={portfolioUrl}
                     onChange={(e) => setPortfolioUrl(e.target.value)}
-                    className="rounded-xl"
+                    className="rounded-xl bg-muted/40 border-border text-foreground hover:bg-muted/60 focus-visible:ring-primary focus-visible:ring-offset-0 focus:outline-none"
                   />
                 </div>
               </div>
 
               {/* Resume File Upload */}
               <div className="space-y-2">
-                <Label className="text-xs font-extrabold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Upload Resume <span className="text-red-500">*</span></Label>
-                <div className="border-2 border-dashed border-zinc-200/80 dark:border-zinc-800 rounded-2xl p-6 flex flex-col items-center justify-center text-center cursor-pointer hover:border-blue-500/50 hover:bg-zinc-50/50 dark:hover:bg-zinc-950/20 transition-all relative">
+                <Label className="text-small-label text-muted-foreground">Upload Resume <span className="text-red-500">*</span></Label>
+                <div className="border-2 border-dashed border-border rounded-2xl p-6 flex flex-col items-center justify-center text-center cursor-pointer hover:border-primary/50 hover:bg-muted/30 transition-all relative">
                   <input
                     type="file"
                     required
@@ -351,18 +353,18 @@ export default function ApplyPage() {
                     onChange={handleFileChange}
                     className="absolute inset-0 opacity-0 cursor-pointer"
                   />
-                  <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/30 text-blue-600 flex items-center justify-center mb-3">
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary border border-primary/20 flex items-center justify-center mb-3">
                     {resumeFile ? <FileText className="w-5 h-5" /> : <Upload className="w-5 h-5" />}
                   </div>
                   {resumeFile ? (
                     <div>
-                      <p className="text-xs font-bold text-zinc-700 dark:text-zinc-300">{resumeFile.name}</p>
-                      <p className="text-[10px] text-zinc-400 font-semibold mt-0.5">{(resumeFile.size / (1024 * 1024)).toFixed(2)} MB • Click to change</p>
+                      <p className="text-grid font-bold text-foreground">{resumeFile.name}</p>
+                      <p className="text-small-label normal-case text-muted-foreground mt-0.5">{(resumeFile.size / (1024 * 1024)).toFixed(2)} MB • Click to change</p>
                     </div>
                   ) : (
                     <div>
-                      <p className="text-xs font-bold text-zinc-600 dark:text-zinc-400">Drag & drop resume here, or click to upload</p>
-                      <p className="text-[10px] text-zinc-400 font-medium mt-1">Accepts PDF, DOC, DOCX up to 10MB</p>
+                      <p className="text-grid font-bold text-muted-foreground">Drag & drop resume here, or click to upload</p>
+                      <p className="text-small-label normal-case text-muted-foreground/60 mt-1">Accepts PDF, DOC, DOCX up to 10MB</p>
                     </div>
                   )}
                 </div>
@@ -373,7 +375,7 @@ export default function ApplyPage() {
                 <Button
                   type="submit"
                   disabled={submitting}
-                  className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-zinc-200 text-white font-extrabold py-6 rounded-xl flex items-center justify-center gap-2 text-sm shadow-md"
+                  className="w-full bg-primary hover:bg-primary/95 disabled:bg-muted text-primary-foreground text-grid font-bold py-6 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-primary/15 transition-all cursor-pointer"
                 >
                   <Send className="w-4 h-4" />
                   {submitting ? 'Submitting Application...' : 'Submit Job Application'}

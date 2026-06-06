@@ -21,7 +21,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { AICopilot } from '@/components/ui/ai-copilot';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function DashboardLayout({
@@ -78,7 +77,7 @@ export default function DashboardLayout({
     return (
       <button
         onClick={() => toggleGroup(groupKey)}
-        className="w-full flex items-center justify-between px-3 py-2 text-[10px] font-extrabold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors mt-4 first:mt-0"
+        className="w-full flex items-center justify-between px-3.5 py-2 text-small-label text-white/45 hover:text-white/85 transition-colors mt-4 first:mt-0"
       >
         <span>{title}</span>
         {isOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
@@ -88,40 +87,40 @@ export default function DashboardLayout({
 
   return (
     <AuthProvider>
-      <div className="flex h-screen bg-zinc-50 dark:bg-[#070b13] transition-colors duration-300">
-        {/* Sidebar */}
-        <div className="w-64 bg-white dark:bg-[#0e1422] border-r border-zinc-200/80 dark:border-zinc-800/80 flex flex-col z-20 shadow-sm">
-          <div className="h-16 flex items-center px-6 border-b border-zinc-100 dark:border-zinc-800/60 justify-between">
+      <div className="flex h-screen w-screen bg-transparent overflow-hidden p-3 gap-4 text-foreground selection:bg-primary/25 selection:text-white">
+        {/* Sidebar - Floating Glass Command Center */}
+        <div className="w-64 bg-white/[0.03] backdrop-blur-2xl border border-white/10 flex flex-col z-20 shadow-[0_8px_32px_rgba(0,0,0,0.35)] rounded-[24px] h-full overflow-hidden shrink-0">
+          <div className="h-16 flex items-center px-6 border-b border-white/10 justify-between bg-white/[0.02]">
             <div className="flex items-center">
-              <div className="w-8 h-8 rounded-lg bg-blue-600/10 flex items-center justify-center text-blue-600 mr-2.5">
+              <div className="w-8 h-8 rounded-xl bg-[#8B5CF6]/10 border border-[#8B5CF6]/25 flex items-center justify-center text-[#8B5CF6] mr-2.5 shadow-[0_0_12px_rgba(139,92,246,0.15)]">
                 <Building className="w-4.5 h-4.5" />
               </div>
-              <span className="font-bold text-lg tracking-tight bg-gradient-to-r from-blue-600 via-indigo-500 to-purple-600 bg-clip-text text-transparent">BluHire-AI</span>
+              <span className="font-extrabold text-base tracking-tight bg-gradient-to-r from-violet-400 via-indigo-400 to-[#8B5CF6] bg-clip-text text-transparent">BluHire-AI</span>
             </div>
-            <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
           </div>
 
-          <nav className="flex-1 overflow-y-auto py-6 px-4">
+          <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-4">
             <div className="space-y-4">
               {/* Dashboard Link (Single Top-level) */}
               <div>
                 <Link
                   href="/dashboard"
-                  className={`relative flex items-center px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all group duration-300 ${
+                  className={`relative flex items-center px-4 py-2.5 rounded-xl text-sidebar transition-all group duration-250 ${
                     pathname === '/dashboard'
-                      ? 'text-blue-600 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-950/20'
-                      : 'text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 hover:bg-zinc-50 dark:hover:bg-zinc-800/20'
+                      ? 'text-white bg-[#8B5CF6]/10 border border-[#8B5CF6]/20 shadow-[0_0_15px_rgba(139,92,246,0.1)]'
+                      : 'text-white/65 hover:text-white hover:bg-white/[0.04] border border-transparent'
                   }`}
                 >
                   {pathname === '/dashboard' && (
                     <motion.div
                       layoutId="active-nav-glow"
-                      className="absolute left-0 w-1 h-6 rounded-r bg-blue-600 dark:bg-blue-500"
+                      className="absolute left-0 w-1 h-5 rounded-r bg-[#8B5CF6] shadow-[0_0_8px_rgba(139,92,246,0.5)]"
                       transition={{ type: 'spring', stiffness: 380, damping: 30 }}
                     />
                   )}
-                  <LayoutDashboard className={`w-5 h-5 mr-3.5 transition-transform duration-300 group-hover:scale-105 ${
-                    pathname === '/dashboard' ? 'text-blue-600 dark:text-blue-400' : 'text-zinc-400 dark:text-zinc-500'
+                  <LayoutDashboard className={`w-4.5 h-4.5 mr-3 transition-transform duration-250 group-hover:scale-105 ${
+                    pathname === '/dashboard' ? 'text-[#8B5CF6]' : 'text-white/45 group-hover:text-white/80'
                   }`} />
                   Dashboard
                 </Link>
@@ -155,13 +154,13 @@ export default function DashboardLayout({
                           <Link
                             key={item.name}
                             href={item.href}
-                            className={`flex items-center px-3 py-2 rounded-xl text-xs font-semibold transition-all group duration-300 ${
+                            className={`flex items-center px-4 py-2.5 rounded-xl text-sidebar transition-all group duration-250 ${
                               isActive
-                                ? 'text-blue-600 dark:text-blue-400 bg-blue-50/30 dark:bg-blue-950/10'
-                                : 'text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 hover:bg-zinc-50/50 dark:hover:bg-zinc-800/10'
+                                ? 'text-white bg-[#8B5CF6]/10 border border-[#8B5CF6]/20 shadow-[0_0_15px_rgba(139,92,246,0.1)]'
+                                : 'text-white/65 hover:text-white hover:bg-white/[0.04] border border-transparent'
                             }`}
                           >
-                            <Icon className={`w-4 h-4 mr-3 ${isActive ? 'text-blue-600 dark:text-blue-400' : 'text-zinc-400 dark:text-zinc-500'}`} />
+                            <Icon className={`w-4 h-4 mr-3 ${isActive ? 'text-[#8B5CF6]' : 'text-white/45 group-hover:text-white/80'}`} />
                             {item.name}
                           </Link>
                         );
@@ -176,21 +175,21 @@ export default function DashboardLayout({
                 <div>
                   <Link
                     href="/dashboard/analytics"
-                    className={`relative flex items-center px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all group duration-300 ${
+                    className={`relative flex items-center px-4 py-2.5 rounded-xl text-sidebar transition-all group duration-250 ${
                       pathname === '/dashboard/analytics'
-                        ? 'text-blue-600 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-950/20'
-                        : 'text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 hover:bg-zinc-50 dark:hover:bg-zinc-800/20'
+                        ? 'text-white bg-[#8B5CF6]/10 border border-[#8B5CF6]/20 shadow-[0_0_15px_rgba(139,92,246,0.1)]'
+                        : 'text-white/65 hover:text-white hover:bg-white/[0.04] border border-transparent'
                     }`}
                   >
                     {pathname === '/dashboard/analytics' && (
                       <motion.div
                         layoutId="active-nav-glow"
-                        className="absolute left-0 w-1 h-6 rounded-r bg-blue-600 dark:bg-blue-500"
+                        className="absolute left-0 w-1 h-5 rounded-r bg-[#8B5CF6]"
                         transition={{ type: 'spring', stiffness: 380, damping: 30 }}
                       />
                     )}
-                    <BarChart3 className={`w-5 h-5 mr-3.5 transition-transform duration-300 group-hover:scale-105 ${
-                      pathname === '/dashboard/analytics' ? 'text-blue-600 dark:text-blue-400' : 'text-zinc-400 dark:text-zinc-500'
+                    <BarChart3 className={`w-4.5 h-4.5 mr-3 transition-transform duration-250 group-hover:scale-105 ${
+                      pathname === '/dashboard/analytics' ? 'text-[#8B5CF6]' : 'text-white/45 group-hover:text-white/80'
                     }`} />
                     Analytics
                   </Link>
@@ -222,13 +221,13 @@ export default function DashboardLayout({
                           <Link
                             key={item.name}
                             href={item.href}
-                            className={`flex items-center px-3 py-2 rounded-xl text-xs font-semibold transition-all group duration-300 ${
+                            className={`flex items-center px-4 py-2.5 rounded-xl text-sidebar transition-all group duration-250 ${
                               isActive
-                                ? 'text-blue-600 dark:text-blue-400 bg-blue-50/30 dark:bg-blue-950/10'
-                                : 'text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 hover:bg-zinc-50/50 dark:hover:bg-zinc-800/10'
+                                ? 'text-white bg-[#8B5CF6]/10 border border-[#8B5CF6]/20 shadow-[0_0_15px_rgba(139,92,246,0.1)]'
+                                : 'text-white/65 hover:text-white hover:bg-white/[0.04] border border-transparent'
                             }`}
                           >
-                            <Icon className={`w-4 h-4 mr-3 ${isActive ? 'text-blue-600 dark:text-blue-400' : 'text-zinc-400 dark:text-zinc-500'}`} />
+                            <Icon className={`w-4 h-4 mr-3 ${isActive ? 'text-[#8B5CF6]' : 'text-white/45 group-hover:text-white/80'}`} />
                             {item.name}
                           </Link>
                         );
@@ -263,13 +262,13 @@ export default function DashboardLayout({
                           <Link
                             key={item.name}
                             href={item.href}
-                            className={`flex items-center px-3 py-2 rounded-xl text-xs font-semibold transition-all group duration-300 ${
+                            className={`flex items-center px-4 py-2.5 rounded-xl text-sidebar transition-all group duration-250 ${
                               isActive
-                                ? 'text-blue-600 dark:text-blue-400 bg-blue-50/30 dark:bg-blue-950/10'
-                                : 'text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 hover:bg-zinc-50/50 dark:hover:bg-zinc-800/10'
+                                ? 'text-white bg-[#8B5CF6]/10 border border-[#8B5CF6]/20 shadow-[0_0_15px_rgba(139,92,246,0.1)]'
+                                : 'text-white/65 hover:text-white hover:bg-white/[0.04] border border-transparent'
                             }`}
                           >
-                            <Icon className={`w-4 h-4 mr-3 ${isActive ? 'text-blue-600 dark:text-blue-400' : 'text-zinc-400 dark:text-zinc-500'}`} />
+                            <Icon className={`w-4 h-4 mr-3 ${isActive ? 'text-[#8B5CF6]' : 'text-white/45 group-hover:text-white/80'}`} />
                             {item.name}
                           </Link>
                         );
@@ -293,13 +292,13 @@ export default function DashboardLayout({
                     >
                       <Link
                         href="/dashboard/profile"
-                        className={`flex items-center px-3 py-2 rounded-xl text-xs font-semibold transition-all group duration-300 ${
+                        className={`flex items-center px-4 py-2.5 rounded-xl text-sidebar transition-all group duration-300 ${
                           pathname === '/dashboard/profile'
-                            ? 'text-blue-600 dark:text-blue-400 bg-blue-50/30 dark:bg-blue-950/10'
-                            : 'text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 hover:bg-zinc-50/50 dark:hover:bg-zinc-800/10'
+                            ? 'text-white bg-[#8B5CF6]/10 border border-[#8B5CF6]/20 shadow-[0_0_15px_rgba(139,92,246,0.1)]'
+                            : 'text-white/65 hover:text-white hover:bg-white/[0.04] border border-transparent'
                         }`}
                       >
-                        <UserCircle className={`w-4 h-4 mr-3 ${pathname === '/dashboard/profile' ? 'text-blue-600 dark:text-blue-400' : 'text-zinc-400 dark:text-zinc-500'}`} />
+                        <UserCircle className={`w-4.5 h-4.5 mr-3 ${pathname === '/dashboard/profile' ? 'text-[#8B5CF6]' : 'text-white/45'}`} />
                         Profile
                       </Link>
                     </motion.div>
@@ -309,23 +308,24 @@ export default function DashboardLayout({
             </div>
           </nav>
 
-          <div className="p-4 border-t border-zinc-100 dark:border-zinc-800/60">
+          <div className="p-3 border-t border-white/10 bg-white/[0.01]">
             <Button
               variant="ghost"
-              className="w-full justify-start text-zinc-500 hover:text-red-600 hover:bg-red-50 dark:text-zinc-400 dark:hover:text-red-400 dark:hover:bg-red-950/20 rounded-xl"
+              className="w-full justify-start text-white/45 hover:text-[#EF4444] hover:bg-[#EF4444]/10 rounded-xl cursor-pointer"
               onClick={handleLogout}
             >
-              <LogOut className="w-5 h-5 mr-3" />
-              Sign out
+              <LogOut className="w-4.5 h-4.5 mr-3" />
+              Sign Out
             </Button>
           </div>
         </div>
 
-        {/* Main content */}
-        <div className="flex-1 flex flex-col overflow-hidden">
-          <header className="h-16 bg-white dark:bg-[#0e1422] border-b border-zinc-200/80 dark:border-zinc-800/80 flex items-center justify-between px-8 z-10 shadow-sm transition-colors duration-300">
+        {/* Main content area */}
+        <div className="flex-1 flex flex-col gap-3 h-full overflow-hidden">
+          {/* Top Navbar - Glass Header */}
+          <header className="h-16 bg-white/[0.03] backdrop-blur-2xl border border-white/10 flex items-center justify-between px-6 z-10 shadow-[0_8px_32px_rgba(0,0,0,0.25)] rounded-[24px] shrink-0">
             <div>
-              <h2 className="text-lg font-semibold text-zinc-800 dark:text-zinc-100">
+              <h2 className="text-small-label text-white">
                 {pathname === '/dashboard' ? 'Overview' : 
                  pathname.startsWith('/dashboard/employees') ? 'Employees' : 
                  pathname === '/dashboard/directory' ? 'Employee Directory' : 
@@ -338,72 +338,70 @@ export default function DashboardLayout({
                  pathname === '/dashboard/profile' ? 'Profile' : 'HRMinds AI'}
               </h2>
             </div>
-            
-            <div className="flex items-center space-x-4">
+
+            <div className="flex items-center space-x-3">
               {/* Theme Toggle */}
               {mounted && (
                 <button
                   onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-                  className="p-2 rounded-xl text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-100 hover:bg-zinc-50 dark:hover:bg-zinc-800/30 transition-all cursor-pointer border border-zinc-100 dark:border-zinc-800/50"
+                  className="p-2 rounded-xl text-white/45 hover:text-white hover:bg-white/[0.04] transition-all cursor-pointer border border-transparent hover:border-white/10"
                   aria-label="Toggle Theme"
                 >
                   {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
                 </button>
               )}
 
-              <div className="h-6 w-px bg-zinc-200 dark:bg-zinc-800" />
+              <div className="h-4 w-px bg-white/10" />
 
-              <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 dark:bg-blue-950/30 dark:text-blue-400 tracking-wide uppercase hidden sm:block">
+              <span className="text-small-label px-3 py-1 rounded-full bg-[#8B5CF6]/10 text-[#8B5CF6] tracking-wider uppercase font-mono hidden sm:block border border-[#8B5CF6]/20">
                 {user?.role.replace('_', ' ')}
               </span>
 
               <DropdownMenu>
-                <DropdownMenuTrigger className="relative h-9 w-9 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 cursor-pointer overflow-hidden border border-zinc-100 dark:border-zinc-800">
-                  <Avatar className="h-9 w-9 rounded-xl">
+                <DropdownMenuTrigger className="relative h-8 w-8 rounded-xl focus:outline-none focus:ring-1 focus:ring-[#8B5CF6] cursor-pointer overflow-hidden border border-white/10">
+                  <Avatar className="h-8 w-8 rounded-xl">
                     <AvatarImage src={user?.profileImage} alt={user?.firstName} />
-                    <AvatarFallback className="rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-medium text-sm">
+                    <AvatarFallback className="rounded-xl bg-gradient-to-tr from-violet-600 to-[#8B5CF6] text-white font-semibold text-xs">
                       {getInitials(user?.firstName, user?.lastName)}
                     </AvatarFallback>
                   </Avatar>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56 rounded-xl p-1.5 shadow-xl border-zinc-200/80 dark:border-zinc-800/80" align="end">
+                <DropdownMenuContent className="w-56 rounded-xl p-1.5 shadow-2xl border-white/10 bg-[#0F0E17]/95 backdrop-blur-xl text-popover-foreground" align="end">
                   <DropdownMenuLabel className="font-normal px-2.5 py-2">
                     <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium leading-none text-zinc-900 dark:text-zinc-100">{user?.firstName} {user?.lastName}</p>
-                      <p className="text-xs leading-none text-zinc-500 dark:text-zinc-400">
+                      <p className="text-xs font-semibold leading-none text-white">{user?.firstName} {user?.lastName}</p>
+                      <p className="text-[10px] leading-none text-white/45">
                         {user?.email}
                       </p>
                     </div>
                   </DropdownMenuLabel>
-                  <DropdownMenuSeparator className="bg-zinc-100 dark:bg-zinc-800" />
-                  <DropdownMenuItem className="rounded-lg py-2 focus:bg-zinc-50 dark:focus:bg-zinc-800/40">
-                    <Link href="/dashboard/profile" className="w-full text-xs">Profile Settings</Link>
+                  <DropdownMenuSeparator className="bg-white/10" />
+                  <DropdownMenuItem className="rounded-lg py-2 focus:bg-white/[0.06] text-xs cursor-pointer">
+                    <Link href="/dashboard/profile" className="w-full">Profile Settings</Link>
                   </DropdownMenuItem>
-                  <DropdownMenuSeparator className="bg-zinc-100 dark:bg-zinc-800" />
-                  <DropdownMenuItem className="text-red-600 dark:text-red-500 focus:bg-red-50 dark:focus:bg-red-950/20 rounded-lg py-2 cursor-pointer" onClick={handleLogout}>
-                    <LogOut className="mr-2 h-4 w-4" />
-                    <span className="text-xs font-medium">Log out</span>
+                  <DropdownMenuSeparator className="bg-white/10" />
+                  <DropdownMenuItem className="text-red-400 focus:bg-[#EF4444]/10 rounded-lg py-2 cursor-pointer text-xs" onClick={handleLogout}>
+                    <LogOut className="mr-2 h-3.5 w-3.5" />
+                    <span>Log Out</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
           </header>
 
-          <main className="flex-1 overflow-y-auto p-8 gradient-bg">
+          {/* Main Content Area Container */}
+          <main className="flex-1 overflow-y-auto p-6 bg-transparent rounded-[24px] h-[calc(100vh-6rem)]">
             <motion.div
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, ease: 'easeOut' }}
-              className="max-w-7xl mx-auto space-y-8"
+              className="max-w-7xl mx-auto space-y-6"
             >
               {children}
             </motion.div>
           </main>
         </div>
       </div>
-      
-      {/* Global AI Copilot Widget */}
-      <AICopilot />
     </AuthProvider>
   );
 }

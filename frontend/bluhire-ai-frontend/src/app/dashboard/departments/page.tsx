@@ -139,68 +139,66 @@ export default function DepartmentsPage() {
     <div className="space-y-8 select-none">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight text-zinc-900 dark:text-white">Departments</h1>
-          <p className="text-zinc-500 dark:text-zinc-400 mt-1 text-sm font-medium">Establish and manage company subdivisions, assign leads, and monitor workforce distributions.</p>
+          <h1 className="text-3xl font-extrabold tracking-tight text-foreground">Departments</h1>
+          <p className="text-muted-foreground mt-1 text-sm font-medium">Establish and manage company subdivisions, assign leads, and monitor workforce distributions.</p>
         </div>
         {isHRorAdmin && (
-          <Button onClick={openCreateDialog} className="bg-blue-600 hover:bg-blue-700 text-white gap-2 rounded-xl cursor-pointer">
+          <Button onClick={openCreateDialog} className="bg-primary hover:bg-primary/90 text-primary-foreground gap-2 rounded-xl cursor-pointer transition shadow-lg shadow-primary/10">
             <Plus className="w-4 h-4" /> Create Department
           </Button>
         )}
       </div>
 
-
-
-      <div className="bg-white dark:bg-[#0e1422] border border-zinc-200/60 dark:border-zinc-800/80 rounded-2xl overflow-hidden shadow-sm">
+      <div className="glass border border-border bg-card/40 rounded-2xl overflow-hidden shadow-2xl glow-primary/5">
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20 space-y-4">
-            <RefreshCw className="w-8 h-8 text-blue-600 animate-spin" />
-            <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">Loading departments list...</p>
+            <RefreshCw className="w-8 h-8 text-primary animate-spin" />
+            <p className="text-xs text-muted-foreground font-medium">Loading departments list...</p>
           </div>
         ) : departments.length === 0 ? (
           <div className="text-center py-20 space-y-4">
-            <Building className="w-12 h-12 text-zinc-300 mx-auto" />
-            <p className="text-sm text-zinc-500 dark:text-zinc-400 font-medium">No departments established yet.</p>
-            {isHRorAdmin && <Button onClick={openCreateDialog} className="rounded-xl">Create your first Department</Button>}
+            <Building className="w-12 h-12 text-muted-foreground mx-auto" />
+            <p className="text-sm text-muted-foreground font-medium">No departments established yet.</p>
+            {isHRorAdmin && <Button onClick={openCreateDialog} className="rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground">Create your first Department</Button>}
           </div>
         ) : (
           <Table>
-            <TableHeader className="bg-zinc-50/50 dark:bg-zinc-900/30">
-              <TableRow>
-                <TableHead className="w-32 text-[10px] font-bold uppercase tracking-wider text-zinc-500">Code</TableHead>
-                <TableHead className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Department Name</TableHead>
-                <TableHead className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Head of Department</TableHead>
-                <TableHead className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Employee Count</TableHead>
-                <TableHead className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Status</TableHead>
-                {isHRorAdmin && <TableHead className="w-24 text-right text-[10px] font-bold uppercase tracking-wider text-zinc-500">Actions</TableHead>}
+            <TableHeader className="bg-muted/50">
+              <TableRow className="border-b border-border/80">
+                <TableHead className="w-32 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Code</TableHead>
+                <TableHead className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Department Name</TableHead>
+                <TableHead className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Head of Department</TableHead>
+                <TableHead className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Employee Count</TableHead>
+                <TableHead className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Status</TableHead>
+                {isHRorAdmin && <TableHead className="w-24 text-right text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Actions</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
               {departments.map((dept) => (
-                <TableRow key={dept._id} className="hover:bg-zinc-50/50 dark:hover:bg-zinc-800/10 transition-colors">
-                  <TableCell className="font-mono text-xs font-semibold text-zinc-900 dark:text-zinc-200">
+                <TableRow key={dept._id} className="hover:bg-muted/20 border-b border-border/40 transition-colors">
+                  <TableCell className="font-mono text-xs font-semibold text-foreground">
                     {dept.code}
                   </TableCell>
                   <TableCell>
                     <div>
-                      <div className="text-xs font-bold text-zinc-900 dark:text-zinc-100">{dept.name}</div>
-                      <div className="text-[11px] text-zinc-400 dark:text-zinc-500 max-w-sm truncate" title={dept.description}>
+                      <div className="text-xs font-bold text-foreground">{dept.name}</div>
+                      <div className="text-[11px] text-muted-foreground max-w-sm truncate" title={dept.description}>
                         {dept.description || 'No description provided.'}
                       </div>
                     </div>
                   </TableCell>
                   <TableCell>
                     {dept.headId ? (
-                      <span className="text-xs font-semibold flex items-center gap-1.5 text-zinc-800 dark:text-zinc-200">
-                        <UserCheck className="w-3.5 h-3.5 text-emerald-500" />
+                      <span className="text-xs font-semibold flex items-center gap-1.5 text-foreground">
+                        <UserCheck className="w-3.5 h-3.5 text-success" />
                         {dept.headId.firstName} {dept.headId.lastName}
                       </span>
                     ) : (
-                      <span className="text-[10px] text-zinc-400 italic">Vacant</span>
+                      <span className="text-[10px] text-muted-foreground italic">Vacant</span>
                     )}
                   </TableCell>
                   <TableCell>
-                    <Badge variant="outline" className="rounded-lg font-bold text-[10px] border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300">
+                    <Badge variant="outline" className="rounded-lg font-bold text-[10px] border-border bg-muted/40 text-foreground">
                       {dept.employeeCount || 0} Members
                     </Badge>
                   </TableCell>
@@ -210,8 +208,8 @@ export default function DepartmentsPage() {
                       onClick={() => handleToggleStatus(dept._id)}
                       className={`inline-flex items-center px-2.5 py-0.5 rounded-lg text-[10px] font-bold select-none border transition-colors ${
                         dept.isActive
-                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200/50 hover:bg-emerald-100 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-800/30'
-                          : 'bg-zinc-100 text-zinc-700 border-zinc-200 hover:bg-zinc-200 dark:bg-zinc-800/50 dark:text-zinc-400 dark:border-zinc-700/30'
+                          ? 'bg-success/10 text-success border-success/20 hover:bg-success/20'
+                          : 'bg-muted text-muted-foreground border-border hover:bg-muted/80'
                       } ${!isHRorAdmin ? 'cursor-default pointer-events-none' : 'cursor-pointer'}`}
                     >
                       {dept.isActive ? 'Active' : 'Inactive'}
@@ -220,11 +218,11 @@ export default function DepartmentsPage() {
                   {isHRorAdmin && (
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-1">
-                        <Button variant="ghost" size="icon" onClick={() => openAssignHeadDialog(dept)} title="Assign Head" className="h-8 w-8 rounded-lg cursor-pointer">
-                          <UserCheck className="w-3.5 h-3.5 text-zinc-500" />
+                        <Button variant="ghost" size="icon" onClick={() => openAssignHeadDialog(dept)} title="Assign Head" className="h-8 w-8 rounded-lg cursor-pointer hover:bg-muted">
+                          <UserCheck className="w-3.5 h-3.5 text-muted-foreground" />
                         </Button>
-                        <Button variant="ghost" size="icon" onClick={() => openEditDialog(dept)} title="Edit details" className="h-8 w-8 rounded-lg cursor-pointer">
-                          <Edit className="w-3.5 h-3.5 text-zinc-500" />
+                        <Button variant="ghost" size="icon" onClick={() => openEditDialog(dept)} title="Edit details" className="h-8 w-8 rounded-lg cursor-pointer hover:bg-muted">
+                          <Edit className="w-3.5 h-3.5 text-muted-foreground" />
                         </Button>
                       </div>
                     </TableCell>
@@ -239,28 +237,28 @@ export default function DepartmentsPage() {
       {/* Dialog Modals */}
       {/* 1. Create Department */}
       <Dialog open={dialogType === 'create'} onOpenChange={(open) => !open && setDialogType('none')}>
-        <DialogContent className="rounded-2xl border-zinc-200/80 dark:border-zinc-800/80 bg-white dark:bg-[#0e1422]">
+        <DialogContent className="rounded-2xl border-border bg-card glass shadow-2xl">
           <DialogHeader>
-            <DialogTitle className="text-sm font-bold uppercase tracking-wider text-zinc-800 dark:text-zinc-100">Create Department</DialogTitle>
+            <DialogTitle className="text-sm font-bold uppercase tracking-wider text-foreground">Create Department</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleCreate} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <label className="text-xs font-semibold">Department Code <span className="text-red-500">*</span></label>
-                <Input placeholder="e.g. ENG" value={code} onChange={(e) => setCode(e.target.value)} className="uppercase rounded-xl" />
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Department Code <span className="text-destructive">*</span></label>
+                <Input placeholder="e.g. ENG" value={code} onChange={(e) => setCode(e.target.value)} className="uppercase rounded-xl bg-muted/50 border-border focus:ring-primary focus:outline-none" />
               </div>
               <div className="space-y-2">
-                <label className="text-xs font-semibold">Department Name <span className="text-red-500">*</span></label>
-                <Input placeholder="e.g. Engineering" value={name} onChange={(e) => setName(e.target.value)} className="rounded-xl" />
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Department Name <span className="text-destructive">*</span></label>
+                <Input placeholder="e.g. Engineering" value={name} onChange={(e) => setName(e.target.value)} className="rounded-xl bg-muted/50 border-border focus:ring-primary focus:outline-none" />
               </div>
             </div>
             <div className="space-y-2">
-              <label className="text-xs font-semibold">Description</label>
-              <Textarea placeholder="Explain responsibilities..." value={description} onChange={(e) => setDescription(e.target.value)} rows={3} className="rounded-xl" />
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Description</label>
+              <Textarea placeholder="Explain responsibilities..." value={description} onChange={(e) => setDescription(e.target.value)} rows={3} className="rounded-xl bg-muted/50 border-border focus:ring-primary focus:outline-none" />
             </div>
             <div className="flex justify-end gap-2 pt-2">
-              <Button type="button" variant="outline" onClick={() => setDialogType('none')} className="rounded-xl">Cancel</Button>
-              <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl">Create</Button>
+              <Button type="button" variant="outline" onClick={() => setDialogType('none')} className="rounded-xl border-border hover:bg-muted text-foreground cursor-pointer">Cancel</Button>
+              <Button type="submit" className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl cursor-pointer">Create</Button>
             </div>
           </form>
         </DialogContent>
@@ -268,22 +266,22 @@ export default function DepartmentsPage() {
 
       {/* 2. Edit Department */}
       <Dialog open={dialogType === 'edit'} onOpenChange={(open) => !open && setDialogType('none')}>
-        <DialogContent className="rounded-2xl border-zinc-200/80 dark:border-zinc-800/80 bg-white dark:bg-[#0e1422]">
+        <DialogContent className="rounded-2xl border-border bg-card glass shadow-2xl">
           <DialogHeader>
-            <DialogTitle className="text-sm font-bold uppercase tracking-wider text-zinc-800 dark:text-zinc-100">Edit Department: {selectedDept?.code}</DialogTitle>
+            <DialogTitle className="text-sm font-bold uppercase tracking-wider text-foreground">Edit Department: {selectedDept?.code}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleUpdate} className="space-y-4">
             <div className="space-y-2">
-              <label className="text-xs font-semibold">Department Name <span className="text-red-500">*</span></label>
-              <Input placeholder="e.g. Engineering" value={name} onChange={(e) => setName(e.target.value)} className="rounded-xl" />
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Department Name <span className="text-destructive">*</span></label>
+              <Input placeholder="e.g. Engineering" value={name} onChange={(e) => setName(e.target.value)} className="rounded-xl bg-muted/50 border-border focus:ring-primary focus:outline-none" />
             </div>
             <div className="space-y-2">
-              <label className="text-xs font-semibold">Description</label>
-              <Textarea placeholder="Explain responsibilities..." value={description} onChange={(e) => setDescription(e.target.value)} rows={3} className="rounded-xl" />
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Description</label>
+              <Textarea placeholder="Explain responsibilities..." value={description} onChange={(e) => setDescription(e.target.value)} rows={3} className="rounded-xl bg-muted/50 border-border focus:ring-primary focus:outline-none" />
             </div>
             <div className="flex justify-end gap-2 pt-2">
-              <Button type="button" variant="outline" onClick={() => setDialogType('none')} className="rounded-xl">Cancel</Button>
-              <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl">Save changes</Button>
+              <Button type="button" variant="outline" onClick={() => setDialogType('none')} className="rounded-xl border-border hover:bg-muted text-foreground cursor-pointer">Cancel</Button>
+              <Button type="submit" className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl cursor-pointer">Save changes</Button>
             </div>
           </form>
         </DialogContent>
@@ -291,29 +289,29 @@ export default function DepartmentsPage() {
 
       {/* 3. Assign Head */}
       <Dialog open={dialogType === 'assign-head'} onOpenChange={(open) => !open && setDialogType('none')}>
-        <DialogContent className="rounded-2xl border-zinc-200/80 dark:border-zinc-800/80 bg-white dark:bg-[#0e1422]">
+        <DialogContent className="rounded-2xl border-border bg-card glass shadow-2xl">
           <DialogHeader>
-            <DialogTitle className="text-sm font-bold uppercase tracking-wider text-zinc-800 dark:text-zinc-100">Assign Department Head: {selectedDept?.name}</DialogTitle>
+            <DialogTitle className="text-sm font-bold uppercase tracking-wider text-foreground">Assign Department Head: {selectedDept?.name}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleAssignHead} className="space-y-4">
             <div className="space-y-2">
-              <label className="text-xs font-semibold">Head of Department</label>
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Head of Department</label>
               <select
                 value={headEmployeeId}
                 onChange={(e) => setHeadEmployeeId(e.target.value)}
-                className="w-full h-10 px-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-transparent text-sm focus:outline-none"
+                className="w-full h-10 px-3 rounded-xl border border-border bg-muted/50 text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer"
               >
-                <option value="">Keep Vacant / Unassigned</option>
+                <option value="" className="bg-popover text-foreground">Keep Vacant / Unassigned</option>
                 {employees.map((emp) => (
-                  <option key={emp._id} value={emp._id}>
+                  <option key={emp._id} value={emp._id} className="bg-popover text-foreground">
                     {emp.firstName} {emp.lastName} ({emp.employeeCode})
                   </option>
                 ))}
               </select>
             </div>
             <div className="flex justify-end gap-2 pt-2">
-              <Button type="button" variant="outline" onClick={() => setDialogType('none')} className="rounded-xl">Cancel</Button>
-              <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl">Assign Head</Button>
+              <Button type="button" variant="outline" onClick={() => setDialogType('none')} className="rounded-xl border-border hover:bg-muted text-foreground cursor-pointer">Cancel</Button>
+              <Button type="submit" className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl cursor-pointer">Assign Head</Button>
             </div>
           </form>
         </DialogContent>

@@ -60,34 +60,35 @@ export default function LoginPage() {
   };
 
   return (
-    <Card className="w-full shadow-lg border-zinc-200 dark:border-zinc-800">
-      <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl font-bold tracking-tight">Sign in</CardTitle>
-        <CardDescription>
-          Enter your email and password to access your account
+    <Card className="w-full border-white/10 bg-white/[0.03] backdrop-blur-2xl rounded-[24px] shadow-2xl relative overflow-hidden group">
+      <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-[#8B5CF6]/30 to-transparent" />
+      <CardHeader className="space-y-1.5 pb-6">
+        <CardTitle className="text-xl font-bold tracking-tight text-white">Welcome back</CardTitle>
+        <CardDescription className="text-xs text-white/60">
+          Enter your credentials to access the BluHire workspace
         </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+          <div className="space-y-1.5">
+            <Label htmlFor="email" className="text-xs font-medium text-white/80">Email address</Label>
             <Input 
               id="email" 
               type="email" 
-              placeholder="m@example.com" 
+              placeholder="name@company.com" 
               {...register('email')}
-              className={errors.email ? 'border-red-500' : ''}
+              className={`text-xs h-10 bg-white/[0.02] border-white/10 focus:border-[#8B5CF6]/50 focus:ring-[#8B5CF6]/20 text-white rounded-xl ${errors.email ? 'border-destructive/50' : ''}`}
             />
             {errors.email && (
-              <p className="text-sm text-red-500">{errors.email.message}</p>
+              <p className="text-[11px] text-destructive mt-1">{errors.email.message}</p>
             )}
           </div>
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             <div className="flex items-center justify-between">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password" className="text-xs font-medium text-white/80">Password</Label>
               <Link 
                 href="/forgot-password" 
-                className="text-sm font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400"
+                className="text-[11px] font-semibold text-[#8B5CF6] hover:text-[#A855F7] transition-colors"
               >
                 Forgot password?
               </Link>
@@ -95,23 +96,28 @@ export default function LoginPage() {
             <Input 
               id="password" 
               type="password" 
+              placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;"
               {...register('password')}
-              className={errors.password ? 'border-red-500' : ''}
+              className={`text-xs h-10 bg-white/[0.02] border-white/10 focus:border-[#8B5CF6]/50 focus:ring-[#8B5CF6]/20 text-white rounded-xl ${errors.password ? 'border-destructive/50' : ''}`}
             />
             {errors.password && (
-              <p className="text-sm text-red-500">{errors.password.message}</p>
+              <p className="text-[11px] text-destructive mt-1">{errors.password.message}</p>
             )}
           </div>
-          <Button type="submit" className="w-full mt-4" disabled={isLoading}>
-            {isLoading ? 'Signing in...' : 'Sign in'}
+          <Button 
+            type="submit" 
+            className="w-full h-10 mt-2 bg-[#8B5CF6] hover:bg-[#A855F7] text-white text-xs font-semibold rounded-xl border-0 shadow-lg shadow-[#8B5CF6]/15 transition-all duration-250 cursor-pointer" 
+            disabled={isLoading}
+          >
+            {isLoading ? 'Signing in...' : 'Sign in to workspace'}
           </Button>
         </form>
       </CardContent>
-      <CardFooter className="flex justify-center border-t border-zinc-100 dark:border-zinc-800 pt-6">
-        <div className="text-sm text-zinc-500 dark:text-zinc-400">
+      <CardFooter className="flex justify-center border-t border-white/10 pt-6 bg-white/[0.01]">
+        <div className="text-xs text-white/60">
           Don&apos;t have an account?{' '}
-          <Link href="/register" className="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 transition-colors">
-            Sign up
+          <Link href="/register" className="font-semibold text-[#8B5CF6] hover:text-[#A855F7] transition-colors">
+            Create an account
           </Link>
         </div>
       </CardFooter>

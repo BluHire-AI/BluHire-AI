@@ -43,6 +43,7 @@ export interface IApplication extends Document {
   notes?: string;
   stageHistory: IStageHistory[];
   isDeleted: boolean;
+  isTestData?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -177,6 +178,11 @@ const ApplicationSchema = new Schema<any>(
       default: [],
     },
     isDeleted: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+    isTestData: {
       type: Boolean,
       default: false,
       index: true,

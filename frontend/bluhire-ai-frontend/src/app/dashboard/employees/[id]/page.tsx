@@ -289,62 +289,75 @@ export default function EmployeeDetailsPage() {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-40 space-y-4">
-        <RefreshCw className="w-8 h-8 text-blue-600 animate-spin" />
-        <p className="text-zinc-500 dark:text-zinc-400">Loading employee details...</p>
+        <div className="relative">
+          <div className="w-10 h-10 rounded-full border-2 border-primary/20 border-t-primary animate-spin" />
+          <div className="absolute inset-0 w-10 h-10 rounded-full border border-primary/5 blur-sm animate-pulse" />
+        </div>
+        <p className="text-sm font-semibold text-muted-foreground tracking-wide animate-pulse">Loading employee profile...</p>
       </div>
     );
   }
 
   if (!employee) {
     return (
-      <div className="text-center py-20 space-y-4">
-        <ShieldAlert className="w-12 h-12 text-red-500 mx-auto" />
-        <h2 className="text-2xl font-bold">Profile Not Found</h2>
-        <p className="text-zinc-500">The requested employee record does not exist or has been deleted.</p>
-        <Link href="/dashboard/employees">
-          <Button>Back to Employees</Button>
+      <div className="max-w-md mx-auto text-center py-20 space-y-6 bg-card border border-border rounded-2xl p-8 mt-20 shadow-2xl relative overflow-hidden">
+        <div className="absolute -top-10 -left-10 w-40 h-40 bg-destructive/10 rounded-full blur-3xl pointer-events-none" />
+        <ShieldAlert className="w-12 h-12 text-destructive mx-auto animate-bounce" />
+        <div className="space-y-2">
+          <h2 className="text-2xl font-bold tracking-tight text-foreground">Profile Not Found</h2>
+          <p className="text-sm text-muted-foreground">The requested employee record does not exist or has been deleted.</p>
+        </div>
+        <Link href="/dashboard/employees" className="block">
+          <Button className="w-full bg-primary hover:bg-primary/95 text-white rounded-xl font-semibold shadow-md">
+            Back to Employees
+          </Button>
         </Link>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-7xl mx-auto">
       {/* Header Panel */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-zinc-200 dark:border-zinc-800">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 p-6 rounded-2xl bg-card/65 backdrop-blur-md border border-border/60 shadow-xl relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-3xl -z-10 pointer-events-none" />
         <div className="flex items-center space-x-4">
           <Link href="/dashboard/employees">
-            <Button variant="ghost" size="icon">
-              <ArrowLeft className="w-5 h-5" />
+            <Button variant="ghost" size="icon" className="hover:bg-muted/60 rounded-xl transition-all h-9 w-9">
+              <ArrowLeft className="w-4 h-4 text-muted-foreground hover:text-foreground" />
             </Button>
           </Link>
-          <div className="w-16 h-16 rounded-full bg-blue-100 dark:bg-blue-900 border-2 border-blue-200 dark:border-blue-800 flex items-center justify-center font-bold text-2xl text-blue-700 dark:text-blue-300">
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-primary to-indigo-500 border border-primary/20 flex items-center justify-center font-bold text-2xl text-white shadow-lg shadow-primary/20 shrink-0">
             {employee.firstName.charAt(0)}{employee.lastName.charAt(0)}
           </div>
           <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">
+            <div className="flex items-center gap-2.5">
+              <h1 className="text-2xl font-bold tracking-tight text-foreground">
                 {employee.firstName} {employee.lastName}
               </h1>
-              <Badge variant={employee.employmentStatus === 'ACTIVE' ? 'success' : 'warning'}>
+              <Badge className={
+                employee.employmentStatus === 'ACTIVE'
+                  ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/10 font-bold'
+                  : 'bg-amber-500/10 text-amber-400 border-amber-500/20 hover:bg-amber-500/10 font-bold'
+              }>
                 {employee.employmentStatus}
               </Badge>
             </div>
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">
+            <p className="text-sm text-muted-foreground mt-1 font-medium">
               {employee.designationId?.title || 'Unassigned'} • {employee.departmentId?.name || 'Unassigned Department'} ({employee.employeeCode})
             </p>
           </div>
         </div>
 
         {isHRorAdmin && (
-          <div className="flex flex-wrap gap-2">
-            <Button variant="outline" size="sm" onClick={() => setActiveDialog('status')}>
+          <div className="flex flex-wrap gap-2.5">
+            <Button variant="outline" size="sm" className="rounded-xl border-border/60 hover:bg-muted/60 text-xs font-semibold" onClick={() => setActiveDialog('status')}>
               Change Status
             </Button>
-            <Button variant="outline" size="sm" onClick={() => setActiveDialog('transfer')}>
+            <Button variant="outline" size="sm" className="rounded-xl border-border/60 hover:bg-muted/60 text-xs font-semibold" onClick={() => setActiveDialog('transfer')}>
               Transfer
             </Button>
-            <Button variant="outline" size="sm" onClick={() => {
+            <Button variant="outline" size="sm" className="rounded-xl border-border/60 hover:bg-muted/60 text-xs font-semibold" onClick={() => {
               setPromoDesg(employee.designationId?._id || '');
               setPromoDept(employee.departmentId?._id || '');
               setPromoSalary(employee.salaryGrade || '');
@@ -353,7 +366,7 @@ export default function EmployeeDetailsPage() {
               Promote
             </Button>
             <Link href={`/dashboard/employees/${employee._id}/edit`}>
-              <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white">
+              <Button size="sm" className="bg-primary hover:bg-primary/95 text-white rounded-xl shadow-md text-xs font-semibold">
                 <Edit className="w-4 h-4 mr-2" /> Edit Profile
               </Button>
             </Link>
@@ -362,87 +375,87 @@ export default function EmployeeDetailsPage() {
       </div>
 
       <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="bg-zinc-100 dark:bg-zinc-900/50 p-1.5 rounded-xl border border-zinc-200/40 dark:border-zinc-800/40 flex flex-wrap gap-1 w-fit">
-          <TabsTrigger value="overview" className="rounded-lg text-xs font-semibold px-4 py-2 cursor-pointer">Overview</TabsTrigger>
-          <TabsTrigger value="education" className="rounded-lg text-xs font-semibold px-4 py-2 cursor-pointer">Education & Skills</TabsTrigger>
-          <TabsTrigger value="performance" className="rounded-lg text-xs font-semibold px-4 py-2 cursor-pointer">Performance</TabsTrigger>
-          <TabsTrigger value="career-growth" className="rounded-lg text-xs font-semibold px-4 py-2 cursor-pointer">Career Growth</TabsTrigger>
-          <TabsTrigger value="ai-insights" className="rounded-lg text-xs font-semibold px-4 py-2 cursor-pointer flex items-center gap-1.5">
-            <Sparkles className="w-3.5 h-3.5 text-amber-500" /> AI Insights
+        <TabsList className="bg-muted/30 p-1 rounded-2xl border border-border/50 flex flex-wrap gap-1 w-fit max-w-full">
+          <TabsTrigger value="overview" className="rounded-xl text-xs font-bold px-4 py-2 cursor-pointer transition-all data-[state=active]:bg-primary data-[state=active]:text-white">Overview</TabsTrigger>
+          <TabsTrigger value="education" className="rounded-xl text-xs font-bold px-4 py-2 cursor-pointer transition-all data-[state=active]:bg-primary data-[state=active]:text-white">Education & Skills</TabsTrigger>
+          <TabsTrigger value="performance" className="rounded-xl text-xs font-bold px-4 py-2 cursor-pointer transition-all data-[state=active]:bg-primary data-[state=active]:text-white">Performance</TabsTrigger>
+          <TabsTrigger value="career-growth" className="rounded-xl text-xs font-bold px-4 py-2 cursor-pointer transition-all data-[state=active]:bg-primary data-[state=active]:text-white">Career Growth</TabsTrigger>
+          <TabsTrigger value="ai-insights" className="rounded-xl text-xs font-bold px-4 py-2 cursor-pointer transition-all data-[state=active]:bg-primary data-[state=active]:text-white flex items-center gap-1.5">
+            <Sparkles className="w-3.5 h-3.5 text-amber-500 animate-pulse" /> AI Insights
           </TabsTrigger>
-          <TabsTrigger value="documents" className="rounded-lg text-xs font-semibold px-4 py-2 cursor-pointer">Documents</TabsTrigger>
-          <TabsTrigger value="timeline" className="rounded-lg text-xs font-semibold px-4 py-2 cursor-pointer">Career Timeline</TabsTrigger>
+          <TabsTrigger value="documents" className="rounded-xl text-xs font-bold px-4 py-2 cursor-pointer transition-all data-[state=active]:bg-primary data-[state=active]:text-white">Documents</TabsTrigger>
+          <TabsTrigger value="timeline" className="rounded-xl text-xs font-bold px-4 py-2 cursor-pointer transition-all data-[state=active]:bg-primary data-[state=active]:text-white">Career Timeline</TabsTrigger>
         </TabsList>
 
         {/* Tab 1: Overview */}
         <TabsContent value="overview">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card className="md:col-span-2">
+            <Card className="md:col-span-2 bg-card/60 backdrop-blur-md border border-border/80 shadow-md rounded-2xl">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <User className="w-5 h-5 text-blue-600" /> Personal & Job Information
+                <CardTitle className="flex items-center gap-2 text-lg font-bold text-foreground">
+                  <User className="w-5 h-5 text-primary" /> Personal & Job Information
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                   <div>
-                    <span className="text-xs text-zinc-400 font-semibold block">Email Address</span>
-                    <span className="text-sm font-medium text-zinc-950 dark:text-zinc-50 flex items-center gap-1">
-                      <Mail className="w-3.5 h-3.5 text-zinc-400" /> {employee.email}
+                    <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider block mb-1">Email Address</span>
+                    <span className="text-sm font-medium text-foreground flex items-center gap-2">
+                      <Mail className="w-4 h-4 text-muted-foreground" /> {employee.email}
                     </span>
                   </div>
                   <div>
-                    <span className="text-xs text-zinc-400 font-semibold block">Phone Number</span>
-                    <span className="text-sm font-medium text-zinc-950 dark:text-zinc-50 flex items-center gap-1">
-                      <Phone className="w-3.5 h-3.5 text-zinc-400" /> {employee.phone}
+                    <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider block mb-1">Phone Number</span>
+                    <span className="text-sm font-medium text-foreground flex items-center gap-2">
+                      <Phone className="w-4 h-4 text-muted-foreground" /> {employee.phone}
                     </span>
                   </div>
                   <div>
-                    <span className="text-xs text-zinc-400 font-semibold block">Gender</span>
-                    <span className="text-sm font-medium text-zinc-950 dark:text-zinc-50">{employee.gender || 'Not specified'}</span>
+                    <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider block mb-1">Gender</span>
+                    <span className="text-sm font-medium text-foreground">{employee.gender || 'Not specified'}</span>
                   </div>
                   <div>
-                    <span className="text-xs text-zinc-400 font-semibold block">Date of Birth</span>
-                    <span className="text-sm font-medium text-zinc-950 dark:text-zinc-50">
+                    <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider block mb-1">Date of Birth</span>
+                    <span className="text-sm font-medium text-foreground">
                       {employee.dateOfBirth ? new Date(employee.dateOfBirth).toLocaleDateString() : 'Not specified'}
                     </span>
                   </div>
                 </div>
 
-                <div className="border-t border-zinc-100 dark:border-zinc-800 pt-6 grid grid-cols-2 gap-4">
+                <div className="border-t border-border pt-6 grid grid-cols-1 sm:grid-cols-2 gap-6">
                   <div>
-                    <span className="text-xs text-zinc-400 font-semibold block">Employment Type</span>
-                    <Badge variant="outline">{employee.employmentType.replace('_', ' ')}</Badge>
+                    <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider block mb-2">Employment Type</span>
+                    <Badge variant="outline" className="bg-muted/50 border-border font-semibold text-foreground px-2.5 py-1 text-xs">{employee.employmentType.replace('_', ' ')}</Badge>
                   </div>
                   <div>
-                    <span className="text-xs text-zinc-400 font-semibold block">Work Location</span>
-                    <span className="text-sm font-medium text-zinc-950 dark:text-zinc-50 flex items-center gap-1">
-                      <MapPin className="w-3.5 h-3.5 text-zinc-400" /> {employee.workLocation}
+                    <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider block mb-1">Work Location</span>
+                    <span className="text-sm font-medium text-foreground flex items-center gap-2">
+                      <MapPin className="w-4 h-4 text-muted-foreground" /> {employee.workLocation}
                     </span>
                   </div>
                   <div>
-                    <span className="text-xs text-zinc-400 font-semibold block">Joining Date</span>
-                    <span className="text-sm font-medium text-zinc-950 dark:text-zinc-50 flex items-center gap-1">
-                      <Calendar className="w-3.5 h-3.5 text-zinc-400" /> {new Date(employee.joiningDate).toLocaleDateString()}
+                    <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider block mb-1">Joining Date</span>
+                    <span className="text-sm font-medium text-foreground flex items-center gap-2">
+                      <Calendar className="w-4 h-4 text-muted-foreground" /> {new Date(employee.joiningDate).toLocaleDateString()}
                     </span>
                   </div>
                   <div>
-                    <span className="text-xs text-zinc-400 font-semibold block">Salary Grade</span>
-                    <span className="text-sm font-medium text-zinc-950 dark:text-zinc-50">{employee.salaryGrade || 'None'}</span>
+                    <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider block mb-1">Salary Grade</span>
+                    <span className="text-sm font-medium text-foreground">{employee.salaryGrade || 'None'}</span>
                   </div>
-                  <div>
-                    <span className="text-xs text-zinc-400 font-semibold block">Reporting Manager</span>
-                    <span className="text-sm font-medium text-zinc-950 dark:text-zinc-50 flex items-center gap-1">
-                      <User className="w-3.5 h-3.5 text-zinc-400" />
+                  <div className="sm:col-span-2">
+                    <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider block mb-1">Reporting Manager</span>
+                    <span className="text-sm font-medium text-foreground flex items-center gap-2">
+                      <User className="w-4 h-4 text-muted-foreground" />
                       {employee.managerId ? `${employee.managerId.firstName} ${employee.managerId.lastName}` : 'Direct Report (CEO)'}
                     </span>
                   </div>
                 </div>
 
                 {employee.notes && (
-                  <div className="border-t border-zinc-100 dark:border-zinc-800 pt-4">
-                    <span className="text-xs text-zinc-400 font-semibold block">HR Notes</span>
-                    <p className="text-sm text-zinc-600 dark:text-zinc-300 italic">"{employee.notes}"</p>
+                  <div className="border-t border-border pt-6">
+                    <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider block mb-2">HR Notes</span>
+                    <p className="text-sm text-muted-foreground italic leading-relaxed bg-muted/20 p-3.5 rounded-xl border border-border/40">"{employee.notes}"</p>
                   </div>
                 )}
               </CardContent>
@@ -450,44 +463,48 @@ export default function EmployeeDetailsPage() {
 
             <div className="space-y-6">
               {/* Emergency Contact */}
-              <Card>
+              <Card className="bg-card/60 backdrop-blur-md border border-border/80 shadow-md rounded-2xl">
                 <CardHeader>
-                  <CardTitle className="text-base font-bold flex items-center gap-2">
-                    <Info className="w-4 h-4 text-blue-600" /> Emergency Contact
+                  <CardTitle className="text-base font-bold flex items-center gap-2 text-foreground">
+                    <Info className="w-4.5 h-4.5 text-primary" /> Emergency Contact
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   {employee.emergencyContact ? (
-                    <div className="space-y-2">
-                      <p className="text-sm font-bold text-zinc-900 dark:text-zinc-100">{employee.emergencyContact.name}</p>
-                      <p className="text-xs text-zinc-500">Relationship: {employee.emergencyContact.relationship}</p>
-                      <p className="text-sm text-zinc-700 dark:text-zinc-300 flex items-center gap-1">
-                        <Phone className="w-3.5 h-3.5 text-zinc-400" /> {employee.emergencyContact.phone}
+                    <div className="space-y-3.5">
+                      <div>
+                        <p className="text-sm font-bold text-foreground">{employee.emergencyContact.name}</p>
+                        <p className="text-xs text-muted-foreground font-medium mt-0.5">Relationship: {employee.emergencyContact.relationship}</p>
+                      </div>
+                      <p className="text-sm text-foreground flex items-center gap-2 bg-muted/40 p-2.5 rounded-xl border border-border/40">
+                        <Phone className="w-4 h-4 text-muted-foreground" /> {employee.emergencyContact.phone}
                       </p>
                     </div>
                   ) : (
-                    <p className="text-sm text-zinc-500 italic">No emergency contact details provided.</p>
+                    <p className="text-sm text-muted-foreground italic">No emergency contact details provided.</p>
                   )}
                 </CardContent>
               </Card>
 
               {/* Address Details */}
-              <Card>
+              <Card className="bg-card/60 backdrop-blur-md border border-border/80 shadow-md rounded-2xl">
                 <CardHeader>
-                  <CardTitle className="text-base font-bold flex items-center gap-2">
-                    <MapPin className="w-4 h-4 text-blue-600" /> Residential Address
+                  <CardTitle className="text-base font-bold flex items-center gap-2 text-foreground">
+                    <MapPin className="w-4.5 h-4.5 text-primary" /> Residential Address
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   {employee.address ? (
-                    <div className="text-sm text-zinc-700 dark:text-zinc-300 space-y-1">
-                      <p>{employee.address.street}</p>
-                      <p>{employee.address.city}, {employee.address.state}</p>
-                      <p>{employee.address.postalCode}</p>
-                      <p className="font-semibold text-zinc-800 dark:text-zinc-200">{employee.address.country}</p>
+                    <div className="text-sm text-foreground space-y-2">
+                      <p className="font-medium">{employee.address.street}</p>
+                      <p className="text-muted-foreground">{employee.address.city}, {employee.address.state} {employee.address.postalCode}</p>
+                      <div className="pt-2 border-t border-border/40">
+                        <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">Country</p>
+                        <p className="font-semibold text-foreground mt-0.5">{employee.address.country}</p>
+                      </div>
                     </div>
                   ) : (
-                    <p className="text-sm text-zinc-500 italic">No address details provided.</p>
+                    <p className="text-sm text-muted-foreground italic">No address details provided.</p>
                   )}
                 </CardContent>
               </Card>
@@ -499,45 +516,45 @@ export default function EmployeeDetailsPage() {
         <TabsContent value="education" className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Skills */}
-            <Card>
+            <Card className="bg-card/60 backdrop-blur-md border border-border/80 shadow-md rounded-2xl">
               <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Award className="w-5 h-5 text-blue-600" /> Technical Skills
+                <CardTitle className="text-lg font-bold flex items-center gap-2 text-foreground">
+                  <Award className="w-5 h-5 text-primary" /> Technical Skills
                 </CardTitle>
                 {isHRorAdmin && (
-                  <Button variant="ghost" size="icon" onClick={() => setActiveDialog('skill')}>
-                    <Plus className="w-4 h-4" />
+                  <Button variant="ghost" size="icon" onClick={() => setActiveDialog('skill')} className="hover:bg-muted/65 rounded-xl h-8 w-8">
+                    <Plus className="w-4 h-4 text-muted-foreground hover:text-foreground" />
                   </Button>
                 )}
               </CardHeader>
               <CardContent>
-                <div className="flex flex-wrap gap-1.5">
+                <div className="flex flex-wrap gap-2">
                   {employee.skills && employee.skills.length > 0 ? (
                     employee.skills.map((skill) => (
-                      <Badge key={skill} variant="secondary" className="pr-1 gap-1">
+                      <Badge key={skill} variant="secondary" className="pr-1 gap-1 bg-muted/60 border-border text-foreground hover:bg-muted/80 rounded-xl px-2.5 py-1 text-xs">
                         {skill}
                         {isHRorAdmin && (
-                          <button onClick={() => handleRemoveSkill(skill)} className="text-zinc-400 hover:text-red-500 transition-colors">
+                          <button onClick={() => handleRemoveSkill(skill)} className="text-muted-foreground hover:text-destructive transition-colors ml-1 w-4 h-4 rounded-full flex items-center justify-center hover:bg-destructive/10">
                             ×
                           </button>
                         )}
                       </Badge>
                     ))
                   ) : (
-                    <p className="text-sm text-zinc-500 italic">No skills listed yet.</p>
+                    <p className="text-sm text-muted-foreground italic">No skills listed yet.</p>
                   )}
                 </div>
               </CardContent>
             </Card>
 
             {/* Education History */}
-            <Card className="md:col-span-2">
+            <Card className="md:col-span-2 bg-card/60 backdrop-blur-md border border-border/80 shadow-md rounded-2xl">
               <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <GraduationCap className="w-5 h-5 text-blue-600" /> Academic Qualifications
+                <CardTitle className="text-lg font-bold flex items-center gap-2 text-foreground">
+                  <GraduationCap className="w-5 h-5 text-primary" /> Academic Qualifications
                 </CardTitle>
                 {isHRorAdmin && (
-                  <Button variant="outline" size="sm" className="gap-1" onClick={() => setActiveDialog('education')}>
+                  <Button variant="outline" size="sm" className="gap-1.5 rounded-xl border-border/60 hover:bg-muted/60 text-xs font-semibold" onClick={() => setActiveDialog('education')}>
                     <Plus className="w-4 h-4" /> Add Degree
                   </Button>
                 )}
@@ -545,30 +562,30 @@ export default function EmployeeDetailsPage() {
               <CardContent className="space-y-4">
                 {employee.education && employee.education.length > 0 ? (
                   employee.education.map((edu, idx) => (
-                    <div key={idx} className="flex gap-4 p-3 rounded-lg border border-zinc-100 dark:border-zinc-800">
-                      <div className="w-10 h-10 rounded-full bg-blue-50 dark:bg-blue-950 flex items-center justify-center text-blue-600">
+                    <div key={idx} className="flex gap-4 p-4 rounded-xl border border-border/60 bg-muted/20 items-center">
+                      <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shrink-0">
                         <GraduationCap className="w-5 h-5" />
                       </div>
                       <div>
-                        <h4 className="font-bold text-sm text-zinc-900 dark:text-zinc-100">{edu.degree} in {edu.field}</h4>
-                        <p className="text-xs text-zinc-500">{edu.institution} • Class of {edu.graduationYear}</p>
+                        <h4 className="font-bold text-sm text-foreground">{edu.degree} in {edu.field}</h4>
+                        <p className="text-xs text-muted-foreground mt-0.5">{edu.institution} • Class of {edu.graduationYear}</p>
                       </div>
                     </div>
                   ))
                 ) : (
-                  <p className="text-sm text-zinc-500 text-center py-6 italic">No academic qualifications listed.</p>
+                  <p className="text-sm text-muted-foreground text-center py-8 italic">No academic qualifications listed.</p>
                 )}
               </CardContent>
             </Card>
 
             {/* Certifications */}
-            <Card className="md:col-span-3">
+            <Card className="md:col-span-3 bg-card/60 backdrop-blur-md border border-border/80 shadow-md rounded-2xl">
               <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Award className="w-5 h-5 text-blue-600" /> Professional Credentials
+                <CardTitle className="text-lg font-bold flex items-center gap-2 text-foreground">
+                  <Award className="w-5 h-5 text-primary" /> Professional Credentials
                 </CardTitle>
                 {isHRorAdmin && (
-                  <Button variant="outline" size="sm" className="gap-1" onClick={() => setActiveDialog('certification')}>
+                  <Button variant="outline" size="sm" className="gap-1.5 rounded-xl border-border/60 hover:bg-muted/60 text-xs font-semibold" onClick={() => setActiveDialog('certification')}>
                     <Plus className="w-4 h-4" /> Add Certificate
                   </Button>
                 )}
@@ -576,15 +593,15 @@ export default function EmployeeDetailsPage() {
               <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {employee.certifications && employee.certifications.length > 0 ? (
                   employee.certifications.map((cert, idx) => (
-                    <div key={idx} className="flex gap-4 p-4 rounded-lg border border-zinc-100 dark:border-zinc-800 items-start justify-between">
+                    <div key={idx} className="flex gap-4 p-4 rounded-xl border border-border/60 bg-muted/25 items-start justify-between">
                       <div className="flex gap-4">
-                        <div className="w-10 h-10 rounded-full bg-purple-50 dark:bg-purple-950 flex items-center justify-center text-purple-600">
+                        <div className="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400 shrink-0">
                           <Award className="w-5 h-5" />
                         </div>
                         <div>
-                          <h4 className="font-bold text-sm text-zinc-900 dark:text-zinc-100">{cert.name}</h4>
-                          <p className="text-xs text-zinc-500">Issued by {cert.issuer}</p>
-                          <p className="text-xs text-zinc-400 mt-1">
+                          <h4 className="font-bold text-sm text-foreground">{cert.name}</h4>
+                          <p className="text-xs text-muted-foreground mt-0.5">Issued by {cert.issuer}</p>
+                          <p className="text-[10px] text-muted-foreground/80 mt-1 font-semibold">
                             Issued: {new Date(cert.issueDate).toLocaleDateString()}
                             {cert.expiryDate && ` • Expires: ${new Date(cert.expiryDate).toLocaleDateString()}`}
                           </p>
@@ -592,13 +609,13 @@ export default function EmployeeDetailsPage() {
                       </div>
                       {cert.certificateUrl && (
                         <a href={cert.certificateUrl} target="_blank" rel="noreferrer">
-                          <Button variant="ghost" size="sm" className="text-blue-600">View</Button>
+                          <Button variant="ghost" size="sm" className="text-primary hover:text-primary/95 text-xs font-bold rounded-xl hover:bg-primary/5 px-3">View</Button>
                         </a>
                       )}
                     </div>
                   ))
                 ) : (
-                  <div className="col-span-3 text-center py-6 text-sm text-zinc-500 italic">
+                  <div className="col-span-3 text-center py-8 text-sm text-muted-foreground italic">
                     No certifications uploaded.
                   </div>
                 )}
@@ -610,42 +627,42 @@ export default function EmployeeDetailsPage() {
         {/* Tab 3: Performance */}
         <TabsContent value="performance" className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card className="md:col-span-2 border-zinc-200/60 dark:border-zinc-800/80 bg-white dark:bg-[#0e1422]">
+            <Card className="md:col-span-2 border-border bg-card/60 backdrop-blur-md shadow-md rounded-2xl">
               <CardHeader>
-                <CardTitle className="text-sm font-bold uppercase tracking-wider text-zinc-800 dark:text-zinc-100 flex items-center gap-2">
-                  <Award className="w-4.5 h-4.5 text-blue-600" /> Performance Appraisal Trend
+                <CardTitle className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                  <Award className="w-4.5 h-4.5 text-primary" /> Performance Appraisal Trend
                 </CardTitle>
               </CardHeader>
               <CardContent className="h-[280px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={performanceTrendData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
-                    <XAxis dataKey="name" stroke="#64748b" fontSize={11} tickLine={false} />
-                    <YAxis domain={[0, 5]} stroke="#64748b" fontSize={11} tickLine={false} />
-                    <Tooltip contentStyle={{ backgroundColor: 'rgba(15,23,42,0.9)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)' }} />
-                    <Line type="monotone" dataKey="rating" stroke="#2563eb" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} name="Rating" />
+                    <XAxis dataKey="name" stroke="var(--muted-foreground)" fontSize={11} tickLine={false} />
+                    <YAxis domain={[0, 5]} stroke="var(--muted-foreground)" fontSize={11} tickLine={false} />
+                    <Tooltip contentStyle={{ backgroundColor: 'var(--card)', borderRadius: '12px', border: '1px solid var(--border)', color: 'var(--foreground)' }} />
+                    <Line type="monotone" dataKey="rating" stroke="var(--primary)" strokeWidth={3} dot={{ r: 4, strokeWidth: 2, fill: 'var(--background)' }} activeDot={{ r: 6 }} name="Rating" />
                   </LineChart>
                 </ResponsiveContainer>
               </CardContent>
             </Card>
 
             <div className="space-y-6">
-              <Card className="border-zinc-200/60 dark:border-zinc-800/80 bg-white dark:bg-[#0e1422]">
+              <Card className="border-border bg-card/60 backdrop-blur-md shadow-md rounded-2xl">
                 <CardHeader>
-                  <CardTitle className="text-sm font-bold uppercase tracking-wider text-zinc-800 dark:text-zinc-100">Appraisal Summary</CardTitle>
+                  <CardTitle className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Appraisal Summary</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <span className="text-xs text-zinc-400 block font-medium">Self Evaluation</span>
-                    <span className="text-lg font-bold text-zinc-950 dark:text-zinc-50">4.5 / 5.0</span>
+                <CardContent className="space-y-5">
+                  <div className="p-3 bg-muted/20 border border-border/40 rounded-xl">
+                    <span className="text-[10px] text-muted-foreground block font-bold uppercase tracking-wider">Self Evaluation</span>
+                    <span className="text-xl font-bold text-foreground mt-0.5 block">4.5 / 5.0</span>
                   </div>
-                  <div>
-                    <span className="text-xs text-zinc-400 block font-medium">Manager Evaluation</span>
-                    <span className="text-lg font-bold text-zinc-950 dark:text-zinc-50">4.3 / 5.0</span>
+                  <div className="p-3 bg-muted/20 border border-border/40 rounded-xl">
+                    <span className="text-[10px] text-muted-foreground block font-bold uppercase tracking-wider">Manager Evaluation</span>
+                    <span className="text-xl font-bold text-foreground mt-0.5 block">4.3 / 5.0</span>
                   </div>
-                  <div>
-                    <span className="text-xs text-zinc-400 block font-medium">Last Promotion Date</span>
-                    <span className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">October 14, 2025</span>
+                  <div className="p-3 bg-muted/20 border border-border/40 rounded-xl">
+                    <span className="text-[10px] text-muted-foreground block font-bold uppercase tracking-wider">Last Promotion Date</span>
+                    <span className="text-sm font-semibold text-foreground mt-0.5 block">October 14, 2025</span>
                   </div>
                 </CardContent>
               </Card>
@@ -656,51 +673,51 @@ export default function EmployeeDetailsPage() {
         {/* Tab 4: Career Growth */}
         <TabsContent value="career-growth" className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card className="border-zinc-200/60 dark:border-zinc-800/80 bg-white dark:bg-[#0e1422]">
+            <Card className="border-border bg-card/60 backdrop-blur-md shadow-md rounded-2xl">
               <CardHeader>
-                <CardTitle className="text-sm font-bold uppercase tracking-wider text-zinc-800 dark:text-zinc-100">Promotion Readiness</CardTitle>
+                <CardTitle className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Promotion Readiness</CardTitle>
               </CardHeader>
               <CardContent className="flex flex-col items-center justify-center py-6">
-                <div className="relative w-32 h-32 flex items-center justify-center rounded-full border-4 border-dashed border-indigo-600/30">
+                <div className="relative w-32 h-32 flex items-center justify-center rounded-2xl border border-primary/20 bg-primary/5">
                   <div className="text-center">
-                    <span className="text-3xl font-extrabold text-indigo-600 dark:text-indigo-400">82%</span>
-                    <span className="text-[10px] text-zinc-400 block font-semibold mt-1">Readiness Score</span>
+                    <span className="text-3xl font-black text-primary">82%</span>
+                    <span className="text-[9px] text-muted-foreground block font-bold mt-1 uppercase tracking-wider">Readiness Score</span>
                   </div>
                 </div>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400 text-center mt-5 font-medium leading-relaxed">
+                <p className="text-xs text-muted-foreground text-center mt-5 font-medium leading-relaxed">
                   Excellent technical skills and strong collaboration indicators place this employee high in the promotion pool.
                 </p>
               </CardContent>
             </Card>
 
-            <Card className="md:col-span-2 border-zinc-200/60 dark:border-zinc-800/80 bg-white dark:bg-[#0e1422]">
+            <Card className="md:col-span-2 border-border bg-card/60 backdrop-blur-md shadow-md rounded-2xl">
               <CardHeader>
-                <CardTitle className="text-sm font-bold uppercase tracking-wider text-zinc-800 dark:text-zinc-100">Career Ladder Pathway</CardTitle>
+                <CardTitle className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Career Ladder Pathway</CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
-                <div className="flex items-center justify-between p-4 rounded-xl border border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-800/10">
+                <div className="flex items-center justify-between p-4 rounded-xl border border-border/60 bg-muted/20">
                   <div>
-                    <span className="text-xs text-zinc-400 block font-semibold">Current Designation</span>
-                    <span className="text-sm font-bold text-zinc-800 dark:text-zinc-100">{employee.designationId?.title || 'Unassigned'}</span>
+                    <span className="text-[10px] text-muted-foreground block font-bold uppercase tracking-wider">Current Designation</span>
+                    <span className="text-sm font-bold text-foreground mt-0.5 block">{employee.designationId?.title || 'Unassigned'}</span>
                   </div>
-                  <ArrowUpRight className="w-5 h-5 text-indigo-600" />
+                  <ArrowUpRight className="w-5 h-5 text-primary" />
                   <div>
-                    <span className="text-xs text-zinc-400 block font-semibold">Target Next Level</span>
-                    <span className="text-sm font-bold text-indigo-600 dark:text-indigo-400">Lead Specialist</span>
+                    <span className="text-[10px] text-muted-foreground block font-bold uppercase tracking-wider">Target Next Level</span>
+                    <span className="text-sm font-bold text-primary mt-0.5 block">Lead Specialist</span>
                   </div>
                 </div>
 
                 <div className="space-y-3">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-zinc-500">Skills to Master for Level Up</h4>
-                  <ul className="space-y-2">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Skills to Master for Level Up</h4>
+                  <ul className="space-y-2.5">
                     {[
-                      { skill: "Distributed Cloud Architecture", status: "In progress", color: "text-amber-500" },
-                      { skill: "Leadership & Strategy Appraisals", status: "Pending", color: "text-zinc-400" },
-                      { skill: "Project Management Certifications", status: "In progress", color: "text-amber-500" }
+                      { skill: "Distributed Cloud Architecture", status: "In progress", color: "text-amber-500 bg-amber-500/10" },
+                      { skill: "Leadership & Strategy Appraisals", status: "Pending", color: "text-muted-foreground bg-muted" },
+                      { skill: "Project Management Certifications", status: "In progress", color: "text-amber-500 bg-amber-500/10" }
                     ].map((item, idx) => (
-                      <li key={idx} className="flex justify-between items-center text-xs p-2 rounded bg-zinc-50/30 dark:bg-zinc-900/30">
-                        <span className="font-semibold text-zinc-700 dark:text-zinc-300">{item.skill}</span>
-                        <span className={`text-[10px] font-bold ${item.color}`}>{item.status}</span>
+                      <li key={idx} className="flex justify-between items-center text-xs p-3 rounded-xl border border-border/40 bg-muted/10">
+                        <span className="font-semibold text-foreground">{item.skill}</span>
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-lg ${item.color}`}>{item.status}</span>
                       </li>
                     ))}
                   </ul>
@@ -714,48 +731,48 @@ export default function EmployeeDetailsPage() {
         <TabsContent value="ai-insights" className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* AI Profile Summary */}
-            <Card className="md:col-span-2 border-zinc-200/60 dark:border-zinc-800/80 bg-white dark:bg-[#0e1422] relative overflow-hidden">
-              <div className="absolute top-0 right-0 p-4 opacity-15">
-                <Brain className="w-20 h-20 text-purple-600" />
+            <Card className="md:col-span-2 border-border bg-card/60 backdrop-blur-md shadow-md rounded-2xl relative overflow-hidden">
+              <div className="absolute top-0 right-0 p-4 opacity-[0.03] pointer-events-none">
+                <Brain className="w-24 h-24 text-primary" />
               </div>
               <CardHeader>
-                <CardTitle className="text-sm font-bold uppercase tracking-wider text-zinc-800 dark:text-zinc-100 flex items-center gap-2">
+                <CardTitle className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
                   <Sparkles className="w-4.5 h-4.5 text-amber-500" /> AI-Generated Employee Executive Summary
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-5">
-                <p className="text-xs leading-relaxed text-zinc-600 dark:text-zinc-300 font-medium">
+                <p className="text-xs leading-relaxed text-foreground font-medium">
                   {employee.firstName} has consistently demonstrated strong project delivery outputs, achieving an average rating of 4.15/5.0. Their technical competency ranks in the top 15% of the company database.
                 </p>
-                <p className="text-xs leading-relaxed text-zinc-600 dark:text-zinc-300 font-medium">
-                  <strong>Risk Assessment:</strong> Attrition risk is classified as <span className="text-emerald-500 font-bold">Low (15%)</span>, supported by a healthy attendance record, high participation in technical skill upgrades, and consistent appraisals.
+                <p className="text-xs leading-relaxed text-foreground font-medium">
+                  <strong>Risk Assessment:</strong> Attrition risk is classified as <span className="text-emerald-450 font-bold">Low (15%)</span>, supported by a healthy attendance record, high participation in technical skill upgrades, and consistent appraisals.
                 </p>
 
-                <div className="grid grid-cols-2 gap-4 pt-2 border-t border-zinc-100 dark:border-zinc-800">
+                <div className="grid grid-cols-2 gap-4 pt-4 border-t border-border">
                   <div>
-                    <span className="text-xs text-zinc-400 block font-semibold">Retention Priority</span>
-                    <Badge variant="outline" className="mt-1 bg-emerald-500/10 text-emerald-500 border-emerald-500/20">Standard Support</Badge>
+                    <span className="text-[10px] text-muted-foreground block font-bold uppercase tracking-wider">Retention Priority</span>
+                    <Badge variant="outline" className="mt-1 bg-emerald-500/10 text-emerald-450 border-emerald-500/20 px-2 py-0.5 rounded-lg">Standard Support</Badge>
                   </div>
                   <div>
-                    <span className="text-xs text-zinc-400 block font-semibold">Leadership Fit Score</span>
-                    <span className="text-sm font-extrabold text-indigo-600 dark:text-indigo-400">88% (Excellent)</span>
+                    <span className="text-[10px] text-muted-foreground block font-bold uppercase tracking-wider">Leadership Fit Score</span>
+                    <span className="text-sm font-extrabold text-indigo-400 mt-1 block">88% (Excellent)</span>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
             {/* Competency Assessment Radar */}
-            <Card className="border-zinc-200/60 dark:border-zinc-800/80 bg-white dark:bg-[#0e1422]">
+            <Card className="border-border bg-card/60 backdrop-blur-md shadow-md rounded-2xl">
               <CardHeader>
-                <CardTitle className="text-sm font-bold uppercase tracking-wider text-zinc-800 dark:text-zinc-100">Competency Radar</CardTitle>
+                <CardTitle className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Competency Radar</CardTitle>
               </CardHeader>
               <CardContent className="h-[220px] flex items-center justify-center">
                 <ResponsiveContainer width="100%" height="100%">
                   <RadarChart cx="50%" cy="50%" outerRadius="75%" data={skillRadarData}>
-                    <PolarGrid stroke="rgba(255,255,255,0.05)" />
-                    <PolarAngleAxis dataKey="subject" stroke="#64748b" fontSize={9} />
-                    <PolarRadiusAxis angle={30} domain={[0, 100]} stroke="#64748b" fontSize={8} />
-                    <Radar name={employee.firstName} dataKey="A" stroke="#8b5cf6" fill="#8b5cf6" fillOpacity={0.3} />
+                    <PolarGrid stroke="var(--border)" />
+                    <PolarAngleAxis dataKey="subject" stroke="var(--muted-foreground)" fontSize={9} />
+                    <PolarRadiusAxis angle={30} domain={[0, 100]} stroke="var(--muted-foreground)" fontSize={8} />
+                    <Radar name={employee.firstName} dataKey="A" stroke="var(--primary)" fill="var(--primary)" fillOpacity={0.25} />
                   </RadarChart>
                 </ResponsiveContainer>
               </CardContent>
@@ -765,13 +782,13 @@ export default function EmployeeDetailsPage() {
 
         {/* Tab 6: Documents */}
         <TabsContent value="documents">
-          <Card>
+          <Card className="bg-card/60 backdrop-blur-md border border-border/80 shadow-md rounded-2xl">
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-lg flex items-center gap-2">
-                <FileText className="w-5 h-5 text-blue-600" /> Employee Attachments & Folders
+              <CardTitle className="text-lg font-bold flex items-center gap-2 text-foreground">
+                <FileText className="w-5 h-5 text-primary" /> Employee Attachments & Folders
               </CardTitle>
               {isHRorAdmin && (
-                <Button variant="outline" size="sm" className="gap-1" onClick={() => setActiveDialog('document')}>
+                <Button variant="outline" size="sm" className="gap-1.5 rounded-xl border-border/60 hover:bg-muted/60 text-xs font-semibold" onClick={() => setActiveDialog('document')}>
                   <FileUp className="w-4 h-4" /> Upload Document
                 </Button>
               )}
@@ -780,24 +797,24 @@ export default function EmployeeDetailsPage() {
               {employee.documents && employee.documents.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {employee.documents.map((doc, idx) => (
-                    <div key={idx} className="p-4 rounded-xl border border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-800/10 flex items-center justify-between">
+                    <div key={idx} className="p-4 rounded-xl border border-border/60 bg-muted/20 flex items-center justify-between">
                       <div className="flex items-center space-x-3">
-                        <div className="p-2.5 bg-red-50 dark:bg-red-950/30 text-red-600 rounded-lg">
+                        <div className="p-2.5 bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl shrink-0">
                           <FileText className="w-5 h-5" />
                         </div>
                         <div>
-                          <p className="text-sm font-semibold truncate max-w-[150px]" title={doc.fileName}>{doc.fileName}</p>
-                          <p className="text-xs text-zinc-400 capitalize">{doc.fileType} • {new Date(doc.uploadedAt).toLocaleDateString()}</p>
+                          <p className="text-sm font-semibold truncate max-w-[150px] text-foreground" title={doc.fileName}>{doc.fileName}</p>
+                          <p className="text-[10px] text-muted-foreground capitalize mt-0.5">{doc.fileType} • {new Date(doc.uploadedAt).toLocaleDateString()}</p>
                         </div>
                       </div>
                       <a href={doc.fileUrl} target="_blank" rel="noreferrer">
-                        <Button variant="ghost" size="sm" className="text-blue-600 font-medium">Download</Button>
+                        <Button variant="ghost" size="sm" className="text-primary hover:text-primary/95 text-xs font-bold rounded-xl hover:bg-primary/5 px-2.5">Download</Button>
                       </a>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-12 text-zinc-500 italic">
+                <div className="text-center py-12 text-muted-foreground italic text-sm">
                   No verified document copies (Offer letters, ID cards, degrees) uploaded.
                 </div>
               )}
@@ -805,38 +822,38 @@ export default function EmployeeDetailsPage() {
           </Card>
         </TabsContent>
 
-        {/* Tab 4: Career Timeline */}
+        {/* Tab 7: Career Timeline */}
         <TabsContent value="timeline">
-          <Card>
+          <Card className="bg-card/60 backdrop-blur-md border border-border/80 shadow-md rounded-2xl">
             <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Calendar className="w-5 h-5 text-blue-600" /> Employment Journey & Activity Log
+              <CardTitle className="text-lg font-bold flex items-center gap-2 text-foreground">
+                <Calendar className="w-5 h-5 text-primary" /> Employment Journey & Activity Log
               </CardTitle>
             </CardHeader>
             <CardContent>
               {timeline.length === 0 ? (
-                <p className="text-sm text-zinc-500 italic text-center py-6">No historical records available on the timeline.</p>
+                <p className="text-sm text-muted-foreground italic text-center py-8">No historical records available on the timeline.</p>
               ) : (
-                <div className="relative pl-6 border-l border-zinc-200 dark:border-zinc-800 space-y-6">
+                <div className="relative pl-6 border-l border-border/80 space-y-6 ml-3 py-2">
                   {timeline.map((act, idx) => (
                     <div key={act._id || idx} className="relative">
-                      <span className="absolute -left-[31px] top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900 ring-4 ring-white dark:ring-zinc-950 text-blue-600">
-                        <span className="h-1.5 w-1.5 rounded-full bg-blue-600" />
+                      <span className="absolute -left-[35px] top-1.5 flex h-4.5 w-4.5 items-center justify-center rounded-full bg-primary/10 border border-primary/20 text-primary ring-4 ring-background">
+                        <span className="h-1.5 w-1.5 rounded-full bg-primary" />
                       </span>
                       <div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs text-zinc-400 font-medium">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="text-[10px] text-muted-foreground font-semibold">
                             {new Date(act.createdAt).toLocaleDateString()}
                           </span>
-                          <Badge variant="outline" className="text-[10px] py-0">
+                          <Badge variant="outline" className="text-[9px] py-0 bg-muted/40 border-border text-foreground font-bold">
                             {act.activityType}
                           </Badge>
                         </div>
-                        <h4 className="font-semibold text-sm text-zinc-900 dark:text-zinc-100 mt-0.5">
+                        <h4 className="font-bold text-sm text-foreground mt-1">
                           {act.description}
                         </h4>
                         {act.notes && (
-                          <p className="text-xs text-zinc-500 dark:text-zinc-400 italic mt-0.5">
+                          <p className="text-xs text-muted-foreground italic mt-1 bg-muted/10 p-2.5 rounded-xl border border-border/30 max-w-2xl">
                             Reason: "{act.notes}"
                           </p>
                         )}
@@ -853,18 +870,18 @@ export default function EmployeeDetailsPage() {
       {/* Dialog Modals */}
       {/* 1. Add Skill */}
       <Dialog open={activeDialog === 'skill'} onOpenChange={(open) => !open && setActiveDialog('none')}>
-        <DialogContent>
+        <DialogContent className="bg-card border border-border rounded-2xl max-w-md p-6">
           <DialogHeader>
-            <DialogTitle>Add Technical Skill</DialogTitle>
+            <DialogTitle className="text-lg font-bold text-foreground">Add Technical Skill</DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleAddSkill} className="space-y-4">
+          <form onSubmit={handleAddSkill} className="space-y-5 mt-4">
             <div className="space-y-2">
-              <label className="text-sm font-semibold">Skill Name</label>
-              <Input placeholder="e.g. Node.js, AWS, React" value={newSkill} onChange={(e) => setNewSkill(e.target.value)} />
+              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">Skill Name</label>
+              <Input placeholder="e.g. Node.js, AWS, React" value={newSkill} onChange={(e) => setNewSkill(e.target.value)} className="rounded-xl" />
             </div>
-            <div className="flex justify-end gap-2">
-              <Button type="button" variant="outline" onClick={() => setActiveDialog('none')}>Cancel</Button>
-              <Button type="submit" className="bg-blue-600 text-white hover:bg-blue-700">Add Skill</Button>
+            <div className="flex justify-end gap-2.5 pt-2">
+              <Button type="button" variant="outline" onClick={() => setActiveDialog('none')} className="rounded-xl border-border/60 hover:bg-muted text-xs font-semibold">Cancel</Button>
+              <Button type="submit" className="bg-primary text-white hover:bg-primary/95 rounded-xl text-xs font-semibold">Add Skill</Button>
             </div>
           </form>
         </DialogContent>
@@ -872,30 +889,30 @@ export default function EmployeeDetailsPage() {
 
       {/* 2. Add Education */}
       <Dialog open={activeDialog === 'education'} onOpenChange={(open) => !open && setActiveDialog('none')}>
-        <DialogContent>
+        <DialogContent className="bg-card border border-border rounded-2xl max-w-md p-6">
           <DialogHeader>
-            <DialogTitle>Add Academic Qualification</DialogTitle>
+            <DialogTitle className="text-lg font-bold text-foreground">Add Academic Qualification</DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleAddEdu} className="space-y-4">
+          <form onSubmit={handleAddEdu} className="space-y-5 mt-4">
             <div className="space-y-2">
-              <label className="text-sm font-semibold">Degree / Certificate</label>
-              <Input placeholder="e.g. Bachelor of Technology" value={eduDegree} onChange={(e) => setEduDegree(e.target.value)} />
+              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">Degree / Certificate</label>
+              <Input placeholder="e.g. Bachelor of Technology" value={eduDegree} onChange={(e) => setEduDegree(e.target.value)} className="rounded-xl" />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-semibold">Field of Study</label>
-              <Input placeholder="e.g. Computer Science & Engineering" value={eduField} onChange={(e) => setEduField(e.target.value)} />
+              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">Field of Study</label>
+              <Input placeholder="e.g. Computer Science & Engineering" value={eduField} onChange={(e) => setEduField(e.target.value)} className="rounded-xl" />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-semibold">Institution / University</label>
-              <Input placeholder="e.g. Stanford University" value={eduInst} onChange={(e) => setEduInst(e.target.value)} />
+              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">Institution / University</label>
+              <Input placeholder="e.g. Stanford University" value={eduInst} onChange={(e) => setEduInst(e.target.value)} className="rounded-xl" />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-semibold">Graduation Year</label>
-              <Input type="number" value={eduYear} onChange={(e) => setEduYear(parseInt(e.target.value))} />
+              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">Graduation Year</label>
+              <Input type="number" value={eduYear} onChange={(e) => setEduYear(parseInt(e.target.value))} className="rounded-xl" />
             </div>
-            <div className="flex justify-end gap-2">
-              <Button type="button" variant="outline" onClick={() => setActiveDialog('none')}>Cancel</Button>
-              <Button type="submit" className="bg-blue-600 text-white hover:bg-blue-700">Add</Button>
+            <div className="flex justify-end gap-2.5 pt-2">
+              <Button type="button" variant="outline" onClick={() => setActiveDialog('none')} className="rounded-xl border-border/60 hover:bg-muted text-xs font-semibold">Cancel</Button>
+              <Button type="submit" className="bg-primary text-white hover:bg-primary/95 rounded-xl text-xs font-semibold">Add</Button>
             </div>
           </form>
         </DialogContent>
@@ -903,36 +920,36 @@ export default function EmployeeDetailsPage() {
 
       {/* 3. Add Certification */}
       <Dialog open={activeDialog === 'certification'} onOpenChange={(open) => !open && setActiveDialog('none')}>
-        <DialogContent>
+        <DialogContent className="bg-card border border-border rounded-2xl max-w-md p-6">
           <DialogHeader>
-            <DialogTitle>Add Certification</DialogTitle>
+            <DialogTitle className="text-lg font-bold text-foreground">Add Certification</DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleAddCert} className="space-y-4">
+          <form onSubmit={handleAddCert} className="space-y-5 mt-4">
             <div className="space-y-2">
-              <label className="text-sm font-semibold">Certification Name</label>
-              <Input placeholder="e.g. AWS Certified Solutions Architect" value={certName} onChange={(e) => setCertName(e.target.value)} />
+              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">Certification Name</label>
+              <Input placeholder="e.g. AWS Certified Solutions Architect" value={certName} onChange={(e) => setCertName(e.target.value)} className="rounded-xl" />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-semibold">Issuer</label>
-              <Input placeholder="e.g. Amazon Web Services" value={certIssuer} onChange={(e) => setCertIssuer(e.target.value)} />
+              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">Issuer</label>
+              <Input placeholder="e.g. Amazon Web Services" value={certIssuer} onChange={(e) => setCertIssuer(e.target.value)} className="rounded-xl" />
             </div>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
-                <label className="text-sm font-semibold">Issue Date</label>
-                <Input type="date" value={certIssueDate} onChange={(e) => setCertIssueDate(e.target.value)} />
+                <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">Issue Date</label>
+                <Input type="date" value={certIssueDate} onChange={(e) => setCertIssueDate(e.target.value)} className="rounded-xl cursor-pointer" />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-semibold">Expiry Date (Optional)</label>
-                <Input type="date" value={certExpiryDate} onChange={(e) => setCertExpiryDate(e.target.value)} />
+                <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">Expiry Date (Optional)</label>
+                <Input type="date" value={certExpiryDate} onChange={(e) => setCertExpiryDate(e.target.value)} className="rounded-xl cursor-pointer" />
               </div>
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-semibold">Credential URL</label>
-              <Input placeholder="e.g. https://creds.com/id" value={certUrl} onChange={(e) => setCertUrl(e.target.value)} />
+              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">Credential URL</label>
+              <Input placeholder="e.g. https://creds.com/id" value={certUrl} onChange={(e) => setCertUrl(e.target.value)} className="rounded-xl" />
             </div>
-            <div className="flex justify-end gap-2">
-              <Button type="button" variant="outline" onClick={() => setActiveDialog('none')}>Cancel</Button>
-              <Button type="submit" className="bg-blue-600 text-white hover:bg-blue-700">Add</Button>
+            <div className="flex justify-end gap-2.5 pt-2">
+              <Button type="button" variant="outline" onClick={() => setActiveDialog('none')} className="rounded-xl border-border/60 hover:bg-muted text-xs font-semibold">Cancel</Button>
+              <Button type="submit" className="bg-primary text-white hover:bg-primary/95 rounded-xl text-xs font-semibold">Add</Button>
             </div>
           </form>
         </DialogContent>
@@ -940,21 +957,21 @@ export default function EmployeeDetailsPage() {
 
       {/* 4. Upload Document */}
       <Dialog open={activeDialog === 'document'} onOpenChange={(open) => !open && setActiveDialog('none')}>
-        <DialogContent>
+        <DialogContent className="bg-card border border-border rounded-2xl max-w-md p-6">
           <DialogHeader>
-            <DialogTitle>Upload Document Attachment</DialogTitle>
+            <DialogTitle className="text-lg font-bold text-foreground">Upload Document Attachment</DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleAddDoc} className="space-y-4">
+          <form onSubmit={handleAddDoc} className="space-y-5 mt-4">
             <div className="space-y-2">
-              <label className="text-sm font-semibold">File Name</label>
-              <Input placeholder="e.g. Offer_Letter_Signed.pdf" value={docName} onChange={(e) => setDocName(e.target.value)} />
+              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">File Name</label>
+              <Input placeholder="e.g. Offer_Letter_Signed.pdf" value={docName} onChange={(e) => setDocName(e.target.value)} className="rounded-xl" />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-semibold">Document Type</label>
+              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">Document Type</label>
               <select
                 value={docType}
                 onChange={(e) => setDocType(e.target.value as any)}
-                className="w-full h-10 px-3 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-transparent text-sm focus:outline-none"
+                className="w-full h-10 px-3 rounded-xl border border-border bg-muted/40 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 text-foreground cursor-pointer transition-all"
               >
                 <option value="pdf">PDF Copy</option>
                 <option value="docx">Word Doc</option>
@@ -963,12 +980,12 @@ export default function EmployeeDetailsPage() {
               </select>
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-semibold">File URL (Hosted/Mock)</label>
-              <Input placeholder="https://..." value={docUrl} onChange={(e) => setDocUrl(e.target.value)} />
+              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">File URL (Hosted/Mock)</label>
+              <Input placeholder="https://..." value={docUrl} onChange={(e) => setDocUrl(e.target.value)} className="rounded-xl" />
             </div>
-            <div className="flex justify-end gap-2">
-              <Button type="button" variant="outline" onClick={() => setActiveDialog('none')}>Cancel</Button>
-              <Button type="submit" className="bg-blue-600 text-white hover:bg-blue-700">Upload</Button>
+            <div className="flex justify-end gap-2.5 pt-2">
+              <Button type="button" variant="outline" onClick={() => setActiveDialog('none')} className="rounded-xl border-border/60 hover:bg-muted text-xs font-semibold">Cancel</Button>
+              <Button type="submit" className="bg-primary text-white hover:bg-primary/95 rounded-xl text-xs font-semibold">Upload</Button>
             </div>
           </form>
         </DialogContent>
@@ -976,17 +993,17 @@ export default function EmployeeDetailsPage() {
 
       {/* 5. Process Promotion */}
       <Dialog open={activeDialog === 'promote'} onOpenChange={(open) => !open && setActiveDialog('none')}>
-        <DialogContent>
+        <DialogContent className="bg-card border border-border rounded-2xl max-w-md p-6">
           <DialogHeader>
-            <DialogTitle>Process Promotion</DialogTitle>
+            <DialogTitle className="text-lg font-bold text-foreground">Process Promotion</DialogTitle>
           </DialogHeader>
-          <form onSubmit={handlePromote} className="space-y-4">
+          <form onSubmit={handlePromote} className="space-y-5 mt-4">
             <div className="space-y-2">
-              <label className="text-sm font-semibold">New Designation <span className="text-red-500">*</span></label>
+              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">New Designation <span className="text-destructive">*</span></label>
               <select
                 value={promoDesg}
                 onChange={(e) => setPromoDesg(e.target.value)}
-                className="w-full h-10 px-3 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-transparent text-sm"
+                className="w-full h-10 px-3 rounded-xl border border-border bg-muted/40 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 text-foreground cursor-pointer transition-all"
               >
                 <option value="">Select Designation...</option>
                 {designations.map((d) => (
@@ -995,11 +1012,11 @@ export default function EmployeeDetailsPage() {
               </select>
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-semibold">Change Department (Optional)</label>
+              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">Change Department (Optional)</label>
               <select
                 value={promoDept}
                 onChange={(e) => setPromoDept(e.target.value)}
-                className="w-full h-10 px-3 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-transparent text-sm"
+                className="w-full h-10 px-3 rounded-xl border border-border bg-muted/40 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 text-foreground cursor-pointer transition-all"
               >
                 <option value="">Keep current department</option>
                 {departments.map((d) => (
@@ -1008,16 +1025,16 @@ export default function EmployeeDetailsPage() {
               </select>
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-semibold">New Salary Grade / Code (Optional)</label>
-              <Input placeholder="e.g. Grade L5" value={promoSalary} onChange={(e) => setPromoSalary(e.target.value)} />
+              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">New Salary Grade / Code (Optional)</label>
+              <Input placeholder="e.g. Grade L5" value={promoSalary} onChange={(e) => setPromoSalary(e.target.value)} className="rounded-xl" />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-semibold">Effective Date</label>
-              <Input type="date" value={promoDate} onChange={(e) => setPromoDate(e.target.value)} />
+              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">Effective Date</label>
+              <Input type="date" value={promoDate} onChange={(e) => setPromoDate(e.target.value)} className="rounded-xl cursor-pointer" />
             </div>
-            <div className="flex justify-end gap-2">
-              <Button type="button" variant="outline" onClick={() => setActiveDialog('none')}>Cancel</Button>
-              <Button type="submit" className="bg-blue-600 text-white hover:bg-blue-700">Approve Promotion</Button>
+            <div className="flex justify-end gap-2.5 pt-2">
+              <Button type="button" variant="outline" onClick={() => setActiveDialog('none')} className="rounded-xl border-border/60 hover:bg-muted text-xs font-semibold">Cancel</Button>
+              <Button type="submit" className="bg-primary text-white hover:bg-primary/95 rounded-xl text-xs font-semibold">Approve Promotion</Button>
             </div>
           </form>
         </DialogContent>
@@ -1025,17 +1042,17 @@ export default function EmployeeDetailsPage() {
 
       {/* 6. Process Transfer */}
       <Dialog open={activeDialog === 'transfer'} onOpenChange={(open) => !open && setActiveDialog('none')}>
-        <DialogContent>
+        <DialogContent className="bg-card border border-border rounded-2xl max-w-md p-6">
           <DialogHeader>
-            <DialogTitle>Process Department Transfer</DialogTitle>
+            <DialogTitle className="text-lg font-bold text-foreground">Process Department Transfer</DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleTransfer} className="space-y-4">
+          <form onSubmit={handleTransfer} className="space-y-5 mt-4">
             <div className="space-y-2">
-              <label className="text-sm font-semibold">New Department <span className="text-red-500">*</span></label>
+              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">New Department <span className="text-destructive">*</span></label>
               <select
                 value={transDept}
                 onChange={(e) => setTransDept(e.target.value)}
-                className="w-full h-10 px-3 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-transparent text-sm"
+                className="w-full h-10 px-3 rounded-xl border border-border bg-muted/40 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 text-foreground cursor-pointer transition-all"
               >
                 <option value="">Select Department...</option>
                 {departments.map((d) => (
@@ -1044,11 +1061,11 @@ export default function EmployeeDetailsPage() {
               </select>
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-semibold">Change Designation (Optional)</label>
+              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">Change Designation (Optional)</label>
               <select
                 value={transDesg}
                 onChange={(e) => setTransDesg(e.target.value)}
-                className="w-full h-10 px-3 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-transparent text-sm"
+                className="w-full h-10 px-3 rounded-xl border border-border bg-muted/40 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 text-foreground cursor-pointer transition-all"
               >
                 <option value="">Keep current designation</option>
                 {designations.map((d) => (
@@ -1057,12 +1074,12 @@ export default function EmployeeDetailsPage() {
               </select>
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-semibold">Transfer Date</label>
-              <Input type="date" value={transDate} onChange={(e) => setTransDate(e.target.value)} />
+              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">Transfer Date</label>
+              <Input type="date" value={transDate} onChange={(e) => setTransDate(e.target.value)} className="rounded-xl cursor-pointer" />
             </div>
-            <div className="flex justify-end gap-2">
-              <Button type="button" variant="outline" onClick={() => setActiveDialog('none')}>Cancel</Button>
-              <Button type="submit" className="bg-blue-600 text-white hover:bg-blue-700">Approve Transfer</Button>
+            <div className="flex justify-end gap-2.5 pt-2">
+              <Button type="button" variant="outline" onClick={() => setActiveDialog('none')} className="rounded-xl border-border/60 hover:bg-muted text-xs font-semibold">Cancel</Button>
+              <Button type="submit" className="bg-primary text-white hover:bg-primary/95 rounded-xl text-xs font-semibold">Approve Transfer</Button>
             </div>
           </form>
         </DialogContent>
@@ -1070,17 +1087,17 @@ export default function EmployeeDetailsPage() {
 
       {/* 7. Change Status */}
       <Dialog open={activeDialog === 'status'} onOpenChange={(open) => !open && setActiveDialog('none')}>
-        <DialogContent>
+        <DialogContent className="bg-card border border-border rounded-2xl max-w-md p-6">
           <DialogHeader>
-            <DialogTitle>Change Employment Status</DialogTitle>
+            <DialogTitle className="text-lg font-bold text-foreground">Change Employment Status</DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleStatusChange} className="space-y-4">
+          <form onSubmit={handleStatusChange} className="space-y-5 mt-4">
             <div className="space-y-2">
-              <label className="text-sm font-semibold">Employment Status <span className="text-red-500">*</span></label>
+              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">Employment Status <span className="text-destructive">*</span></label>
               <select
                 value={statusVal}
                 onChange={(e) => setStatusVal(e.target.value)}
-                className="w-full h-10 px-3 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-transparent text-sm"
+                className="w-full h-10 px-3 rounded-xl border border-border bg-muted/40 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 text-foreground cursor-pointer transition-all"
               >
                 <option value="ACTIVE">ACTIVE</option>
                 <option value="ON_LEAVE">ON LEAVE</option>
@@ -1089,16 +1106,16 @@ export default function EmployeeDetailsPage() {
               </select>
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-semibold">Reason for Change (Optional)</label>
-              <Input placeholder="e.g. Parental leave, voluntary separation" value={statusReason} onChange={(e) => setStatusReason(e.target.value)} />
+              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">Reason for Change (Optional)</label>
+              <Input placeholder="e.g. Parental leave, voluntary separation" value={statusReason} onChange={(e) => setStatusReason(e.target.value)} className="rounded-xl" />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-semibold">Effective Date</label>
-              <Input type="date" value={statusDate} onChange={(e) => setStatusDate(e.target.value)} />
+              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">Effective Date</label>
+              <Input type="date" value={statusDate} onChange={(e) => setStatusDate(e.target.value)} className="rounded-xl cursor-pointer" />
             </div>
-            <div className="flex justify-end gap-2">
-              <Button type="button" variant="outline" onClick={() => setActiveDialog('none')}>Cancel</Button>
-              <Button type="submit" className="bg-blue-600 text-white hover:bg-blue-700">Confirm Change</Button>
+            <div className="flex justify-end gap-2.5 pt-2">
+              <Button type="button" variant="outline" onClick={() => setActiveDialog('none')} className="rounded-xl border-border/60 hover:bg-muted text-xs font-semibold">Cancel</Button>
+              <Button type="submit" className="bg-primary text-white hover:bg-primary/95 rounded-xl text-xs font-semibold">Confirm Change</Button>
             </div>
           </form>
         </DialogContent>

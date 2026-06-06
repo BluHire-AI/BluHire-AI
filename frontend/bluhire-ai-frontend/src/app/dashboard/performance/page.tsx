@@ -147,9 +147,17 @@ export default function PerformanceDashboard() {
   const [learningPlanLoading, setLearningPlanLoading] = useState(false);
 
 
-  // Set default tab if employee
+  // Set default tab if employee or query param tab is provided
   useEffect(() => {
-    if (isEmployee) {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const tabParam = params.get('tab');
+      if (tabParam && ['overview', 'reviews', 'goals', 'skills', 'promotions', 'analytics'].includes(tabParam)) {
+        setActiveTab(tabParam);
+      } else if (isEmployee) {
+        setActiveTab('goals');
+      }
+    } else if (isEmployee) {
       setActiveTab('goals');
     }
   }, [user]);
@@ -487,7 +495,7 @@ export default function PerformanceDashboard() {
   };
 
   // Color mappings
-  const COLORS = ['#6366F1', '#10B981', '#F59E0B', '#EF4444'];
+  const COLORS = ['#8B5CF6', '#10B981', '#F59E0B', '#EF4444'];
   const PRIORITY_COLORS: any = {
     HIGH: 'bg-red-500/10 text-red-500 border-red-500/20',
     MEDIUM: 'bg-amber-500/10 text-amber-500 border-amber-500/20',
@@ -495,24 +503,24 @@ export default function PerformanceDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 p-6 space-y-6">
+    <div className="min-h-screen bg-transparent text-foreground p-6 space-y-6">
       {/* Premium Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-slate-900/40 border border-slate-800/60 rounded-2xl p-6 backdrop-blur-xl gap-4">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center glass bg-card/40 border border-border rounded-2xl p-6 glow-primary/5 gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-indigo-400 via-sky-400 to-emerald-400 bg-clip-text text-transparent">
+          <h1 className="text-h1 bg-gradient-to-r from-primary via-purple-400 to-success bg-clip-text text-transparent">
             Continuous AI Performance Coach
           </h1>
-          <p className="text-slate-400 mt-1">
+          <p className="text-body-copy text-muted-foreground mt-1">
             Evaluate workforce milestones, skill gap intelligence, and AI-driven promotion readiness.
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <span className="px-3 py-1 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 rounded-full text-xs font-semibold">
+          <span className="px-3 py-1 bg-primary/10 text-primary border border-primary/20 rounded-full text-small-label font-semibold">
             {user?.role?.replace('_', ' ')}
           </span>
           <button
             onClick={fetchTabData}
-            className="p-2 bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700/50 rounded-xl transition text-slate-300"
+            className="p-2 bg-muted hover:bg-muted/85 border border-border rounded-xl transition text-foreground cursor-pointer"
           >
             <RefreshCw className="h-4 w-4" />
           </button>
@@ -520,14 +528,14 @@ export default function PerformanceDashboard() {
       </div>
 
       {/* Tabs Menu */}
-      <div className="flex border-b border-slate-800 overflow-x-auto gap-2">
+      <div className="flex border-b border-border overflow-x-auto gap-2">
         {!isEmployee && (
           <button
             onClick={() => setActiveTab('overview')}
-            className={`py-3 px-6 font-medium text-sm transition-all border-b-2 whitespace-nowrap ${
+            className={`py-3 px-6 font-medium text-sm transition-all border-b-2 whitespace-nowrap cursor-pointer ${
               activeTab === 'overview'
-                ? 'border-indigo-500 text-indigo-400 font-semibold'
-                : 'border-transparent text-slate-400 hover:text-slate-200'
+                ? 'border-primary text-primary font-semibold'
+                : 'border-transparent text-muted-foreground hover:text-foreground'
             }`}
           >
             Overview
@@ -535,30 +543,30 @@ export default function PerformanceDashboard() {
         )}
         <button
           onClick={() => setActiveTab('reviews')}
-          className={`py-3 px-6 font-medium text-sm transition-all border-b-2 whitespace-nowrap ${
+          className={`py-3 px-6 font-medium text-sm transition-all border-b-2 whitespace-nowrap cursor-pointer ${
             activeTab === 'reviews'
-              ? 'border-indigo-500 text-indigo-400 font-semibold'
-              : 'border-transparent text-slate-400 hover:text-slate-200'
+              ? 'border-primary text-primary font-semibold'
+              : 'border-transparent text-muted-foreground hover:text-foreground'
           }`}
         >
           Performance Reviews
         </button>
         <button
           onClick={() => setActiveTab('goals')}
-          className={`py-3 px-6 font-medium text-sm transition-all border-b-2 whitespace-nowrap ${
+          className={`py-3 px-6 font-medium text-sm transition-all border-b-2 whitespace-nowrap cursor-pointer ${
             activeTab === 'goals'
-              ? 'border-indigo-500 text-indigo-400 font-semibold'
-              : 'border-transparent text-slate-400 hover:text-slate-200'
+              ? 'border-primary text-primary font-semibold'
+              : 'border-transparent text-muted-foreground hover:text-foreground'
           }`}
         >
           Goals Kanban
         </button>
         <button
           onClick={() => setActiveTab('skills')}
-          className={`py-3 px-6 font-medium text-sm transition-all border-b-2 whitespace-nowrap ${
+          className={`py-3 px-6 font-medium text-sm transition-all border-b-2 whitespace-nowrap cursor-pointer ${
             activeTab === 'skills'
-              ? 'border-indigo-500 text-indigo-400 font-semibold'
-              : 'border-transparent text-slate-400 hover:text-slate-200'
+              ? 'border-primary text-primary font-semibold'
+              : 'border-transparent text-muted-foreground hover:text-foreground'
           }`}
         >
           Skill Assessments
@@ -566,10 +574,10 @@ export default function PerformanceDashboard() {
         {!isEmployee && (
           <button
             onClick={() => setActiveTab('promotions')}
-            className={`py-3 px-6 font-medium text-sm transition-all border-b-2 whitespace-nowrap ${
+            className={`py-3 px-6 font-medium text-sm transition-all border-b-2 whitespace-nowrap cursor-pointer ${
               activeTab === 'promotions'
-                ? 'border-indigo-500 text-indigo-400 font-semibold'
-                : 'border-transparent text-slate-400 hover:text-slate-200'
+                ? 'border-primary text-primary font-semibold'
+                : 'border-transparent text-muted-foreground hover:text-foreground'
             }`}
           >
             Promotion Readiness
@@ -578,10 +586,10 @@ export default function PerformanceDashboard() {
         {!isEmployee && (
           <button
             onClick={() => setActiveTab('analytics')}
-            className={`py-3 px-6 font-medium text-sm transition-all border-b-2 whitespace-nowrap ${
+            className={`py-3 px-6 font-medium text-sm transition-all border-b-2 whitespace-nowrap cursor-pointer ${
               activeTab === 'analytics'
-                ? 'border-indigo-500 text-indigo-400 font-semibold'
-                : 'border-transparent text-slate-400 hover:text-slate-200'
+                ? 'border-primary text-primary font-semibold'
+                : 'border-transparent text-muted-foreground hover:text-foreground'
             }`}
           >
             Talent Analytics
@@ -592,8 +600,8 @@ export default function PerformanceDashboard() {
       {/* Loading overlay */}
       {loading && (
         <div className="flex justify-center items-center py-16 space-x-2">
-          <RefreshCw className="animate-spin text-indigo-400" />
-          <span className="text-slate-400">Loading continuous evaluations...</span>
+          <RefreshCw className="animate-spin text-primary" />
+          <span className="text-muted-foreground">Loading continuous evaluations...</span>
         </div>
       )}
 
@@ -603,51 +611,51 @@ export default function PerformanceDashboard() {
           {/* 1. OVERVIEW TAB */}
           {activeTab === 'overview' && !isEmployee && (
             <div className="space-y-6 animate-fadeIn">
-              {/* Executive Cards Grid */}
+               {/* Executive Cards Grid */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-6 relative overflow-hidden group hover:border-slate-700/80 transition-all">
+                <div className="glass bg-card/65 border border-border rounded-2xl p-6 relative overflow-hidden group hover:border-primary/20 transition-all shadow-xl">
                   <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform">
-                    <Award className="h-16 w-16 text-indigo-400" />
+                    <Award className="h-16 w-16 text-primary" />
                   </div>
-                  <p className="text-slate-400 text-sm font-medium">Avg Review Score</p>
-                  <p className="text-4xl font-extrabold text-indigo-400 mt-2">{overview.overallAvgScore}/100</p>
-                  <div className="flex items-center text-xs mt-3 text-emerald-500 font-medium">
+                  <p className="text-small-label text-muted-foreground">Avg Review Score</p>
+                  <p className="text-kpi text-primary mt-2">{overview.overallAvgScore}/100</p>
+                  <div className="flex items-center text-small-label mt-3 text-success normal-case font-medium">
                     <TrendingUp className="h-3 w-3 mr-1" />
                     <span>Submitted reviews</span>
                   </div>
                 </div>
 
-                <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-6 relative overflow-hidden group hover:border-slate-700/80 transition-all">
+                <div className="glass bg-card/65 border border-border rounded-2xl p-6 relative overflow-hidden group hover:border-primary/20 transition-all shadow-xl">
                   <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform">
-                    <Brain className="h-16 w-16 text-emerald-400" />
+                    <Brain className="h-16 w-16 text-success" />
                   </div>
-                  <p className="text-slate-400 text-sm font-medium">Promotion Candidates</p>
-                  <p className="text-4xl font-extrabold text-emerald-400 mt-2">{overview.promotionReadyCount}</p>
-                  <div className="flex items-center text-xs mt-3 text-emerald-400/80 font-medium">
+                  <p className="text-small-label text-muted-foreground">Promotion Candidates</p>
+                  <p className="text-kpi text-success mt-2">{overview.promotionReadyCount}</p>
+                  <div className="flex items-center text-small-label mt-3 text-success/80 normal-case font-medium">
                     <Zap className="h-3 w-3 mr-1" />
                     <span>ReadinessScore &ge; 90</span>
                   </div>
                 </div>
 
-                <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-6 relative overflow-hidden group hover:border-slate-700/80 transition-all">
+                <div className="glass bg-card/65 border border-border rounded-2xl p-6 relative overflow-hidden group hover:border-primary/20 transition-all shadow-xl">
                   <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform">
-                    <ListTodo className="h-16 w-16 text-amber-400" />
+                    <ListTodo className="h-16 w-16 text-warning" />
                   </div>
-                  <p className="text-slate-400 text-sm font-medium">Goal Completion Rate</p>
-                  <p className="text-4xl font-extrabold text-amber-400 mt-2">{overview.goalCompletionRate}%</p>
-                  <div className="flex items-center text-xs mt-3 text-amber-400/80 font-medium">
+                  <p className="text-small-label text-muted-foreground">Goal Completion Rate</p>
+                  <p className="text-kpi text-warning mt-2">{overview.goalCompletionRate}%</p>
+                  <div className="flex items-center text-small-label mt-3 text-warning/80 normal-case font-medium">
                     <CheckCircle2 className="h-3 w-3 mr-1" />
                     <span>Completed objectives</span>
                   </div>
                 </div>
 
-                <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-6 relative overflow-hidden group hover:border-slate-700/80 transition-all">
+                <div className="glass bg-card/65 border border-border rounded-2xl p-6 relative overflow-hidden group hover:border-primary/20 transition-all shadow-xl">
                   <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform">
-                    <Clock className="h-16 w-16 text-sky-400" />
+                    <Clock className="h-16 w-16 text-accent" />
                   </div>
-                  <p className="text-slate-400 text-sm font-medium">Review Submission Rate</p>
-                  <p className="text-4xl font-extrabold text-sky-400 mt-2">{overview.reviewCompletionRate}%</p>
-                  <div className="flex items-center text-xs mt-3 text-sky-400/80 font-medium">
+                  <p className="text-small-label text-muted-foreground">Review Submission Rate</p>
+                  <p className="text-kpi text-accent mt-2">{overview.reviewCompletionRate}%</p>
+                  <div className="flex items-center text-small-label mt-3 text-accent/80 normal-case font-medium">
                     <FileText className="h-3 w-3 mr-1" />
                     <span>Submitted / drafts</span>
                   </div>
@@ -655,49 +663,49 @@ export default function PerformanceDashboard() {
               </div>
 
               {/* High Risk Employees Widget */}
-              <div className="bg-slate-900/40 border border-slate-800/60 rounded-2xl p-6 space-y-4">
-                <div className="flex justify-between items-center border-b border-slate-800/80 pb-4">
+              <div className="glass bg-card/40 border border-border rounded-2xl p-6 space-y-4">
+                <div className="flex justify-between items-center border-b border-border pb-4">
                   <div className="flex items-center gap-2">
-                    <ShieldAlert className="h-5 w-5 text-red-500" />
-                    <h3 className="text-lg font-bold text-slate-200">High Performance Risk Intel Log</h3>
+                    <ShieldAlert className="h-5 w-5 text-destructive" />
+                    <h3 className="text-h2 text-foreground">High Performance Risk Intel Log</h3>
                   </div>
-                  <span className="text-xs bg-red-500/10 text-red-400 border border-red-500/20 px-2.5 py-1 rounded-full font-semibold">
+                  <span className="text-xs bg-destructive/10 text-destructive border border-destructive/20 px-2.5 py-1 rounded-full font-semibold">
                     {highRisks.length} Alerts Active
                   </span>
                 </div>
                 {highRisks.length === 0 ? (
-                  <div className="text-center text-slate-500 py-6 text-sm">
+                  <div className="text-center text-muted-foreground py-6 text-sm">
                     No active high-risk performance alerts. All tracked team members are meeting goals and review targets.
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {highRisks.map((item, idx) => (
-                      <div key={idx} className="bg-slate-950/80 border border-slate-850 p-4 rounded-xl space-y-3 relative overflow-hidden group hover:border-red-500/20 transition-all">
+                      <div key={idx} className="bg-muted/30 border border-border p-4 rounded-xl space-y-3 relative overflow-hidden group hover:border-destructive/20 transition-all">
                         <div className="flex justify-between items-start">
                           <div>
-                            <h4 className="font-bold text-slate-200 text-sm">{item.employee?.firstName} {item.employee?.lastName}</h4>
-                            <p className="text-[11px] text-slate-500">{item.employee?.employeeCode}</p>
+                            <h4 className="font-bold text-foreground text-sm">{item.employee?.firstName} {item.employee?.lastName}</h4>
+                            <p className="text-[11px] text-muted-foreground">{item.employee?.employeeCode}</p>
                           </div>
                           <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${
                             item.riskLevel === 'HIGH' 
-                              ? 'bg-red-500/10 text-red-400 border-red-500/20' 
-                              : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                              ? 'bg-destructive/10 text-destructive border-destructive/20' 
+                              : 'bg-warning/10 text-warning border-warning/20'
                           }`}>
                             Risk Score: {item.riskScore}
                           </span>
                         </div>
                         
                         <div className="space-y-1">
-                          <p className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">Risk Factors:</p>
-                          <ul className="list-disc list-inside text-[11px] text-slate-400 space-y-0.5 animate-fadeIn">
+                          <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Risk Factors:</p>
+                          <ul className="list-disc list-inside text-[11px] text-muted-foreground space-y-0.5 animate-fadeIn">
                             {item.reasons?.map((reason: string, rIdx: number) => (
                               <li key={rIdx} className="line-clamp-1">{reason}</li>
                             ))}
                           </ul>
                         </div>
                         
-                        <div className="bg-red-500/5 border border-red-500/10 p-2.5 rounded-lg">
-                          <p className="text-[10px] text-red-400 font-medium leading-relaxed">{item.recommendation}</p>
+                        <div className="bg-destructive/5 border border-destructive/10 p-2.5 rounded-lg">
+                          <p className="text-[10px] text-destructive font-medium leading-relaxed">{item.recommendation}</p>
                         </div>
                       </div>
                     ))}
@@ -708,29 +716,29 @@ export default function PerformanceDashboard() {
               {/* Leaderboards and Rankings */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Top Performers */}
-                <div className="bg-slate-900/40 border border-slate-800/60 rounded-2xl p-6 space-y-4">
-                  <div className="flex justify-between items-center border-b border-slate-800/80 pb-4">
-                    <h3 className="text-lg font-bold text-slate-200">Top Talent Leaderboard</h3>
-                    <Award className="h-5 w-5 text-indigo-400" />
+                <div className="glass bg-card/40 border border-border rounded-2xl p-6 space-y-4">
+                  <div className="flex justify-between items-center border-b border-border pb-4">
+                    <h3 className="text-h2 text-foreground">Top Talent Leaderboard</h3>
+                    <Award className="h-5 w-5 text-primary" />
                   </div>
                   {topPerformers.length === 0 ? (
-                    <div className="text-center text-slate-500 py-8">No high-performing reviews submitted yet.</div>
+                    <div className="text-center text-muted-foreground py-8">No high-performing reviews submitted yet.</div>
                   ) : (
                     <div className="space-y-3 max-h-[350px] overflow-y-auto pr-2">
                       {topPerformers.map((item, idx) => (
-                        <div key={item._id} className="flex justify-between items-center bg-slate-900/80 border border-slate-800/50 p-4 rounded-xl">
+                        <div key={item._id} className="flex justify-between items-center bg-muted/40 border border-border p-4 rounded-xl">
                           <div className="flex items-center gap-3">
-                            <span className="w-6 h-6 flex items-center justify-center bg-indigo-500/10 text-indigo-400 font-bold text-xs rounded-full">
+                            <span className="w-6 h-6 flex items-center justify-center bg-primary/10 text-primary font-bold text-xs rounded-full">
                               {idx + 1}
                             </span>
                             <div>
-                              <p className="font-semibold text-slate-200">
+                              <p className="font-semibold text-foreground">
                                 {item.employee?.firstName} {item.employee?.lastName}
                               </p>
-                              <p className="text-xs text-slate-400">{item.designationName || 'Staff'} - {item.departmentName}</p>
+                              <p className="text-xs text-muted-foreground">{item.designationName || 'Staff'} - {item.departmentName}</p>
                             </div>
                           </div>
-                          <span className="text-indigo-400 font-bold bg-indigo-500/10 px-3 py-1 rounded-lg text-sm border border-indigo-500/20">
+                          <span className="text-primary font-bold bg-primary/10 px-3 py-1 rounded-lg text-sm border border-primary/20">
                             {item.overallScore}%
                           </span>
                         </div>
@@ -740,29 +748,29 @@ export default function PerformanceDashboard() {
                 </div>
 
                 {/* Manager Effectiveness */}
-                <div className="bg-slate-900/40 border border-slate-800/60 rounded-2xl p-6 space-y-4">
-                  <div className="flex justify-between items-center border-b border-slate-800/80 pb-4">
-                    <h3 className="text-lg font-bold text-slate-200">Manager Effectiveness Index</h3>
-                    <UserCheck className="h-5 w-5 text-emerald-400" />
+                <div className="glass bg-card/40 border border-border rounded-2xl p-6 space-y-4">
+                  <div className="flex justify-between items-center border-b border-border pb-4">
+                    <h3 className="text-h2 text-foreground">Manager Effectiveness Index</h3>
+                    <UserCheck className="h-5 w-5 text-success" />
                   </div>
                   {managerRankings.length === 0 ? (
-                    <div className="text-center text-slate-500 py-8">No manager statistics gathered yet.</div>
+                    <div className="text-center text-muted-foreground py-8">No manager statistics gathered yet.</div>
                   ) : (
                     <div className="space-y-3 max-h-[350px] overflow-y-auto pr-2">
                       {managerRankings.map((item, idx) => (
-                        <div key={item._id} className="bg-slate-900/80 border border-slate-800/50 p-4 rounded-xl space-y-2">
+                        <div key={item._id} className="bg-muted/40 border border-border p-4 rounded-xl space-y-2">
                           <div className="flex justify-between items-center">
-                            <p className="font-semibold text-slate-200">{item.managerName}</p>
-                            <span className="text-emerald-400 font-semibold text-xs bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded">
+                            <p className="font-semibold text-foreground">{item.managerName}</p>
+                            <span className="text-success font-semibold text-xs bg-success/10 border border-success/20 px-2 py-0.5 rounded">
                               Rank #{idx + 1}
                             </span>
                           </div>
-                          <div className="grid grid-cols-2 gap-4 text-xs text-slate-400">
+                          <div className="grid grid-cols-2 gap-4 text-xs text-muted-foreground">
                             <div>
-                              Team Score: <strong className="text-slate-200">{item.avgPerformanceScore}/100</strong>
+                              Team Score: <strong className="text-foreground">{item.avgPerformanceScore}/100</strong>
                             </div>
                             <div>
-                              Goals Completed: <strong className="text-slate-200">{item.goalCompletionRate}%</strong>
+                              Goals Completed: <strong className="text-foreground">{item.goalCompletionRate}%</strong>
                             </div>
                           </div>
                         </div>
@@ -778,44 +786,44 @@ export default function PerformanceDashboard() {
           {activeTab === 'reviews' && (
             <div className="space-y-6 animate-fadeIn">
               {/* Filter Bar */}
-              <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-slate-900/50 border border-slate-800/80 rounded-2xl p-4 gap-4">
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center glass border border-border bg-card/40 rounded-2xl p-4 gap-4">
                 <div className="flex flex-wrap items-center gap-3">
-                  <div className="flex items-center bg-slate-850 px-3 py-1.5 rounded-xl border border-slate-800">
-                    <Filter className="h-4 w-4 text-slate-400 mr-2" />
+                  <div className="flex items-center bg-muted/50 px-3 py-1.5 rounded-xl border border-border">
+                    <Filter className="h-4 w-4 text-muted-foreground mr-2" />
                     <select
                       value={filterPeriod}
                       onChange={(e) => setFilterPeriod(e.target.value)}
-                      className="bg-transparent text-slate-200 text-sm focus:outline-none"
+                      className="bg-transparent text-foreground text-sm focus:outline-none cursor-pointer"
                     >
-                      <option value="">All Periods</option>
-                      <option value="Q1 2026">Q1 2026</option>
-                      <option value="Q2 2026">Q2 2026</option>
-                      <option value="Q3 2026">Q3 2026</option>
-                      <option value="Q4 2026">Q4 2026</option>
+                      <option value="" className="bg-popover text-foreground">All Periods</option>
+                      <option value="Q1 2026" className="bg-popover text-foreground">Q1 2026</option>
+                      <option value="Q2 2026" className="bg-popover text-foreground">Q2 2026</option>
+                      <option value="Q3 2026" className="bg-popover text-foreground">Q3 2026</option>
+                      <option value="Q4 2026" className="bg-popover text-foreground">Q4 2026</option>
                     </select>
                   </div>
-                  <div className="flex items-center bg-slate-850 px-3 py-1.5 rounded-xl border border-slate-800">
+                  <div className="flex items-center bg-muted/50 px-3 py-1.5 rounded-xl border border-border">
                     <select
                       value={filterType}
                       onChange={(e) => setFilterType(e.target.value)}
-                      className="bg-transparent text-slate-200 text-sm focus:outline-none"
+                      className="bg-transparent text-foreground text-sm focus:outline-none cursor-pointer"
                     >
-                      <option value="">All Types</option>
-                      <option value="MONTHLY">Monthly</option>
-                      <option value="QUARTERLY">Quarterly</option>
-                      <option value="ANNUAL">Annual</option>
+                      <option value="" className="bg-popover text-foreground">All Types</option>
+                      <option value="MONTHLY" className="bg-popover text-foreground">Monthly</option>
+                      <option value="QUARTERLY" className="bg-popover text-foreground">Quarterly</option>
+                      <option value="ANNUAL" className="bg-popover text-foreground">Annual</option>
                     </select>
                   </div>
                   {!isEmployee && (
-                    <div className="flex items-center bg-slate-850 px-3 py-1.5 rounded-xl border border-slate-800">
+                    <div className="flex items-center bg-muted/50 px-3 py-1.5 rounded-xl border border-border">
                       <select
                         value={filterDept}
                         onChange={(e) => setFilterDept(e.target.value)}
-                        className="bg-transparent text-slate-200 text-sm focus:outline-none"
+                        className="bg-transparent text-foreground text-sm focus:outline-none cursor-pointer"
                       >
-                        <option value="">All Departments</option>
+                        <option value="" className="bg-popover text-foreground">All Departments</option>
                         {departments.map(d => (
-                          <option key={d._id} value={d._id}>{d.name}</option>
+                          <option key={d._id} value={d._id} className="bg-popover text-foreground">{d.name}</option>
                         ))}
                       </select>
                     </div>
@@ -824,7 +832,7 @@ export default function PerformanceDashboard() {
                 {isAdminOrManager && (
                   <button
                     onClick={() => { setSelectedReview(null); resetReviewForm(); setShowReviewModal(true); }}
-                    className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 font-semibold text-sm text-white px-4 py-2 rounded-xl transition"
+                    className="flex items-center gap-2 bg-primary hover:bg-primary/95 font-semibold text-sm text-primary-foreground px-4 py-2 rounded-xl transition cursor-pointer shadow-lg shadow-primary/10"
                   >
                     <Plus className="h-4 w-4" />
                     Create Review
@@ -833,22 +841,22 @@ export default function PerformanceDashboard() {
               </div>
 
               {/* Self vs Manager Comparison Section */}
-              <div className="bg-slate-900/40 border border-slate-800/60 rounded-2xl p-6 space-y-4">
+              <div className="glass border border-border bg-card/40 rounded-2xl p-6 space-y-4">
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                   <div>
-                    <h3 className="text-lg font-bold text-slate-200 font-sans">Self vs Manager Evaluation Gaps</h3>
-                    <p className="text-xs text-slate-400 mt-0.5">Compare self-ratings side-by-side with supervisor scores.</p>
+                    <h3 className="text-h2 text-foreground font-sans">Self vs Manager Evaluation Gaps</h3>
+                    <p className="text-xs text-muted-foreground mt-0.5">Compare self-ratings side-by-side with supervisor scores.</p>
                   </div>
                   {!isEmployee && (
                     <div className="w-full md:w-64">
                       <select
                         value={comparisonEmployeeId}
                         onChange={(e) => setComparisonEmployeeId(e.target.value)}
-                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none"
+                        className="w-full bg-muted/50 border border-border rounded-xl px-3 py-2 text-xs text-foreground focus:outline-none cursor-pointer"
                       >
-                        <option value="">Compare employee ratings...</option>
+                        <option value="" className="bg-popover text-foreground">Compare employee ratings...</option>
                         {employees.map(e => (
-                          <option key={e._id} value={e._id}>{e.firstName} {e.lastName} ({e.employeeCode})</option>
+                          <option key={e._id} value={e._id} className="bg-popover text-foreground">{e.firstName} {e.lastName} ({e.employeeCode})</option>
                         ))}
                       </select>
                     </div>
@@ -864,7 +872,7 @@ export default function PerformanceDashboard() {
                           if (empId) setComparisonEmployeeId(empId);
                         }
                       }}
-                      className="px-4 py-2 bg-indigo-600/20 text-indigo-400 border border-indigo-500/20 hover:bg-indigo-600/30 text-xs font-semibold rounded-xl transition"
+                      className="px-4 py-2 bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 text-xs font-semibold rounded-xl transition cursor-pointer"
                     >
                       Load My Comparison Report
                     </button>
@@ -874,7 +882,7 @@ export default function PerformanceDashboard() {
                 {comparisonEmployeeId && (
                   <>
                     {comparisonData.length === 0 ? (
-                      <div className="text-center text-slate-500 py-6 text-sm">
+                      <div className="text-center text-muted-foreground py-6 text-sm">
                         No paired evaluations (Self & Manager) matching Q1/Q2 periods found for this employee.
                       </div>
                     ) : (
@@ -886,33 +894,33 @@ export default function PerformanceDashboard() {
                               Self: c.self?.overallScore || 0,
                               Manager: c.manager?.overallScore || 0
                             }))}>
-                              <CartesianGrid strokeDasharray="3 3" stroke="#1E293B" />
-                              <XAxis dataKey="period" stroke="#94A3B8" />
-                              <YAxis domain={[0, 100]} stroke="#94A3B8" />
-                              <Tooltip contentStyle={{ backgroundColor: '#0F172A', border: '1px solid #334155' }} />
+                              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                              <XAxis dataKey="period" stroke="var(--muted-foreground)" />
+                              <YAxis domain={[0, 100]} stroke="var(--muted-foreground)" />
+                              <Tooltip contentStyle={{ backgroundColor: 'var(--popover)', border: '1px solid var(--border)', color: 'var(--foreground)' }} />
                               <Legend />
-                              <Bar dataKey="Self" fill="#6366F1" radius={[4, 4, 0, 0]} />
-                              <Bar dataKey="Manager" fill="#10B981" radius={[4, 4, 0, 0]} />
+                              <Bar dataKey="Self" fill="var(--primary)" radius={[4, 4, 0, 0]} />
+                              <Bar dataKey="Manager" fill="var(--success)" radius={[4, 4, 0, 0]} />
                             </BarChart>
                           </ResponsiveContainer>
                         </div>
-                        <div className="bg-slate-950/40 p-4 border border-slate-850 rounded-xl space-y-3">
-                          <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Evaluation Discrepancies</h4>
+                        <div className="bg-muted/30 p-4 border border-border rounded-xl space-y-3">
+                          <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Evaluation Discrepancies</h4>
                           <div className="space-y-2 max-h-[180px] overflow-y-auto pr-1">
                             {comparisonData.map((c, idx) => (
-                              <div key={idx} className="flex justify-between items-center text-xs border-b border-slate-900 pb-2 last:border-0">
+                              <div key={idx} className="flex justify-between items-center text-xs border-b border-border/40 pb-2 last:border-0">
                                 <div>
-                                  <p className="font-semibold text-slate-200">{c.reviewPeriod}</p>
-                                  <p className="text-[10px] text-slate-500">
+                                  <p className="font-semibold text-foreground">{c.reviewPeriod}</p>
+                                  <p className="text-[10px] text-muted-foreground">
                                     Self: {c.self?.overallScore || 0}% &bull; Mgr: {c.manager?.overallScore || 0}%
                                   </p>
                                 </div>
-                                <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                                <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${
                                   c.gap > 5 
-                                    ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                                    ? 'bg-success/10 text-success border-success/20'
                                     : c.gap < -5
-                                    ? 'bg-red-500/10 text-red-400 border border-red-500/20'
-                                    : 'bg-slate-500/10 text-slate-400 border border-slate-500/20'
+                                    ? 'bg-destructive/10 text-destructive border-destructive/20'
+                                    : 'bg-muted border-border text-muted-foreground'
                                 }`}>
                                   Gap: {c.gap > 0 ? `+${c.gap}` : c.gap}
                                 </span>
@@ -927,11 +935,11 @@ export default function PerformanceDashboard() {
               </div>
 
               {/* Review Table */}
-              <div className="bg-slate-900/40 border border-slate-800/60 rounded-2xl overflow-hidden">
+              <div className="glass border border-border bg-card/40 rounded-2xl overflow-hidden shadow-2xl">
                 <div className="overflow-x-auto">
                   <table className="w-full text-left border-collapse">
                     <thead>
-                      <tr className="bg-slate-900/80 border-b border-slate-800 text-slate-400 text-xs font-bold uppercase">
+                      <tr className="bg-muted/65 border-b border-border text-muted-foreground text-small-label">
                         <th className="p-4">Employee</th>
                         <th className="p-4">Review Type</th>
                         <th className="p-4">Period</th>
@@ -941,31 +949,31 @@ export default function PerformanceDashboard() {
                         {isAdminOrManager && <th className="p-4 text-right">Actions</th>}
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-800/60">
+                    <tbody className="divide-y divide-border/40">
                       {reviews.length === 0 ? (
                         <tr>
-                          <td colSpan={7} className="p-8 text-center text-slate-500">No performance reviews match the filters.</td>
+                          <td colSpan={7} className="p-8 text-center text-muted-foreground">No performance reviews match the filters.</td>
                         </tr>
                       ) : (
                         reviews.map((rev) => (
-                          <tr key={rev._id} className="hover:bg-slate-900/20 transition-colors text-sm text-slate-300">
+                          <tr key={rev._id} className="hover:bg-muted/20 transition-colors text-grid text-foreground">
                             <td className="p-4">
-                              <p className="font-semibold text-slate-200">
+                              <p className="font-semibold text-foreground">
                                 {rev.employeeId?.firstName} {rev.employeeId?.lastName}
                               </p>
-                              <p className="text-xs text-slate-500">{rev.employeeId?.employeeCode}</p>
+                              <p className="text-small-label text-muted-foreground">{rev.employeeId?.employeeCode}</p>
                             </td>
                             <td className="p-4">{rev.reviewType}</td>
                             <td className="p-4">{rev.reviewPeriod}</td>
                             <td className="p-4">
                               {rev.reviewerId?.firstName} {rev.reviewerId?.lastName}
                             </td>
-                            <td className="p-4 text-center font-bold text-indigo-400">{rev.overallScore}%</td>
+                            <td className="p-4 text-center font-bold text-primary">{rev.overallScore}%</td>
                             <td className="p-4">
-                              <span className={`px-2 py-0.5 rounded text-xs font-medium border ${
+                              <span className={`px-2 py-0.5 rounded text-small-label border ${
                                 rev.status === 'SUBMITTED'
-                                  ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                                  : 'bg-slate-500/10 text-slate-400 border-slate-500/20'
+                                  ? 'bg-success/10 text-success border-success/20'
+                                  : 'bg-muted text-muted-foreground border-border'
                               }`}>
                                 {rev.status}
                               </span>
@@ -992,13 +1000,13 @@ export default function PerformanceDashboard() {
                                     });
                                     setShowReviewModal(true);
                                   }}
-                                  className="p-1.5 hover:bg-slate-800 rounded transition text-indigo-400 inline-flex"
+                                  className="p-1.5 hover:bg-muted rounded transition text-primary inline-flex cursor-pointer"
                                 >
                                   <Edit2 className="h-4 w-4" />
                                 </button>
                                 <button
                                   onClick={() => handleDeleteReview(rev._id)}
-                                  className="p-1.5 hover:bg-slate-800 rounded transition text-red-400 inline-flex"
+                                  className="p-1.5 hover:bg-muted rounded transition text-destructive inline-flex cursor-pointer"
                                 >
                                   <Trash2 className="h-4 w-4" />
                                 </button>
@@ -1013,21 +1021,21 @@ export default function PerformanceDashboard() {
 
                 {/* Pagination */}
                 {reviewTotal > 10 && (
-                  <div className="flex justify-between items-center p-4 border-t border-slate-800 bg-slate-900/20">
+                  <div className="flex justify-between items-center p-4 border-t border-border bg-muted/20">
                     <button
                       disabled={reviewPage === 1}
                       onClick={() => setReviewPage(p => p - 1)}
-                      className="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-xs rounded transition disabled:opacity-40"
+                      className="px-3 py-1 bg-muted hover:bg-muted/80 border border-border text-xs rounded transition disabled:opacity-40 cursor-pointer"
                     >
                       Previous
                     </button>
-                    <span className="text-xs text-slate-400">
+                    <span className="text-xs text-muted-foreground">
                       Page {reviewPage} of {Math.ceil(reviewTotal / 10)}
                     </span>
                     <button
                       disabled={reviewPage * 10 >= reviewTotal}
                       onClick={() => setReviewPage(p => p + 1)}
-                      className="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-xs rounded transition disabled:opacity-40"
+                      className="px-3 py-1 bg-muted hover:bg-muted/80 border border-border text-xs rounded transition disabled:opacity-40 cursor-pointer"
                     >
                       Next
                     </button>
@@ -1042,11 +1050,11 @@ export default function PerformanceDashboard() {
             <div className="space-y-6 animate-fadeIn">
               {/* Header and filters */}
               <div className="flex justify-between items-center">
-                <h3 className="text-xl font-extrabold text-slate-200">Kanban Milestone Roadmap</h3>
+                <h3 className="text-h2 text-foreground">Kanban Milestone Roadmap</h3>
                 {isAdminOrManager && (
                   <button
                     onClick={() => { resetGoalForm(); setShowGoalModal(true); }}
-                    className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 font-semibold text-sm text-white px-4 py-2 rounded-xl transition"
+                    className="flex items-center gap-2 bg-primary hover:bg-primary/95 font-semibold text-sm text-primary-foreground px-4 py-2 rounded-xl transition cursor-pointer shadow-lg shadow-primary/10"
                   >
                     <Plus className="h-4 w-4" />
                     Assign Goal
@@ -1059,12 +1067,12 @@ export default function PerformanceDashboard() {
                 {['NOT_STARTED', 'IN_PROGRESS', 'COMPLETED', 'OVERDUE'].map((stage) => {
                   const stageGoals = goals.filter(g => g.status === stage);
                   return (
-                    <div key={stage} className="bg-slate-900/30 border border-slate-800/80 rounded-2xl p-4 space-y-4">
-                      <div className="flex justify-between items-center border-b border-slate-800/80 pb-2">
-                        <span className="font-bold text-sm tracking-wider uppercase text-slate-400">
+                    <div key={stage} className="glass border border-border bg-card/30 rounded-2xl p-4 space-y-4">
+                      <div className="flex justify-between items-center border-b border-border/60 pb-2">
+                        <span className="font-bold text-sm tracking-wider uppercase text-muted-foreground">
                           {stage.replace('_', ' ')}
                         </span>
-                        <span className="text-xs bg-slate-850 px-2 py-0.5 rounded text-slate-400 border border-slate-800">
+                        <span className="text-xs bg-muted px-2 py-0.5 rounded text-muted-foreground border border-border">
                           {stageGoals.length}
                         </span>
                       </div>
@@ -1073,26 +1081,26 @@ export default function PerformanceDashboard() {
                         {stageGoals.map((goal) => (
                           <div
                             key={goal._id}
-                            className="bg-slate-900 border border-slate-800/80 rounded-xl p-4 space-y-3 hover:border-indigo-500/40 transition-all shadow-lg"
+                            className="bg-card border border-border rounded-xl p-4 space-y-3 hover:border-primary/40 transition-all shadow-lg"
                           >
                             <div className="flex justify-between items-start">
                               <div className="flex items-center gap-1.5">
                                 <span className={`text-[10px] px-2 py-0.5 border rounded-full font-semibold ${PRIORITY_COLORS[goal.priority]}`}>
                                   {goal.priority}
                                 </span>
-                                <span className="text-[10px] bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded border border-slate-700/50">
+                                <span className="text-[10px] bg-muted text-muted-foreground px-1.5 py-0.5 rounded border border-border">
                                   w: {goal.weightage || 100}
                                 </span>
                               </div>
-                              <span className="text-[10px] text-slate-500 font-mono">
+                              <span className="text-[10px] text-muted-foreground font-mono">
                                 {new Date(goal.targetDate).toLocaleDateString()}
                               </span>
                             </div>
                             <div>
-                              <h4 className="font-bold text-slate-200 text-sm leading-tight">{goal.title}</h4>
-                              <p className="text-xs text-slate-400 mt-1 line-clamp-2">{goal.description || 'No description provided'}</p>
+                              <h4 className="font-bold text-foreground text-sm leading-tight">{goal.title}</h4>
+                              <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{goal.description || 'No description provided'}</p>
                               {!isEmployee && (
-                                <p className="text-[10px] text-indigo-400 mt-2 font-medium">
+                                <p className="text-[10px] text-primary mt-2 font-medium">
                                   {goal.employeeId?.firstName} {goal.employeeId?.lastName}
                                 </p>
                               )}
@@ -1100,13 +1108,13 @@ export default function PerformanceDashboard() {
 
                             {/* Goal Progress Slider */}
                             <div className="space-y-1">
-                              <div className="flex justify-between items-center text-[10px] text-slate-500">
+                              <div className="flex justify-between items-center text-[10px] text-muted-foreground">
                                 <span>Progress</span>
                                 <span>{goal.progressPercentage}%</span>
                               </div>
-                              <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                              <div className="w-full bg-muted h-1.5 rounded-full overflow-hidden">
                                 <div
-                                  className="bg-indigo-500 h-full transition-all"
+                                  className="bg-primary h-full transition-all"
                                   style={{ width: `${goal.progressPercentage}%` }}
                                 ></div>
                               </div>
@@ -1114,16 +1122,16 @@ export default function PerformanceDashboard() {
 
                             {/* Kanban Drag / Status controls */}
                             {!isRecruiter && (
-                              <div className="flex justify-between items-center pt-2 border-t border-slate-800 text-[10px] gap-2">
+                              <div className="flex justify-between items-center pt-2 border-t border-border/60 text-[10px] gap-2">
                                 <select
                                   value={goal.status}
                                   onChange={(e) => handleUpdateGoalStatus(goal._id, e.target.value, goal.progressPercentage)}
-                                  className="bg-slate-850 text-slate-300 rounded px-2 py-1 border border-slate-800 focus:outline-none flex-1 text-center"
+                                  className="bg-muted/50 text-foreground rounded px-2 py-1 border border-border focus:outline-none flex-1 text-center cursor-pointer"
                                 >
-                                  <option value="NOT_STARTED">Not Started</option>
-                                  <option value="IN_PROGRESS">In Progress</option>
-                                  <option value="COMPLETED">Completed</option>
-                                  <option value="OVERDUE">Overdue</option>
+                                  <option value="NOT_STARTED" className="bg-popover text-foreground">Not Started</option>
+                                  <option value="IN_PROGRESS" className="bg-popover text-foreground">In Progress</option>
+                                  <option value="COMPLETED" className="bg-popover text-foreground">Completed</option>
+                                  <option value="OVERDUE" className="bg-popover text-foreground">Overdue</option>
                                 </select>
                                 <input
                                   type="number"
@@ -1131,7 +1139,7 @@ export default function PerformanceDashboard() {
                                   max="100"
                                   value={goal.progressPercentage}
                                   onChange={(e) => handleUpdateGoalStatus(goal._id, goal.status, Number(e.target.value))}
-                                  className="w-12 bg-slate-850 text-slate-300 rounded px-1 py-1 border border-slate-800 text-center focus:outline-none"
+                                  className="w-12 bg-muted/50 text-foreground rounded px-1 py-1 border border-border text-center focus:outline-none"
                                 />
                               </div>
                             )}
@@ -1149,11 +1157,11 @@ export default function PerformanceDashboard() {
           {activeTab === 'skills' && (
             <div className="space-y-6 animate-fadeIn">
               <div className="flex justify-between items-center">
-                <h3 className="text-xl font-extrabold text-slate-200">Competency Heatmaps & Gap Analysis</h3>
+                <h3 className="text-h2 text-foreground">Competency Heatmaps & Gap Analysis</h3>
                 {isAdminOrManager && (
                   <button
                     onClick={() => { setShowSkillModal(true); }}
-                    className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 font-semibold text-sm text-white px-4 py-2 rounded-xl transition"
+                    className="flex items-center gap-2 bg-primary hover:bg-primary/95 font-semibold text-sm text-primary-foreground px-4 py-2 rounded-xl transition cursor-pointer shadow-lg shadow-primary/10"
                   >
                     <Plus className="h-4 w-4" />
                     Assess Skill
@@ -1164,28 +1172,28 @@ export default function PerformanceDashboard() {
               {/* Skills list cards */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {skills.length === 0 ? (
-                  <div className="col-span-full bg-slate-900/30 border border-slate-850 p-8 text-center text-slate-500 rounded-2xl">
+                  <div className="col-span-full glass border border-border bg-card/30 p-8 text-center text-muted-foreground rounded-2xl">
                     No skill competency maps defined yet.
                   </div>
                 ) : (
                   skills.map((item) => (
                     <div
                       key={item._id}
-                      className="bg-slate-900 border border-slate-800/80 rounded-2xl p-5 space-y-4 shadow-lg hover:border-slate-700/80 transition-all"
+                      className="bg-card border border-border rounded-2xl p-5 space-y-4 shadow-lg hover:border-primary/20 transition-all"
                     >
-                      <div className="flex justify-between items-start border-b border-slate-800 pb-3">
+                      <div className="flex justify-between items-start border-b border-border/60 pb-3">
                         <div>
-                          <h4 className="font-extrabold text-slate-200">{item.skillName}</h4>
+                          <h4 className="font-extrabold text-foreground">{item.skillName}</h4>
                           {!isEmployee && (
-                            <p className="text-xs text-indigo-400 mt-0.5">
+                            <p className="text-xs text-primary mt-0.5">
                               {item.employeeId?.firstName} {item.employeeId?.lastName}
                             </p>
                           )}
                         </div>
                         <span className={`px-2 py-0.5 text-xs font-semibold rounded border ${
                           item.gapScore === 0
-                            ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                            : 'bg-amber-500/10 text-amber-500 border-amber-500/20'
+                            ? 'bg-success/10 text-success border-success/20'
+                            : 'bg-warning/10 text-warning border-warning/20'
                         }`}>
                           {item.gapScore === 0 ? 'Optimal' : `Gap Score: ${item.gapScore}`}
                         </span>
@@ -1194,31 +1202,31 @@ export default function PerformanceDashboard() {
                       {/* Score comparison visual */}
                       <div className="space-y-3">
                         <div className="space-y-1">
-                          <div className="flex justify-between text-xs text-slate-400">
+                          <div className="flex justify-between text-xs text-muted-foreground">
                             <span>Current Proficiency Level</span>
-                            <span className="font-bold text-slate-200">{item.currentLevel}/10</span>
+                            <span className="font-bold text-foreground">{item.currentLevel}/10</span>
                           </div>
-                          <div className="w-full bg-slate-850 h-2 rounded-full overflow-hidden border border-slate-800">
-                            <div className="bg-indigo-500 h-full rounded-full" style={{ width: `${item.currentLevel * 10}%` }}></div>
+                          <div className="w-full bg-muted h-2 rounded-full overflow-hidden border border-border">
+                            <div className="bg-primary h-full rounded-full" style={{ width: `${item.currentLevel * 10}%` }}></div>
                           </div>
                         </div>
 
                         <div className="space-y-1">
-                          <div className="flex justify-between text-xs text-slate-400">
+                          <div className="flex justify-between text-xs text-muted-foreground">
                             <span>Required Level for Designation</span>
-                            <span className="font-bold text-indigo-400">{item.desiredLevel}/10</span>
+                            <span className="font-bold text-accent">{item.desiredLevel}/10</span>
                           </div>
-                          <div className="w-full bg-slate-850 h-2 rounded-full overflow-hidden border border-slate-800">
-                            <div className="bg-sky-500 h-full rounded-full" style={{ width: `${item.desiredLevel * 10}%` }}></div>
+                          <div className="w-full bg-muted h-2 rounded-full overflow-hidden border border-border">
+                            <div className="bg-accent h-full rounded-full" style={{ width: `${item.desiredLevel * 10}%` }}></div>
                           </div>
                         </div>
                       </div>
 
-                      <div className="pt-2 flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/60">
+                      <div className="pt-2 flex justify-between items-center text-xs text-muted-foreground border-t border-border/60">
                         <span>Assessed by {item.assessedBy?.firstName || 'HR'}</span>
                         <button
                           onClick={() => handleFetchInsights(item.employeeId?._id || item.employeeId)}
-                          className="flex items-center gap-1 text-indigo-400 hover:text-indigo-300 font-semibold"
+                          className="flex items-center gap-1 text-primary hover:text-primary/80 font-semibold cursor-pointer"
                         >
                           <Brain className="h-3.5 w-3.5" />
                           AI Gap Roadmap
@@ -1231,23 +1239,23 @@ export default function PerformanceDashboard() {
 
               {/* AI Insights Modal/Panel */}
               {selectedSkillInsight && (
-                <div className="bg-slate-900 border border-indigo-500/20 rounded-2xl p-6 relative overflow-hidden animate-fadeIn">
+                <div className="glass bg-card border border-primary/20 rounded-2xl p-6 relative overflow-hidden animate-fadeIn shadow-2xl glow-primary/5">
                   <div className="absolute top-0 right-0 p-4 opacity-5">
-                    <Brain className="h-32 w-32 text-indigo-400" />
+                    <Brain className="h-32 w-32 text-primary" />
                   </div>
-                  <div className="flex justify-between items-center border-b border-slate-800 pb-3 mb-4">
+                  <div className="flex justify-between items-center border-b border-border/60 pb-3 mb-4">
                     <div className="flex items-center gap-2">
-                      <Brain className="h-5 w-5 text-indigo-400 animate-pulse" />
-                      <h4 className="font-bold text-slate-100">AI Skill Coach Growth Roadmap</h4>
+                      <Brain className="h-5 w-5 text-primary animate-pulse" />
+                      <h4 className="font-bold text-foreground">AI Skill Coach Growth Roadmap</h4>
                     </div>
                     <button
                       onClick={() => setSelectedSkillInsight(null)}
-                      className="text-xs text-slate-400 hover:text-slate-200"
+                      className="text-xs text-muted-foreground hover:text-foreground cursor-pointer"
                     >
                       Close Roadmap
                     </button>
                   </div>
-                  <div className="prose prose-invert max-w-none text-slate-300 text-sm whitespace-pre-wrap leading-relaxed">
+                  <div className="prose prose-invert max-w-none text-muted-foreground text-sm whitespace-pre-wrap leading-relaxed">
                     {selectedSkillInsight}
                   </div>
                 </div>
@@ -1255,15 +1263,15 @@ export default function PerformanceDashboard() {
 
               {/* AI Structured Learning Plan Card Section */}
               {learningPlan && learningPlan.courses && (
-                <div className="bg-slate-900 border border-emerald-500/20 rounded-2xl p-6 space-y-4 animate-fadeIn">
-                  <div className="flex justify-between items-center border-b border-slate-800 pb-3">
+                <div className="glass bg-card border border-success/20 rounded-2xl p-6 space-y-4 animate-fadeIn shadow-2xl">
+                  <div className="flex justify-between items-center border-b border-border/60 pb-3">
                     <div className="flex items-center gap-2">
-                      <BookOpen className="h-5 w-5 text-emerald-400" />
-                      <h4 className="font-bold text-slate-100">AI Growth Pathway (Learning Plan)</h4>
+                      <BookOpen className="h-5 w-5 text-success" />
+                      <h4 className="font-bold text-foreground">AI Growth Pathway (Learning Plan)</h4>
                     </div>
                     <button
                       onClick={() => setLearningPlan(null)}
-                      className="text-xs text-slate-400 hover:text-slate-200"
+                      className="text-xs text-muted-foreground hover:text-foreground cursor-pointer"
                     >
                       Close Learning Plan
                     </button>
@@ -1271,18 +1279,18 @@ export default function PerformanceDashboard() {
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {learningPlan.courses.map((course: any, idx: number) => (
-                      <div key={idx} className="bg-slate-950 border border-slate-850 p-4 rounded-xl space-y-3 relative hover:border-emerald-500/10 transition-all">
+                      <div key={idx} className="bg-muted/30 border border-border p-4 rounded-xl space-y-3 relative hover:border-success/20 transition-all">
                         <div className="flex justify-between items-start">
-                          <h5 className="font-bold text-slate-200 text-sm">{course.courseName}</h5>
-                          <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-bold px-2 py-0.5 rounded">
+                          <h5 className="font-bold text-foreground text-sm">{course.courseName}</h5>
+                          <span className="bg-success/10 text-success border border-success/20 text-[10px] font-bold px-2 py-0.5 rounded">
                             {course.duration}
                           </span>
                         </div>
                         <div className="space-y-1">
-                          <p className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">Topics covered:</p>
+                          <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Topics covered:</p>
                           <div className="flex flex-wrap gap-1.5">
                             {course.topics?.map((topic: string, tIdx: number) => (
-                              <span key={tIdx} className="text-[10px] bg-slate-900 border border-slate-800 px-2 py-0.5 rounded text-slate-300">
+                              <span key={tIdx} className="text-[10px] bg-card border border-border px-2 py-0.5 rounded text-foreground">
                                 {topic}
                               </span>
                             ))}
@@ -1300,35 +1308,35 @@ export default function PerformanceDashboard() {
           {activeTab === 'promotions' && !isEmployee && (
             <div className="space-y-6 animate-fadeIn">
               <div className="flex justify-between items-center">
-                <h3 className="text-xl font-extrabold text-slate-200">AI Promotion Eligible Candidates</h3>
-                <div className="text-xs text-slate-400 flex items-center bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-xl">
-                  <Brain className="h-3.5 w-3.5 text-indigo-400 mr-2" />
+                <h3 className="text-h2 text-foreground">AI Promotion Eligible Candidates</h3>
+                <div className="text-xs text-muted-foreground flex items-center glass bg-card/40 border border-border px-3 py-1.5 rounded-xl">
+                  <Brain className="h-3.5 w-3.5 text-primary mr-2" />
                   Calculates tenure, review scores, and goals completion.
                 </div>
               </div>
 
               <div className="grid grid-cols-1 gap-6">
                 {promotionCandidates.length === 0 ? (
-                  <div className="bg-slate-900/30 border border-slate-850 p-8 text-center text-slate-500 rounded-2xl">
+                  <div className="col-span-full glass border border-border bg-card/30 p-8 text-center text-muted-foreground rounded-2xl">
                     No active promotion assessment reviews found. Trigger candidate scoring from the list.
                   </div>
                 ) : (
                   promotionCandidates.map((promo) => (
                     <div
                       key={promo._id}
-                      className="bg-slate-900 border border-slate-800/80 rounded-2xl p-6 space-y-4 hover:border-slate-700/80 transition-all shadow-xl"
+                      className="bg-card border border-border rounded-2xl p-6 space-y-4 hover:border-primary/20 transition-all shadow-xl"
                     >
-                      <div className="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-slate-800 pb-4 gap-4">
+                      <div className="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-border/60 pb-4 gap-4">
                         <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 font-extrabold text-lg">
+                          <div className="w-12 h-12 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-extrabold text-lg">
                             {promo.employee?.firstName?.[0]}
                             {promo.employee?.lastName?.[0]}
                           </div>
                           <div>
-                            <h4 className="font-extrabold text-slate-100 text-lg">
+                            <h4 className="font-extrabold text-foreground text-lg">
                               {promo.employee?.firstName} {promo.employee?.lastName}
                             </h4>
-                            <p className="text-xs text-slate-400">
+                            <p className="text-xs text-muted-foreground">
                               Code: {promo.employee?.employeeCode} &bull; {promo.departmentName} &bull; {promo.designationName || 'Staff'}
                             </p>
                           </div>
@@ -1336,13 +1344,13 @@ export default function PerformanceDashboard() {
 
                         <div className="flex items-center gap-4">
                           <div className="text-right">
-                            <p className="text-xs text-slate-400 font-semibold">Promotion Readiness Score</p>
+                            <p className="text-xs text-muted-foreground font-semibold">Promotion Readiness Score</p>
                             <span className={`text-2xl font-black ${
                               promo.readinessScore >= 90
-                                ? 'text-emerald-400'
+                                ? 'text-success'
                                 : promo.readinessScore >= 75
-                                ? 'text-amber-400'
-                                : 'text-slate-400'
+                                ? 'text-warning'
+                                : 'text-muted-foreground'
                             }`}>
                               {promo.readinessScore}%
                             </span>
@@ -1352,7 +1360,7 @@ export default function PerformanceDashboard() {
                             <button
                               disabled={promoLoading === promo.employee?._id}
                               onClick={() => handleTriggerPromotionEvaluation(promo.employee?._id)}
-                              className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-xs font-semibold rounded-xl border border-slate-700/60 text-indigo-400 hover:text-indigo-300 transition flex items-center gap-1.5"
+                              className="px-4 py-2 bg-muted hover:bg-muted/80 text-xs font-semibold rounded-xl border border-border text-primary hover:text-primary/90 transition flex items-center gap-1.5 cursor-pointer"
                             >
                               {promoLoading === promo.employee?._id ? (
                                 <RefreshCw className="h-3 w-3 animate-spin" />
@@ -1367,52 +1375,52 @@ export default function PerformanceDashboard() {
 
                       {/* Content breakdown */}
                       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        <div className="bg-slate-950/40 p-4 border border-slate-850 rounded-xl space-y-2">
-                          <h5 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Candidate Strengths</h5>
-                          <ul className="space-y-1.5 text-xs text-slate-300">
+                        <div className="bg-muted/30 p-4 border border-border rounded-xl space-y-2">
+                          <h5 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Candidate Strengths</h5>
+                          <ul className="space-y-1.5 text-xs text-foreground">
                             {promo.strengths?.map((s: string, idx: number) => (
                               <li key={idx} className="flex items-center gap-1.5">
-                                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
+                                <CheckCircle2 className="h-3.5 w-3.5 text-success shrink-0" />
                                 <span>{s}</span>
                               </li>
                             ))}
                             {(!promo.strengths || promo.strengths.length === 0) && (
-                              <li className="text-slate-500">No strengths logged.</li>
+                              <li className="text-muted-foreground">No strengths logged.</li>
                             )}
                           </ul>
                         </div>
 
-                        <div className="bg-slate-950/40 p-4 border border-slate-850 rounded-xl space-y-2">
-                          <h5 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Missing Skill Gaps</h5>
-                          <ul className="space-y-1.5 text-xs text-slate-300">
+                        <div className="bg-muted/30 p-4 border border-border rounded-xl space-y-2">
+                          <h5 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Missing Skill Gaps</h5>
+                          <ul className="space-y-1.5 text-xs text-foreground">
                             {promo.skillGaps?.map((g: string, idx: number) => (
                               <li key={idx} className="flex items-center gap-1.5">
-                                <AlertTriangle className="h-3.5 w-3.5 text-amber-500 shrink-0" />
+                                <AlertTriangle className="h-3.5 w-3.5 text-warning shrink-0" />
                                 <span>{g}</span>
                               </li>
                             ))}
                             {(!promo.skillGaps || promo.skillGaps.length === 0) && (
-                              <li className="text-slate-500">All required designation skills mastered.</li>
+                              <li className="text-muted-foreground">All required designation skills mastered.</li>
                             )}
                           </ul>
                         </div>
 
-                        <div className="bg-slate-950/40 p-4 border border-slate-850 rounded-xl space-y-2">
-                          <h5 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Recommended Career Tier</h5>
+                        <div className="bg-muted/30 p-4 border border-border rounded-xl space-y-2">
+                          <h5 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Recommended Career Tier</h5>
                           <div className="space-y-1">
-                            <p className="text-sm font-bold text-indigo-400">{promo.recommendedLevel}</p>
-                            <p className="text-[11px] text-slate-400">Calculated on tenure milestones & peer feedback.</p>
+                            <p className="text-sm font-bold text-primary">{promo.recommendedLevel}</p>
+                            <p className="text-[11px] text-muted-foreground">Calculated on tenure milestones & peer feedback.</p>
                           </div>
                         </div>
                       </div>
 
                       {/* AI Summary roadmap */}
-                      <div className="bg-indigo-500/5 p-4 border border-indigo-500/10 rounded-xl space-y-2">
+                      <div className="bg-primary/5 p-4 border border-primary/10 rounded-xl space-y-2">
                         <div className="flex items-center gap-1.5">
-                          <Brain className="h-4 w-4 text-indigo-400" />
-                          <h5 className="text-xs font-bold text-slate-300">AI Growth Roadmap & Timeline Analysis</h5>
+                          <Brain className="h-4 w-4 text-primary" />
+                          <h5 className="text-xs font-bold text-foreground">AI Growth Roadmap & Timeline Analysis</h5>
                         </div>
-                        <p className="text-xs text-slate-400 leading-relaxed whitespace-pre-wrap">{promo.aiSummary}</p>
+                        <p className="text-xs text-muted-foreground leading-relaxed whitespace-pre-wrap">{promo.aiSummary}</p>
                       </div>
                     </div>
                   ))
@@ -1420,57 +1428,57 @@ export default function PerformanceDashboard() {
               </div>
 
               {/* Succession Planning Section */}
-              <div className="bg-slate-900/40 border border-slate-800/60 rounded-2xl p-6 space-y-4 mt-6">
-                <div className="flex justify-between items-center border-b border-slate-800/80 pb-4">
+              <div className="glass border border-border bg-card/40 rounded-2xl p-6 space-y-4 mt-6">
+                <div className="flex justify-between items-center border-b border-border pb-4">
                   <div>
-                    <h3 className="text-lg font-bold text-slate-200 font-sans">Role Succession Pipelines</h3>
-                    <p className="text-xs text-slate-400 mt-0.5 font-sans">Critical organizational positions and identified candidate replacements.</p>
+                    <h3 className="text-h2 text-foreground font-sans">Role Succession Pipelines</h3>
+                    <p className="text-xs text-muted-foreground mt-0.5 font-sans">Critical organizational positions and identified candidate replacements.</p>
                   </div>
-                  <span className="text-xs bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-2.5 py-1 rounded-full font-semibold">
+                  <span className="text-xs bg-primary/10 text-primary border border-primary/20 px-2.5 py-1 rounded-full font-semibold">
                     {successionPlans.length} Positions Mapped
                   </span>
                 </div>
 
                 {successionPlans.length === 0 ? (
-                  <div className="text-center text-slate-500 py-6 text-sm">
+                  <div className="text-center text-muted-foreground py-6 text-sm">
                     No succession plan maps generated yet. Use the Copilot tool to initialize one.
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {successionPlans.map((plan, idx) => (
-                      <div key={idx} className="bg-slate-950/80 border border-slate-850 p-5 rounded-2xl space-y-4">
-                        <div className="flex justify-between items-start border-b border-slate-900 pb-3">
+                      <div key={idx} className="bg-card border border-border p-5 rounded-2xl space-y-4">
+                        <div className="flex justify-between items-start border-b border-border pb-3">
                           <div>
-                            <h4 className="font-extrabold text-slate-100 text-sm">{plan.position}</h4>
-                            <p className="text-[10px] text-slate-500 mt-0.5">
+                            <h4 className="font-extrabold text-foreground text-sm">{plan.position}</h4>
+                            <p className="text-[10px] text-muted-foreground mt-0.5">
                               Current: {plan.currentEmployee ? `${plan.currentEmployee.firstName} ${plan.currentEmployee.lastName} (${plan.currentEmployee.employeeCode})` : 'Vacant'}
                             </p>
                           </div>
-                          <span className="text-[10px] text-slate-500 font-mono">
+                          <span className="text-[10px] text-muted-foreground font-mono">
                             {new Date(plan.generatedAt).toLocaleDateString()}
                           </span>
                         </div>
 
                         <div className="space-y-3">
-                          <p className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">Identified Successors:</p>
+                          <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Identified Successors:</p>
                           <div className="space-y-3">
                             {plan.successorCandidates?.map((candidate: any, cIdx: number) => (
-                              <div key={cIdx} className="bg-slate-900/60 border border-slate-800/60 p-3 rounded-xl space-y-2">
+                              <div key={cIdx} className="bg-muted/30 border border-border p-3 rounded-xl space-y-2">
                                 <div className="flex justify-between items-center text-xs">
-                                  <span className="font-semibold text-slate-200">
+                                  <span className="font-semibold text-foreground">
                                     {candidate.employeeId?.firstName} {candidate.employeeId?.lastName}
                                   </span>
                                   <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${
                                     candidate.readinessScore >= 85
-                                      ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                                      : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                                      ? 'bg-success/10 text-success border-success/20'
+                                      : 'bg-warning/10 text-warning border-warning/20'
                                   }`}>
                                     Ready: {candidate.recommendedTimeline} ({candidate.readinessScore}%)
                                   </span>
                                 </div>
                                 <div className="flex flex-wrap gap-1">
                                   {candidate.suitabilityReasons?.map((reason: string, rIdx: number) => (
-                                    <span key={rIdx} className="text-[9px] bg-slate-950 border border-slate-800 px-1.5 py-0.5 rounded text-slate-400">
+                                    <span key={rIdx} className="text-[9px] bg-card border border-border px-1.5 py-0.5 rounded text-muted-foreground animate-fadeIn">
                                       &bull; {reason}
                                     </span>
                                   ))}
@@ -1491,21 +1499,21 @@ export default function PerformanceDashboard() {
           {activeTab === 'analytics' && !isEmployee && (
             <div className="space-y-6 animate-fadeIn">
               {/* Employee Historic Trend Line */}
-              <div className="bg-slate-900/40 border border-slate-800/60 rounded-2xl p-6 space-y-4">
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-800/80 pb-4">
+              <div className="glass border border-border bg-card/40 rounded-2xl p-6 space-y-4">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-border pb-4">
                   <div>
-                    <h3 className="text-lg font-bold text-slate-200 font-sans">Individual Performance Score Trends</h3>
-                    <p className="text-xs text-slate-400 mt-0.5 font-sans">Track historical rating trajectories and rolling score averages.</p>
+                    <h3 className="text-h2 text-foreground font-sans">Individual Performance Score Trends</h3>
+                    <p className="text-xs text-muted-foreground mt-0.5 font-sans">Track historical rating trajectories and rolling score averages.</p>
                   </div>
                   <div className="w-full md:w-64">
                     <select
                       value={trendEmployeeId}
                       onChange={(e) => setTrendEmployeeId(e.target.value)}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none"
+                      className="w-full bg-muted/50 border border-border rounded-xl px-3 py-2 text-xs text-foreground focus:outline-none cursor-pointer"
                     >
-                      <option value="">Select employee for trend chart...</option>
+                      <option value="" className="bg-popover text-foreground">Select employee for trend chart...</option>
                       {employees.map(e => (
-                        <option key={e._id} value={e._id}>{e.firstName} {e.lastName} ({e.employeeCode})</option>
+                        <option key={e._id} value={e._id} className="bg-popover text-foreground">{e.firstName} {e.lastName} ({e.employeeCode})</option>
                       ))}
                     </select>
                   </div>
@@ -1514,22 +1522,22 @@ export default function PerformanceDashboard() {
                 {trendEmployeeId && trendData && (
                   <div className="space-y-4 animate-fadeIn">
                     <div className="flex items-center gap-3 text-xs">
-                      <span className="bg-slate-950 border border-slate-850 px-3 py-1 rounded-xl text-slate-300">
-                        Rolling Average: <strong className="text-indigo-400">{trendData.rollingAverage}%</strong>
+                      <span className="bg-muted border border-border px-3 py-1 rounded-xl text-foreground">
+                        Rolling Average: <strong className="text-primary">{trendData.rollingAverage}%</strong>
                       </span>
                       <span className={`px-3 py-1 rounded-xl font-bold border ${
                         trendData.trendDirection === 'UPWARD'
-                          ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                          ? 'bg-success/10 text-success border-success/20'
                           : trendData.trendDirection === 'DOWNWARD'
-                          ? 'bg-red-500/10 text-red-400 border-red-500/20'
-                          : 'bg-slate-500/10 text-slate-400 border-slate-500/20'
+                          ? 'bg-destructive/10 text-destructive border-destructive/20'
+                          : 'bg-muted border-border text-muted-foreground'
                       }`}>
                         Trend: {trendData.trendDirection}
                       </span>
                     </div>
 
                     {trendData.scores?.length === 0 ? (
-                      <div className="text-center text-slate-500 py-6 text-sm">
+                      <div className="text-center text-muted-foreground py-6 text-sm">
                         No performance history submitted for this employee.
                       </div>
                     ) : (
@@ -1539,12 +1547,12 @@ export default function PerformanceDashboard() {
                             period: trendData.periods[idx] || `Period ${idx+1}`,
                             Score: score
                           }))}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="#1E293B" />
-                            <XAxis dataKey="period" stroke="#94A3B8" />
-                            <YAxis domain={[0, 100]} stroke="#94A3B8" />
-                            <Tooltip contentStyle={{ backgroundColor: '#0F172A', border: '1px solid #334155' }} />
+                            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                            <XAxis dataKey="period" stroke="var(--muted-foreground)" />
+                            <YAxis domain={[0, 100]} stroke="var(--muted-foreground)" />
+                            <Tooltip contentStyle={{ backgroundColor: 'var(--popover)', border: '1px solid var(--border)', color: 'var(--foreground)' }} />
                             <Legend />
-                            <Line type="monotone" dataKey="Score" stroke="#6366F1" strokeWidth={3} activeDot={{ r: 8 }} />
+                            <Line type="monotone" dataKey="Score" stroke="var(--primary)" strokeWidth={3} activeDot={{ r: 8 }} />
                           </LineChart>
                         </ResponsiveContainer>
                       </div>
@@ -1555,24 +1563,24 @@ export default function PerformanceDashboard() {
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Score distributions */}
-                <div className="bg-slate-900/40 border border-slate-800/60 rounded-2xl p-6 space-y-4">
-                  <h4 className="font-extrabold text-slate-200">Performance Distribution</h4>
+                <div className="glass border border-border bg-card/40 rounded-2xl p-6 space-y-4">
+                  <h4 className="font-extrabold text-foreground">Performance Distribution</h4>
                   <div className="h-[250px]">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={chartData.performanceDistribution}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#1E293B" />
-                        <XAxis dataKey="name" stroke="#94A3B8" />
-                        <YAxis stroke="#94A3B8" />
-                        <Tooltip contentStyle={{ backgroundColor: '#0F172A', border: '1px solid #334155' }} />
-                        <Bar dataKey="count" fill="#6366F1" radius={[4, 4, 0, 0]} />
+                        <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                        <XAxis dataKey="name" stroke="var(--muted-foreground)" />
+                        <YAxis stroke="var(--muted-foreground)" />
+                        <Tooltip contentStyle={{ backgroundColor: 'var(--popover)', border: '1px solid var(--border)', color: 'var(--foreground)' }} />
+                        <Bar dataKey="count" fill="var(--primary)" radius={[4, 4, 0, 0]} />
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
                 </div>
 
                 {/* Goals Status */}
-                <div className="bg-slate-900/40 border border-slate-800/60 rounded-2xl p-6 space-y-4">
-                  <h4 className="font-extrabold text-slate-200">Milestone Goal Completion Trends</h4>
+                <div className="glass border border-border bg-card/40 rounded-2xl p-6 space-y-4">
+                  <h4 className="font-extrabold text-foreground">Milestone Goal Completion Trends</h4>
                   <div className="h-[250px]">
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
@@ -1589,7 +1597,7 @@ export default function PerformanceDashboard() {
                             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                           ))}
                         </Pie>
-                        <Tooltip contentStyle={{ backgroundColor: '#0F172A', border: '1px solid #334155' }} />
+                        <Tooltip contentStyle={{ backgroundColor: 'var(--popover)', border: '1px solid var(--border)', color: 'var(--foreground)' }} />
                         <Legend />
                       </PieChart>
                     </ResponsiveContainer>
@@ -1597,18 +1605,18 @@ export default function PerformanceDashboard() {
                 </div>
 
                 {/* Skill gaps average */}
-                <div className="bg-slate-900/40 border border-slate-800/60 rounded-2xl p-6 space-y-4 lg:col-span-2">
-                  <h4 className="font-extrabold text-slate-200">Competency Skill Deficiency Levels</h4>
+                <div className="glass border border-border bg-card/40 rounded-2xl p-6 space-y-4 lg:col-span-2">
+                  <h4 className="font-extrabold text-foreground">Competency Skill Deficiency Levels</h4>
                   <div className="h-[250px]">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={chartData.skills}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#1E293B" />
-                        <XAxis dataKey="name" stroke="#94A3B8" />
-                        <YAxis stroke="#94A3B8" />
-                        <Tooltip contentStyle={{ backgroundColor: '#0F172A', border: '1px solid #334155' }} />
+                        <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                        <XAxis dataKey="name" stroke="var(--muted-foreground)" />
+                        <YAxis stroke="var(--muted-foreground)" />
+                        <Tooltip contentStyle={{ backgroundColor: 'var(--popover)', border: '1px solid var(--border)', color: 'var(--foreground)' }} />
                         <Legend />
-                        <Bar dataKey="gap" name="Average Gap Score" fill="#F59E0B" radius={[4, 4, 0, 0]} />
-                        <Bar dataKey="count" name="Employee Count" fill="#10B981" radius={[4, 4, 0, 0]} />
+                        <Bar dataKey="gap" name="Average Gap Score" fill="var(--warning)" radius={[4, 4, 0, 0]} />
+                        <Bar dataKey="count" name="Employee Count" fill="var(--success)" radius={[4, 4, 0, 0]} />
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
@@ -1621,13 +1629,13 @@ export default function PerformanceDashboard() {
 
       {/* CREATE / EDIT REVIEW MODAL */}
       {showReviewModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4 overflow-y-auto">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 w-full max-w-2xl space-y-4 max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center border-b border-slate-800 pb-3">
-              <h3 className="text-xl font-bold text-slate-100">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4 overflow-y-auto">
+          <div className="glass bg-card border border-border rounded-2xl p-6 w-full max-w-2xl space-y-4 max-h-[90vh] overflow-y-auto shadow-2xl glow-primary/5">
+            <div className="flex justify-between items-center border-b border-border/60 pb-3">
+              <h3 className="text-xl font-bold text-foreground">
                 {selectedReview ? 'Update Performance Review' : 'Create Performance Review'}
               </h3>
-              <button onClick={() => { setShowReviewModal(false); setSelectedReview(null); }} className="text-slate-400 hover:text-slate-200">
+              <button onClick={() => { setShowReviewModal(false); setSelectedReview(null); }} className="text-muted-foreground hover:text-foreground cursor-pointer text-xl">
                 &times;
               </button>
             </div>
@@ -1635,68 +1643,68 @@ export default function PerformanceDashboard() {
             <form onSubmit={handleCreateReview} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">Select Employee</label>
+                  <label className="block text-xs font-semibold text-muted-foreground uppercase mb-1">Select Employee</label>
                   <select
                     disabled={!!selectedReview}
                     value={reviewForm.employeeId}
                     onChange={(e) => setReviewForm({ ...reviewForm, employeeId: e.target.value })}
                     required
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none"
+                    className="w-full bg-muted/50 border border-border rounded-xl px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer hover:bg-muted/80"
                   >
-                    <option value="">Choose employee...</option>
+                    <option value="" className="bg-popover text-foreground">Choose employee...</option>
                     {employees.map(e => (
-                      <option key={e._id} value={e._id}>{e.firstName} {e.lastName} ({e.employeeCode})</option>
+                      <option key={e._id} value={e._id} className="bg-popover text-foreground">{e.firstName} {e.lastName} ({e.employeeCode})</option>
                     ))}
                   </select>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">Review Period</label>
+                  <label className="block text-xs font-semibold text-muted-foreground uppercase mb-1">Review Period</label>
                   <select
                     value={reviewForm.reviewPeriod}
                     onChange={(e) => setReviewForm({ ...reviewForm, reviewPeriod: e.target.value })}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none"
+                    className="w-full bg-muted/50 border border-border rounded-xl px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer hover:bg-muted/80"
                   >
-                    <option value="Q1 2026">Q1 2026</option>
-                    <option value="Q2 2026">Q2 2026</option>
-                    <option value="Q3 2026">Q3 2026</option>
-                    <option value="Q4 2026">Q4 2026</option>
+                    <option value="Q1 2026" className="bg-popover text-foreground">Q1 2026</option>
+                    <option value="Q2 2026" className="bg-popover text-foreground">Q2 2026</option>
+                    <option value="Q3 2026" className="bg-popover text-foreground">Q3 2026</option>
+                    <option value="Q4 2026" className="bg-popover text-foreground">Q4 2026</option>
                   </select>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">Review Type</label>
+                  <label className="block text-xs font-semibold text-muted-foreground uppercase mb-1">Review Type</label>
                   <select
                     value={reviewForm.reviewType}
                     onChange={(e) => setReviewForm({ ...reviewForm, reviewType: e.target.value })}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none"
+                    className="w-full bg-muted/50 border border-border rounded-xl px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer hover:bg-muted/80"
                   >
-                    <option value="MONTHLY">Monthly</option>
-                    <option value="QUARTERLY">Quarterly</option>
-                    <option value="ANNUAL">Annual</option>
+                    <option value="MONTHLY" className="bg-popover text-foreground">Monthly</option>
+                    <option value="QUARTERLY" className="bg-popover text-foreground">Quarterly</option>
+                    <option value="ANNUAL" className="bg-popover text-foreground">Annual</option>
                   </select>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">Overall Review Rating (0-100)</label>
+                  <label className="block text-xs font-semibold text-muted-foreground uppercase mb-1">Overall Review Rating (0-100)</label>
                   <input
                     type="number"
                     min="0"
                     max="100"
                     value={reviewForm.overallScore}
                     onChange={(e) => setReviewForm({ ...reviewForm, overallScore: Number(e.target.value) })}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none"
+                    className="w-full bg-muted/50 border border-border rounded-xl px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary hover:bg-muted/80"
                   />
                 </div>
               </div>
 
               {/* Sub-scores */}
-              <div className="bg-slate-950/40 p-4 rounded-xl border border-slate-850 space-y-4">
-                <h4 className="text-xs font-bold text-indigo-400 uppercase tracking-wider">Sub-Metric Competency Ratings (1-10)</h4>
+              <div className="bg-muted/40 p-4 rounded-xl border border-border space-y-4">
+                <h4 className="text-xs font-bold text-primary uppercase tracking-wider">Sub-Metric Competency Ratings (1-10)</h4>
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
                   {['technicalScore', 'communicationScore', 'leadershipScore', 'productivityScore', 'teamworkScore'].map((scoreKey) => (
                     <div key={scoreKey}>
-                      <label className="block text-[10px] text-slate-400 font-medium mb-1 capitalize">
+                      <label className="block text-[10px] text-muted-foreground font-medium mb-1 capitalize">
                         {scoreKey.replace('Score', '')}
                       </label>
                       <input
@@ -1705,7 +1713,7 @@ export default function PerformanceDashboard() {
                         max="10"
                         value={(reviewForm as any)[scoreKey]}
                         onChange={(e) => setReviewForm({ ...reviewForm, [scoreKey]: Number(e.target.value) })}
-                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-2 py-1.5 text-xs text-slate-200 text-center focus:outline-none"
+                        className="w-full bg-muted/50 border border-border rounded-xl px-2 py-1.5 text-xs text-foreground text-center focus:outline-none focus:ring-2 focus:ring-primary hover:bg-muted/80"
                       />
                     </div>
                   ))}
@@ -1715,27 +1723,27 @@ export default function PerformanceDashboard() {
               {/* Comments and Tags */}
               <div className="space-y-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">Supervisor Comments</label>
+                  <label className="block text-xs font-semibold text-muted-foreground uppercase mb-1">Supervisor Comments</label>
                   <textarea
                     rows={3}
                     value={reviewForm.comments}
                     onChange={(e) => setReviewForm({ ...reviewForm, comments: e.target.value })}
                     required
                     placeholder="Enter professional coaching notes and metrics accomplishments..."
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none"
+                    className="w-full bg-muted/50 border border-border rounded-xl px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary hover:bg-muted/80"
                   ></textarea>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">Key Strengths</label>
+                    <label className="block text-xs font-semibold text-muted-foreground uppercase mb-1">Key Strengths</label>
                     <div className="flex gap-2">
                       <input
                         type="text"
                         value={strengthInput}
                         onChange={(e) => setStrengthInput(e.target.value)}
                         placeholder="e.g. System Design"
-                        className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-slate-200 focus:outline-none"
+                        className="flex-1 bg-muted/50 border border-border rounded-xl px-3 py-1.5 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-primary hover:bg-muted/80"
                       />
                       <button
                         type="button"
@@ -1745,14 +1753,14 @@ export default function PerformanceDashboard() {
                             setStrengthInput('');
                           }
                         }}
-                        className="px-3 bg-slate-800 rounded-xl text-xs"
+                        className="px-3 bg-muted hover:bg-muted/80 border border-border rounded-xl text-xs text-foreground cursor-pointer transition"
                       >
                         Add
                       </button>
                     </div>
-                    <div className="flex flex-wrap gap-1 mt-2">
+                    <div className="flex flex-wrap gap-1.5 mt-2 animate-fadeIn">
                       {reviewForm.strengths.map((s, i) => (
-                        <span key={i} className="text-[10px] bg-slate-800 border border-slate-750 px-2 py-0.5 rounded text-indigo-400">
+                        <span key={i} className="text-[10px] bg-primary/10 border border-primary/20 px-2 py-0.5 rounded text-primary">
                           {s}
                         </span>
                       ))}
@@ -1760,14 +1768,14 @@ export default function PerformanceDashboard() {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">Areas for Growth</label>
+                    <label className="block text-xs font-semibold text-muted-foreground uppercase mb-1">Areas for Growth</label>
                     <div className="flex gap-2">
                       <input
                         type="text"
                         value={weaknessInput}
                         onChange={(e) => setWeaknessInput(e.target.value)}
                         placeholder="e.g. Public Speaking"
-                        className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-slate-200 focus:outline-none"
+                        className="flex-1 bg-muted/50 border border-border rounded-xl px-3 py-1.5 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-primary hover:bg-muted/80"
                       />
                       <button
                         type="button"
@@ -1777,14 +1785,14 @@ export default function PerformanceDashboard() {
                             setWeaknessInput('');
                           }
                         }}
-                        className="px-3 bg-slate-800 rounded-xl text-xs"
+                        className="px-3 bg-muted hover:bg-muted/80 border border-border rounded-xl text-xs text-foreground cursor-pointer transition"
                       >
                         Add
                       </button>
                     </div>
-                    <div className="flex flex-wrap gap-1 mt-2">
+                    <div className="flex flex-wrap gap-1.5 mt-2 animate-fadeIn">
                       {reviewForm.weaknesses.map((w, i) => (
-                        <span key={i} className="text-[10px] bg-slate-800 border border-slate-750 px-2 py-0.5 rounded text-amber-500">
+                        <span key={i} className="text-[10px] bg-warning/10 border border-warning/20 px-2 py-0.5 rounded text-warning">
                           {w}
                         </span>
                       ))}
@@ -1794,16 +1802,16 @@ export default function PerformanceDashboard() {
               </div>
 
               {/* Status */}
-              <div className="flex justify-between items-center border-t border-slate-800 pt-4">
+              <div className="flex justify-between items-center border-t border-border/60 pt-4">
                 <div className="flex items-center gap-2">
-                  <label className="text-xs text-slate-400">Submission Mode:</label>
+                  <label className="text-xs text-muted-foreground">Submission Mode:</label>
                   <select
                     value={reviewForm.status}
                     onChange={(e) => setReviewForm({ ...reviewForm, status: e.target.value })}
-                    className="bg-slate-950 border border-slate-800 rounded-xl px-2 py-1 text-xs text-slate-200"
+                    className="bg-muted/50 border border-border rounded-xl px-2 py-1 text-xs text-foreground cursor-pointer focus:outline-none"
                   >
-                    <option value="DRAFT">DRAFT</option>
-                    <option value="SUBMITTED">SUBMITTED (Triggers AI coach)</option>
+                    <option value="DRAFT" className="bg-popover text-foreground">DRAFT</option>
+                    <option value="SUBMITTED" className="bg-popover text-foreground">SUBMITTED (Triggers AI coach)</option>
                   </select>
                 </div>
 
@@ -1811,13 +1819,13 @@ export default function PerformanceDashboard() {
                   <button
                     type="button"
                     onClick={() => { setShowReviewModal(false); setSelectedReview(null); }}
-                    className="px-4 py-2 bg-slate-850 hover:bg-slate-800 text-xs font-semibold rounded-xl text-slate-400"
+                    className="px-4 py-2 bg-muted hover:bg-muted/80 border border-border text-xs font-semibold rounded-xl text-muted-foreground cursor-pointer transition"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 font-semibold text-xs text-white rounded-xl"
+                    className="px-4 py-2 bg-primary hover:bg-primary/90 font-semibold text-xs text-primary-foreground rounded-xl cursor-pointer transition shadow-lg shadow-primary/10"
                   >
                     {selectedReview ? 'Update' : 'Save'}
                   </button>
@@ -1830,130 +1838,130 @@ export default function PerformanceDashboard() {
 
       {/* CREATE GOAL MODAL */}
       {showGoalModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4 overflow-y-auto">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 w-full max-w-md space-y-4">
-            <div className="flex justify-between items-center border-b border-slate-800 pb-3">
-              <h3 className="text-xl font-bold text-slate-100">Assign New Goal</h3>
-              <button onClick={() => setShowGoalModal(false)} className="text-slate-400 hover:text-slate-200">&times;</button>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4 overflow-y-auto">
+          <div className="glass bg-card border border-border rounded-2xl p-6 w-full max-w-md space-y-4 shadow-2xl glow-primary/5">
+            <div className="flex justify-between items-center border-b border-border/60 pb-3">
+              <h3 className="text-xl font-bold text-foreground">Assign New Goal</h3>
+              <button onClick={() => setShowGoalModal(false)} className="text-muted-foreground hover:text-foreground cursor-pointer text-xl">&times;</button>
             </div>
 
             <form onSubmit={handleCreateGoal} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">Select Employee</label>
+                <label className="block text-xs font-semibold text-muted-foreground uppercase mb-1">Select Employee</label>
                 <select
                   value={goalForm.employeeId}
                   onChange={(e) => setGoalForm({ ...goalForm, employeeId: e.target.value })}
                   required
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none"
+                  className="w-full bg-muted/50 border border-border rounded-xl px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer hover:bg-muted/80"
                 >
-                  <option value="">Choose employee...</option>
+                  <option value="" className="bg-popover text-foreground">Choose employee...</option>
                   {employees.map(e => (
-                    <option key={e._id} value={e._id}>{e.firstName} {e.lastName} ({e.employeeCode})</option>
+                    <option key={e._id} value={e._id} className="bg-popover text-foreground">{e.firstName} {e.lastName} ({e.employeeCode})</option>
                   ))}
                 </select>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">Goal Title</label>
+                <label className="block text-xs font-semibold text-muted-foreground uppercase mb-1">Goal Title</label>
                 <input
                   type="text"
                   required
                   value={goalForm.title}
                   onChange={(e) => setGoalForm({ ...goalForm, title: e.target.value })}
                   placeholder="e.g. Master React 19 Core Hooks"
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none"
+                  className="w-full bg-muted/50 border border-border rounded-xl px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary hover:bg-muted/80"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">Description</label>
+                <label className="block text-xs font-semibold text-muted-foreground uppercase mb-1">Description</label>
                 <textarea
                   rows={2}
                   value={goalForm.description}
                   onChange={(e) => setGoalForm({ ...goalForm, description: e.target.value })}
                   placeholder="Enter detailed goals scope..."
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none"
+                  className="w-full bg-muted/50 border border-border rounded-xl px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary hover:bg-muted/80"
                 ></textarea>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">Goal Category</label>
+                  <label className="block text-xs font-semibold text-muted-foreground uppercase mb-1">Goal Category</label>
                   <select
                     value={goalForm.category}
                     onChange={(e) => setGoalForm({ ...goalForm, category: e.target.value })}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-200"
+                    className="w-full bg-muted/50 border border-border rounded-xl px-3 py-2 text-sm text-foreground cursor-pointer focus:ring-2 focus:ring-primary"
                   >
-                    <option value="Technical">Technical</option>
-                    <option value="Operations">Operations</option>
-                    <option value="Leadership">Leadership</option>
-                    <option value="General">General</option>
+                    <option value="Technical" className="bg-popover text-foreground">Technical</option>
+                    <option value="Operations" className="bg-popover text-foreground">Operations</option>
+                    <option value="Leadership" className="bg-popover text-foreground">Leadership</option>
+                    <option value="General" className="bg-popover text-foreground">General</option>
                   </select>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">Priority</label>
+                  <label className="block text-xs font-semibold text-muted-foreground uppercase mb-1">Priority</label>
                   <select
                     value={goalForm.priority}
                     onChange={(e) => setGoalForm({ ...goalForm, priority: e.target.value })}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-200"
+                    className="w-full bg-muted/50 border border-border rounded-xl px-3 py-2 text-sm text-foreground cursor-pointer focus:ring-2 focus:ring-primary"
                   >
-                    <option value="LOW">Low</option>
-                    <option value="MEDIUM">Medium</option>
-                    <option value="HIGH">High</option>
+                    <option value="LOW" className="bg-popover text-foreground">Low</option>
+                    <option value="MEDIUM" className="bg-popover text-foreground">Medium</option>
+                    <option value="HIGH" className="bg-popover text-foreground">High</option>
                   </select>
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">Target End Date</label>
+                  <label className="block text-xs font-semibold text-muted-foreground uppercase mb-1">Target End Date</label>
                   <input
                     type="date"
                     required
                     value={goalForm.targetDate}
                     onChange={(e) => setGoalForm({ ...goalForm, targetDate: e.target.value })}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none"
+                    className="w-full bg-muted/50 border border-border rounded-xl px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary hover:bg-muted/80"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">Start progress</label>
+                  <label className="block text-xs font-semibold text-muted-foreground uppercase mb-1">Start progress</label>
                   <input
                     type="number"
                     min="0"
                     max="100"
                     value={goalForm.progressPercentage}
                     onChange={(e) => setGoalForm({ ...goalForm, progressPercentage: Number(e.target.value) })}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none"
+                    className="w-full bg-muted/50 border border-border rounded-xl px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary hover:bg-muted/80"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">Goal Weightage (1-100)</label>
+                  <label className="block text-xs font-semibold text-muted-foreground uppercase mb-1">Goal Weightage (1-100)</label>
                   <input
                     type="number"
                     min="1"
                     max="100"
                     value={goalForm.weightage}
                     onChange={(e) => setGoalForm({ ...goalForm, weightage: Number(e.target.value) })}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none"
+                    className="w-full bg-muted/50 border border-border rounded-xl px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary hover:bg-muted/80"
                   />
                 </div>
               </div>
 
-              <div className="flex justify-end gap-3 border-t border-slate-800 pt-4">
+              <div className="flex justify-end gap-3 border-t border-border/60 pt-4">
                 <button
                   type="button"
                   onClick={() => setShowGoalModal(false)}
-                  className="px-4 py-2 bg-slate-850 text-xs font-semibold rounded-xl text-slate-400"
+                  className="px-4 py-2 bg-muted hover:bg-muted/80 border border-border text-xs font-semibold rounded-xl text-muted-foreground cursor-pointer transition"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 font-semibold text-xs text-white rounded-xl"
+                  className="px-4 py-2 bg-primary hover:bg-primary/90 font-semibold text-xs text-primary-foreground rounded-xl cursor-pointer transition shadow-lg shadow-primary/10"
                 >
                   Create
                 </button>
@@ -1965,78 +1973,78 @@ export default function PerformanceDashboard() {
 
       {/* CREATE SKILL ASSESSMENT MODAL */}
       {showSkillModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4 overflow-y-auto">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 w-full max-w-md space-y-4">
-            <div className="flex justify-between items-center border-b border-slate-800 pb-3">
-              <h3 className="text-xl font-bold text-slate-100">Assess Skill Competency</h3>
-              <button onClick={() => setShowSkillModal(false)} className="text-slate-400 hover:text-slate-200">&times;</button>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4 overflow-y-auto">
+          <div className="glass bg-card border border-border rounded-2xl p-6 w-full max-w-md space-y-4 shadow-2xl glow-primary/5">
+            <div className="flex justify-between items-center border-b border-border/60 pb-3">
+              <h3 className="text-xl font-bold text-foreground">Assess Skill Competency</h3>
+              <button onClick={() => setShowSkillModal(false)} className="text-muted-foreground hover:text-foreground cursor-pointer text-xl">&times;</button>
             </div>
 
             <form onSubmit={handleAssessSkill} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">Select Employee</label>
+                <label className="block text-xs font-semibold text-muted-foreground uppercase mb-1">Select Employee</label>
                 <select
                   value={skillForm.employeeId}
                   onChange={(e) => setSkillForm({ ...skillForm, employeeId: e.target.value })}
                   required
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none"
+                  className="w-full bg-muted/50 border border-border rounded-xl px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer hover:bg-muted/80"
                 >
-                  <option value="">Choose employee...</option>
+                  <option value="" className="bg-popover text-foreground">Choose employee...</option>
                   {employees.map(e => (
-                    <option key={e._id} value={e._id}>{e.firstName} {e.lastName} ({e.employeeCode})</option>
+                    <option key={e._id} value={e._id} className="bg-popover text-foreground">{e.firstName} {e.lastName} ({e.employeeCode})</option>
                   ))}
                 </select>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">Skill Name</label>
+                <label className="block text-xs font-semibold text-muted-foreground uppercase mb-1">Skill Name</label>
                 <input
                   type="text"
                   required
                   value={skillForm.skillName}
                   onChange={(e) => setSkillForm({ ...skillForm, skillName: e.target.value })}
                   placeholder="e.g. Node.js, System Architecture"
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none"
+                  className="w-full bg-muted/50 border border-border rounded-xl px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary hover:bg-muted/80"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">Current Level (1-10)</label>
+                  <label className="block text-xs font-semibold text-muted-foreground uppercase mb-1">Current Level (1-10)</label>
                   <input
                     type="number"
                     min="1"
                     max="10"
                     value={skillForm.currentLevel}
                     onChange={(e) => setSkillForm({ ...skillForm, currentLevel: Number(e.target.value) })}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none"
+                    className="w-full bg-muted/50 border border-border rounded-xl px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary hover:bg-muted/80"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">Desired Level (1-10)</label>
+                  <label className="block text-xs font-semibold text-muted-foreground uppercase mb-1">Desired Level (1-10)</label>
                   <input
                     type="number"
                     min="1"
                     max="10"
                     value={skillForm.desiredLevel}
                     onChange={(e) => setSkillForm({ ...skillForm, desiredLevel: Number(e.target.value) })}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none"
+                    className="w-full bg-muted/50 border border-border rounded-xl px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary hover:bg-muted/80"
                   />
                 </div>
               </div>
 
-              <div className="flex justify-end gap-3 border-t border-slate-800 pt-4">
+              <div className="flex justify-end gap-3 border-t border-border/60 pt-4">
                 <button
                   type="button"
                   onClick={() => setShowSkillModal(false)}
-                  className="px-4 py-2 bg-slate-850 text-xs font-semibold rounded-xl text-slate-400"
+                  className="px-4 py-2 bg-muted hover:bg-muted/80 border border-border text-xs font-semibold rounded-xl text-muted-foreground cursor-pointer transition"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 font-semibold text-xs text-white rounded-xl"
+                  className="px-4 py-2 bg-primary hover:bg-primary/90 font-semibold text-xs text-primary-foreground rounded-xl cursor-pointer transition shadow-lg shadow-primary/10"
                 >
                   Assess
                 </button>

@@ -76,13 +76,23 @@ export class AuthController {
   async forgotPassword(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const result = await authService.forgotPassword(req.body.email);
+      res.status(200).json(result);
+    } catch (error: any) {
+      next(error);
+    }
+  }
+
+  async verifyResetOtp(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { email, otp } = req.body;
+      const result = await authService.verifyResetOtp(email, otp);
       res.status(200).json({
         success: true,
-        message: 'Password reset link generated',
+        message: 'OTP verified successfully',
         data: result,
       });
     } catch (error: any) {
-      next(error);
+      res.status(400).json({ success: false, message: error.message });
     }
   }
 

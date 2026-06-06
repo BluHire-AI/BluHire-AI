@@ -48,7 +48,16 @@ export default function LoginPage() {
         const { user, accessToken, refreshToken } = response.data.data;
         login(user, accessToken, refreshToken);
         toast.success('Login successful');
-        router.push('/dashboard');
+        
+        let targetRoute = '/dashboard';
+        switch (user.role) {
+          case 'CANDIDATE': targetRoute = '/candidate/dashboard'; break;
+          case 'EMPLOYEE': targetRoute = '/employee/dashboard'; break;
+          case 'HR_RECRUITER': targetRoute = '/recruitment/dashboard'; break;
+          case 'SENIOR_MANAGER': targetRoute = '/executive/dashboard'; break;
+          case 'MANAGEMENT_ADMIN': targetRoute = '/admin/dashboard'; break;
+        }
+        router.push(targetRoute);
       }
     } catch (error: unknown) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any

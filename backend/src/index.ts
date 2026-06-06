@@ -3,6 +3,9 @@ import cors from 'cors';
 import { env } from './config/env';
 import { connectDB } from './config/db';
 import apiRouter from './routes';
+import authRoutes from './routes/auth.routes';
+import userRoutes from './routes/user.routes';
+import analyticsRoutes from './routes/analytics.routes';
 import { errorHandler } from './middlewares/error.middleware';
 
 const app = express();
@@ -19,6 +22,7 @@ app.use(cors({
 
 // Route Definitions
 app.use('/api/v1', apiRouter);
+app.use('/api/v1/analytics', analyticsRoutes);
 
 // Base route
 app.get('/', (req, res) => {

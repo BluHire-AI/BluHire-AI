@@ -13,6 +13,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 
+import { useRouter } from 'next/navigation';
+
 const forgotPasswordSchema = z.object({
   email: z.string().email({ message: 'Invalid email address' }),
 });
@@ -20,8 +22,8 @@ const forgotPasswordSchema = z.object({
 type ForgotPasswordFormValues = z.infer<typeof forgotPasswordSchema>;
 
 export default function ForgotPasswordPage() {
+  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const [isSubmitted, setIsSubmitted] = useState(false);
 
   const {
     register,
@@ -40,8 +42,8 @@ export default function ForgotPasswordPage() {
       const response = await api.post('/auth/forgot-password', data);
       
       if (response.data.success) {
-        setIsSubmitted(true);
-        toast.success('Password reset email sent');
+        toast.success('If an account exists, an OTP has been sent.');
+        router.push(`/verify-otp?email=${encodeURIComponent(data.email)}`);
       }
     } catch (error: unknown) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -57,16 +59,11 @@ export default function ForgotPasswordPage() {
       <CardHeader className="space-y-1">
         <CardTitle className="text-2xl font-bold tracking-tight">Forgot password</CardTitle>
         <CardDescription>
-          Enter your email address and we will send you a link to reset your password
+          Enter your email address and we will send you a 6-digit OTP to reset your password
         </CardDescription>
       </CardHeader>
       <CardContent>
-        {isSubmitted ? (
-          <div className="bg-green-50 dark:bg-green-900/20 text-green-800 dark:text-green-300 p-4 rounded-md text-sm text-center">
-            If an account exists with that email, a password reset link has been sent. Please check your inbox.
-          </div>
-        ) : (
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input 
@@ -85,7 +82,6 @@ export default function ForgotPasswordPage() {
               {isLoading ? 'Sending link...' : 'Send reset link'}
             </Button>
           </form>
-        )}
       </CardContent>
       <CardFooter className="flex justify-center border-t border-zinc-100 dark:border-zinc-800 pt-6">
         <div className="text-sm text-zinc-500 dark:text-zinc-400">

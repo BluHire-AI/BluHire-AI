@@ -2,6 +2,7 @@ import { userRepository } from '../repositories/user.repository';
 import { hashPassword, comparePassword } from '../utils/password.util';
 import { generateTokens, verifyRefreshToken, generateResetToken, verifyResetToken } from '../utils/jwt.util';
 import { RegisterDTO, LoginDTO } from '../dto/user.dto';
+import { emailService } from './email.service';
 
 export class AuthService {
   async register(data: any) {
@@ -76,18 +77,61 @@ export class AuthService {
   async forgotPassword(email: string) {
     const user = await userRepository.findByEmail(email);
     if (!user) {
-      return { success: true };
+      // Generic response to prevent enumeration
+      return { success: true, message: 'If an account exists, an OTP has been sent.' };
     }
 
-    const resetToken = generateResetToken(user);
-    const resetLink = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/reset-password?token=${resetToken}`;
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const hashedOtp = await hashPassword(otp);
     
-    console.log('------------------------------------');
-    console.log(`Password reset requested for: ${email}`);
-    console.log(`Reset Link: ${resetLink}`);
-    console.log('------------------------------------');
+    // Set expiry to 10 mins from now
+    const expires = new Date();
+    expires.setMinutes(expires.getMinutes() + 10);
+
+    await userRepository.updateById(user.id as string, {
+      passwordResetOtp: hashedOtp,
+      passwordResetOtpExpires: expires,
+      passwordResetAttempts: 0
+    } as any);
+
+    await emailService.sendPasswordResetOTP(email, otp);
     
-    return { success: true, resetToken, resetLink };
+    return { success: true, message: 'If an account exists, an OTP has been sent.' };
+  }
+
+  async verifyResetOtp(email: string, otp: string) {
+    const user = await userRepository.findByEmail(email);
+    if (!user || !user.passwordResetOtp || !user.passwordResetOtpExpires) {
+      throw new Error('Invalid or expired OTP');
+    }
+
+    if (user.passwordResetAttempts && user.passwordResetAttempts >= 5) {
+      throw new Error('Too many verification attempts. Please request a new OTP.');
+    }
+
+    if (new Date() > user.passwordResetOtpExpires) {
+      throw new Error('OTP has expired');
+    }
+
+    const isMatch = await comparePassword(otp, user.passwordResetOtp);
+    if (!isMatch) {
+      await userRepository.updateById(user.id as string, {
+        passwordResetAttempts: (user.passwordResetAttempts || 0) + 1
+      } as any);
+      throw new Error('Invalid OTP');
+    }
+
+    // OTP verified successfully. Generate temporary reset token.
+    const tempResetToken = generateResetToken(user);
+    
+    // Clear OTP data
+    await userRepository.updateById(user.id as string, {
+      passwordResetOtp: null,
+      passwordResetOtpExpires: null,
+      passwordResetAttempts: 0
+    } as any);
+
+    return { tempResetToken };
   }
 
   async resetPassword(data: any) {

@@ -1,0 +1,12 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const review_controller_1 = require("../controllers/review.controller");
+const router = (0, express_1.Router)();
+router.post('/', review_controller_1.reviewController.create);
+router.put('/:id', review_controller_1.reviewController.update);
+router.get('/', review_controller_1.reviewController.getList);
+router.get('/comparison/:employeeId', review_controller_1.reviewController.getComparison);
+router.get('/:id', review_controller_1.reviewController.getById);
+router.delete('/:id', review_controller_1.reviewController.delete);
+exports.default = router;

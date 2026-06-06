@@ -364,10 +364,15 @@ class EmployeeService {
             lastName: emp.lastName,
             email: emp.email,
             phone: emp.phone,
-            departmentId: emp.departmentId.toString(),
-            designationId: emp.designationId.toString(),
+            departmentId: emp.departmentId ? (typeof emp.departmentId === 'object' && '_id' in emp.departmentId
+                ? { _id: emp.departmentId._id.toString(), name: emp.departmentId.name }
+                : { _id: emp.departmentId.toString(), name: 'Department Team' }) : null,
+            designationId: emp.designationId ? (typeof emp.designationId === 'object' && '_id' in emp.designationId
+                ? { _id: emp.designationId._id.toString(), title: emp.designationId.title, level: emp.designationId.level }
+                : { _id: emp.designationId.toString(), title: 'Team Member' }) : null,
             profileImage: emp.profileImage,
             workLocation: emp.workLocation,
+            skills: emp.skills || []
         }));
         const page = pagination?.page || 1;
         const limit = pagination?.limit || 10;

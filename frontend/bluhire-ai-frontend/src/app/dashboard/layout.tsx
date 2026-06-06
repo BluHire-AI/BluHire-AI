@@ -5,8 +5,8 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { 
   LayoutDashboard, Users, UserCircle, LogOut, Building, Briefcase, 
-  Network, Contact, Sun, Moon, Sparkles, ChevronDown, ChevronRight,
-  TrendingUp, Compass, Award, BarChart3, Bot
+  Network, Contact, Sun, Moon, ChevronDown, ChevronRight,
+  Compass, Award, BarChart3, Bot, BookOpen
 } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { useAuthStore } from '@/lib/store/auth';
@@ -37,9 +37,9 @@ export default function DashboardLayout({
   // Group accordion states
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({
     workforce: true,
+    aiFeatures: true,
     orgSetup: true,
     account: true,
-    future: false,
   });
 
   useEffect(() => {
@@ -144,7 +144,74 @@ export default function DashboardLayout({
                         { name: 'Employee Directory', href: '/dashboard/directory', icon: Contact },
                         { name: 'Organization Chart', href: '/dashboard/org-chart', icon: Network },
                         { name: 'Recruitment', href: '/dashboard/recruitment', icon: Compass, roles: ['MANAGEMENT_ADMIN', 'HR_RECRUITER'] },
-                        { name: 'Analytics', href: '/dashboard/analytics', icon: BarChart3, roles: ['MANAGEMENT_ADMIN', 'SENIOR_MANAGER', 'HR_RECRUITER'] },
+                        { name: 'Performance & Coaching', href: '/dashboard/performance', icon: Award },
+                      ].map((item) => {
+                        if (item.roles && user && !item.roles.includes(user.role)) {
+                          return null;
+                        }
+                        const isActive = pathname === item.href;
+                        const Icon = item.icon;
+                        return (
+                          <Link
+                            key={item.name}
+                            href={item.href}
+                            className={`flex items-center px-3 py-2 rounded-xl text-xs font-semibold transition-all group duration-300 ${
+                              isActive
+                                ? 'text-blue-600 dark:text-blue-400 bg-blue-50/30 dark:bg-blue-950/10'
+                                : 'text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 hover:bg-zinc-50/50 dark:hover:bg-zinc-800/10'
+                            }`}
+                          >
+                            <Icon className={`w-4 h-4 mr-3 ${isActive ? 'text-blue-600 dark:text-blue-400' : 'text-zinc-400 dark:text-zinc-500'}`} />
+                            {item.name}
+                          </Link>
+                        );
+                      })}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              {/* Analytics Link (Standalone Top-level) */}
+              {user && ['MANAGEMENT_ADMIN', 'SENIOR_MANAGER', 'HR_RECRUITER'].includes(user.role) && (
+                <div>
+                  <Link
+                    href="/dashboard/analytics"
+                    className={`relative flex items-center px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all group duration-300 ${
+                      pathname === '/dashboard/analytics'
+                        ? 'text-blue-600 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-950/20'
+                        : 'text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 hover:bg-zinc-50 dark:hover:bg-zinc-800/20'
+                    }`}
+                  >
+                    {pathname === '/dashboard/analytics' && (
+                      <motion.div
+                        layoutId="active-nav-glow"
+                        className="absolute left-0 w-1 h-6 rounded-r bg-blue-600 dark:bg-blue-500"
+                        transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                      />
+                    )}
+                    <BarChart3 className={`w-5 h-5 mr-3.5 transition-transform duration-300 group-hover:scale-105 ${
+                      pathname === '/dashboard/analytics' ? 'text-blue-600 dark:text-blue-400' : 'text-zinc-400 dark:text-zinc-500'
+                    }`} />
+                    Analytics
+                  </Link>
+                </div>
+              )}
+
+              {/* AI Features Group */}
+              <div>
+                {renderGroupHeader('AI Features', 'aiFeatures')}
+                <AnimatePresence initial={false}>
+                  {openGroups.aiFeatures && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.15 }}
+                      className="overflow-hidden space-y-1 mt-1 pl-1"
+                    >
+                      {[
+                        { name: 'AI Copilot', href: '/dashboard/copilot', icon: Bot, roles: ['MANAGEMENT_ADMIN', 'HR_RECRUITER', 'SENIOR_MANAGER'] },
+                        { name: 'Knowledge Base', href: '/dashboard/knowledge', icon: BookOpen, roles: ['MANAGEMENT_ADMIN', 'SENIOR_MANAGER', 'HR_RECRUITER', 'EMPLOYEE'] },
                       ].map((item) => {
                         if (item.roles && user && !item.roles.includes(user.role)) {
                           return null;
@@ -239,38 +306,6 @@ export default function DashboardLayout({
                   )}
                 </AnimatePresence>
               </div>
-
-              {/* Future Modules Group */}
-              <div>
-                {renderGroupHeader('Future Modules', 'future')}
-                <AnimatePresence initial={false}>
-                  {openGroups.future && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: 'auto', opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.15 }}
-                      className="overflow-hidden space-y-1 mt-1 pl-1"
-                    >
-                      {[
-                        { name: 'Performance', icon: Award },
-                        { name: 'AI Hub', icon: Bot },
-                      ].map((item) => (
-                        <div
-                          key={item.name}
-                          className="flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold text-zinc-400 dark:text-zinc-600 cursor-not-allowed select-none"
-                        >
-                          <div className="flex items-center">
-                            <item.icon className="w-4 h-4 mr-3 text-zinc-300 dark:text-zinc-800" />
-                            {item.name}
-                          </div>
-                          <span className="text-[8px] font-bold px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800/40 text-zinc-400 dark:text-zinc-600">Soon</span>
-                        </div>
-                      ))}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
             </div>
           </nav>
 
@@ -298,6 +333,8 @@ export default function DashboardLayout({
                  pathname === '/dashboard/departments' ? 'Departments' : 
                  pathname === '/dashboard/designations' ? 'Designations' : 
                  pathname.startsWith('/dashboard/recruitment') ? 'Recruitment' : 
+                 pathname.startsWith('/dashboard/copilot') ? 'AI Copilot' :
+                 pathname === '/dashboard/knowledge' ? 'Knowledge Base' :
                  pathname === '/dashboard/profile' ? 'Profile' : 'HRMinds AI'}
               </h2>
             </div>

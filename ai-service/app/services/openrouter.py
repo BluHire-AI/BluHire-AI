@@ -1,5 +1,6 @@
 import os
 import httpx
+import json
 from typing import Dict, Any
 from dotenv import load_dotenv
 
@@ -120,6 +121,79 @@ class OpenRouterClient:
         raise Exception(
             f"OpenRouter call failed. Last error: {last_error}"
         )
+
+    async def get_chat_completion(
+        self,
+        messages: list,
+        tools: list = None,
+        tool_choice: Any = None
+    ) -> Dict[str, Any]:
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "HTTP-Referer": "https://bluehire.ai",
+            "X-Title": "HRMinds AI Sourcing",
+            "Content-Type": "application/json"
+        }
+
+        payload: Dict[str, Any] = {
+            "model": self.default_model,
+            "messages": messages,
+            "temperature": 0.2
+        }
+        if tools:
+            payload["tools"] = tools
+        if tool_choice:
+            payload["tool_choice"] = tool_choice
+
+        async with httpx.AsyncClient(timeout=60.0) as client:
+            response = await client.post(
+                self.api_url,
+                headers=headers,
+                json=payload
+            )
+            if response.status_code == 200:
+                return response.json()
+            else:
+                raise Exception(f"OpenRouter API error status {response.status_code}: {response.text}")
+
+    async def stream_chat_completion(
+        self,
+        messages: list,
+        tools: list = None
+    ):
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "HTTP-Referer": "https://bluehire.ai",
+            "X-Title": "HRMinds AI Sourcing",
+            "Content-Type": "application/json"
+        }
+
+        payload: Dict[str, Any] = {
+            "model": self.default_model,
+            "messages": messages,
+            "temperature": 0.2,
+            "stream": True
+        }
+        if tools:
+            payload["tools"] = tools
+
+        async def generator():
+            async with httpx.AsyncClient(timeout=60.0) as client:
+                async with client.stream(
+                    "POST",
+                    self.api_url,
+                    headers=headers,
+                    json=payload
+                ) as response:
+                    if response.status_code != 200:
+                        yield f"data: {json.dumps({'error': f'OpenRouter stream error status {response.status_code}'})}\n\n"
+                        return
+
+                    async for line in response.aiter_lines():
+                        if line.strip():
+                            yield f"{line}\n\n"
+
+        return generator()
 
 
 open_router_client = OpenRouterClient()

@@ -6,6 +6,9 @@ import { employeeRoutes } from '../modules/employee';
 import { publicRecruitmentRouter, adminRecruitmentRouter } from '../modules/recruitment';
 import aiRouter from '../modules/recruitment/ai/ai.routes';
 import analyticsRoutes from '../modules/analytics/analytics.routes';
+import copilotRoutes from '../modules/copilot/copilot.routes';
+import { performanceRoutes } from '../modules/performance';
+import knowledgeRoutes from '../modules/knowledge/routes/knowledge.routes';
 
 const apiRouter = Router();
 
@@ -15,6 +18,10 @@ apiRouter.use('/public/recruitment', publicRecruitmentRouter);
 apiRouter.use('/recruitment', authenticate, adminRecruitmentRouter);
 apiRouter.use('/ai', authenticate, aiRouter);
 apiRouter.use('/analytics', authenticate, analyticsRoutes);
+apiRouter.use('/copilot', authenticate, copilotRoutes);
+apiRouter.use('/performance', authenticate, performanceRoutes);
+apiRouter.use('/knowledge', authenticate, knowledgeRoutes);
 apiRouter.use('/', authenticate, employeeRoutes);
 
 export default apiRouter;
+

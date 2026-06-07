@@ -2,42 +2,112 @@
 
 BluHire-AI is a next-generation Enterprise Human Resource Management System (HRMS) powered by AI. It simplifies candidate screening, automated voice interviews, shift scheduling, payroll cycles, and leave management through a sleek dark glassmorphic dashboard interface.
 
+## 🌐 Live Demo
+
+**Deployed Application:** https://bluhire-ai-frontend.vercel.app
+
 ---
 
 ## 🚀 Key Modules & Features
 
-### 1. 🎤 Recruitment & AI Interviews
-* **Voice Interview Engine**: Candidates receive structured invitations and record response webms.
-* **Auto-Screening Worker**: BullMQ queue asynchronously routes audio responses to FastAPI/Uvicorn AI service for transcripts and scoring.
-* **Hiring Decision Center**: Interactive scorecard reviews, problem-solving evaluations, and technical metrics dashboard.
+### 🎤 Recruitment & AI Interviews
 
-### 2. 💸 Enterprise Payroll & Incentives
-* **Incentives Registry**: Award spot bonuses, referrals, or retention incentives linked to specific employees.
-* **Deductions Registry**: Automatically applies custom tax configurations, TDS slabs, or payroll deductions.
-* **AI Payroll Assistant**: Chat-based assistant that allows HR to detect anomalies or predict monthly costs, and allows employees to analyze salary structures.
+* **Voice Interview Engine** – Candidates receive structured interview invitations and record voice responses directly through the platform.
+* **AI-Powered Screening** – Audio responses are processed through a FastAPI AI service for transcription, scoring, and evaluation.
+* **Hiring Decision Center** – HR teams can review candidate scorecards, communication skills, technical performance, and interview analytics.
+* **Candidate Portal** – Dedicated candidate experience with interview scheduling and status tracking.
 
-### 3. 📅 Attendance & Shift Scheduling
-* **Leaves Management**: Dynamic quota balances (Annual, Sick, Casual) styled with custom linear progress bars.
-* **Shift Roster**: Setup and allocate shift configurations (Morning, Night, and Flexible shifts).
-* **Analytics**: Monthly presence summaries and interactive trends charts.
+### 💸 Enterprise Payroll & Incentives
+
+* **Payroll Management** – Automated payroll processing with configurable salary structures.
+* **Incentives Registry** – Manage spot bonuses, referral rewards, and retention incentives.
+* **Deductions Registry** – Configure taxes, deductions, and payroll adjustments.
+* **AI Payroll Assistant** – Analyze salary structures, payroll anomalies, and monthly payroll forecasts through natural language conversations.
+
+### 📅 Attendance & Shift Scheduling
+
+* **Attendance Tracking** – Real-time attendance monitoring and reporting.
+* **Leave Management** – Dynamic leave balances with Annual, Sick, and Casual leave tracking.
+* **Shift Roster Management** – Create and assign Morning, Night, and Flexible shifts.
+* **Attendance Analytics** – Interactive charts and workforce attendance insights.
+
+### 👥 Employee Management
+
+* Employee directory and profile management.
+* Role-based access control (RBAC).
+* Department and organizational hierarchy management.
+* Employee lifecycle management.
+
+### 📈 Performance Management
+
+* Employee performance tracking.
+* KPI and goal management.
+* Performance reviews and analytics.
+* AI-assisted performance insights.
+
+### 🤖 AI-Powered HR Tools
+
+* AI Voice Interview System.
+* Resume Screening & Candidate Evaluation.
+* HR Copilot Assistant.
+* Payroll Intelligence Assistant.
+* Employee Performance Analytics.
 
 ---
 
 ## 🛠️ Technology Stack
 
-* **Frontend**: Next.js 15, TailwindCSS, Framer Motion, React Query, Lucide icons.
-* **Backend API**: Node.js, Express, TypeScript, Mongoose (MongoDB), BullMQ.
-* **AI Service**: Python (FastAPI/Uvicorn), Pydantic, pytest.
-* **Task Queues**: Redis (BullMQ queue manager).
+### Frontend
+
+* Next.js 15
+* React
+* TypeScript
+* Tailwind CSS
+* Framer Motion
+* React Query
+* Lucide Icons
+
+### Backend
+
+* Node.js
+* Express.js
+* TypeScript
+* MongoDB
+* Mongoose
+* BullMQ
+
+### AI Services
+
+* Python
+* FastAPI
+* Uvicorn
+* Pydantic
+* Pytest
+
+### Infrastructure
+
+* Redis
+* MongoDB Atlas
+* Vercel
+* BullMQ Queue Workers
 
 ---
 
-## 📦 Project Directory Structure
+## 📦 Project Structure
 
-```
-├── ai-service/          # Python-based FastAPI audio transcription & screening service
-├── backend/             # Node/Express TypeScript server (auth, payroll, attendance, etc.)
-└── frontend/            # Next.js 15 frontend application (glassmorphic theme dashboard)
+```text
+BluHire-AI/
+├── ai-service/              # FastAPI AI microservice
+├── backend/                 # Node.js + Express API
+├── frontend/                # Next.js application
+│
+├── recruitment/             # Recruitment & interview workflows
+├── attendance/              # Attendance & leave management
+├── payroll/                 # Payroll & incentives
+├── performance/             # Performance tracking
+├── employee-management/     # Employee directory & profiles
+│
+└── README.md
 ```
 
 ---
@@ -45,41 +115,164 @@ BluHire-AI is a next-generation Enterprise Human Resource Management System (HRM
 ## ⚙️ Installation & Local Setup
 
 ### Prerequisites
-* **Node.js**: v18+ and `npm`
-* **Python**: v3.10+
-* **MongoDB**: A running local or Atlas instance
-* **Redis**: Required for BullMQ job queueing
 
-### 1. Database & Queue Startup
-Ensure your local MongoDB and Redis instances are running:
+* Node.js v18+
+* Python 3.10+
+* MongoDB
+* Redis
+* npm
+
+---
+
+### 1. Start MongoDB & Redis
+
 ```bash
 mongod
 redis-server
 ```
 
-### 2. Backend API Setup
+---
+
+### 2. Backend Setup
+
 ```bash
 cd backend
+
 npm install
-# Configure your .env file
+
+# Configure environment variables
+cp .env.example .env
+
 npm run dev
 ```
 
+Backend runs on:
+
+```text
+http://localhost:5000
+```
+
+---
+
 ### 3. AI Service Setup
+
 ```bash
 cd ai-service
+
 python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Windows
+venv\Scripts\activate
+
+# Linux / macOS
+source venv/bin/activate
+
 pip install -r requirements.txt
-# Configure your .env file
+
 uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
 ```
 
-### 4. Frontend Next.js Setup
+AI Service runs on:
+
+```text
+http://localhost:8000
+```
+
+---
+
+### 4. Frontend Setup
+
 ```bash
 cd frontend/bluhire-ai-frontend
+
 npm install
-# Configure your .env file
+
+# Configure environment variables
 npm run dev
 ```
-Open `http://localhost:3001` in your browser.
+
+Frontend runs on:
+
+```text
+http://localhost:3001
+```
+
+---
+
+## 🔐 Authentication & Access Control
+
+BluHire-AI uses Role-Based Access Control (RBAC) with support for:
+
+* Super Admin
+* HR Manager
+* Recruiter
+* Employee
+* Candidate
+
+Permissions are dynamically assigned based on user roles.
+
+---
+
+## 🔄 System Architecture
+
+```text
+Frontend (Next.js)
+        │
+        ▼
+Backend API (Node.js + Express)
+        │
+ ┌──────┼─────────┐
+ ▼      ▼         ▼
+MongoDB Redis   AI Service
+                 (FastAPI)
+```
+
+The platform uses BullMQ workers and Redis queues to process interview recordings asynchronously and communicate with the AI evaluation service.
+
+---
+
+## 🎯 Core Highlights
+
+* AI Voice Interviews
+* Resume Screening
+* HR Copilot
+* Payroll Intelligence
+* Attendance Analytics
+* Leave Management
+* Shift Scheduling
+* Employee Directory
+* Performance Tracking
+* Enterprise RBAC
+* Glassmorphic Dashboard UI
+* Real-Time Analytics
+
+---
+
+## 👨‍💻 Team
+
+### Dhanush Maddila
+
+* HR Copilot
+* Performance Management
+* RAG Search Integration
+* Employee Management
+* Frontend Development
+* AI Features Integration
+
+### TejDeep
+
+* System Architecture
+* Authentication & RBAC
+* Attendance & Leave Management
+* Payroll Management
+* AI Interview Platform
+* Interview Processing Pipeline
+* Integration Testing
+
+---
+
+## 📄 License
+
+This project was developed as part of a hackathon and educational learning initiative.
+
+

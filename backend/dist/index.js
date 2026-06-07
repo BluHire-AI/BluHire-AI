@@ -10,6 +10,7 @@ const db_1 = require("./config/db");
 const routes_1 = __importDefault(require("./routes"));
 const error_middleware_1 = require("./middlewares/error.middleware");
 const screening_worker_1 = __importDefault(require("./modules/recruitment/queue/screening.worker"));
+require("./modules/recruitment/queue/interview.worker");
 const app = (0, express_1.default)();
 // Middlewares
 app.use(express_1.default.json());
@@ -17,7 +18,7 @@ app.use(express_1.default.urlencoded({ extended: true }));
 app.use((0, cors_1.default)({
     origin: process.env.NODE_ENV === 'production'
         ? ['https://bluhire-ai.vercel.app']
-        : ['http://localhost:3000', 'http://localhost:5173'],
+        : ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:5173'],
     credentials: true,
 }));
 // Route Definitions

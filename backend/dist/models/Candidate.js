@@ -137,6 +137,11 @@ const CandidateSchema = new mongoose_1.Schema({
         default: false,
         index: true,
     },
+    isTestData: {
+        type: Boolean,
+        default: false,
+        index: true,
+    },
     createdBy: {
         type: mongoose_1.Schema.Types.ObjectId,
         ref: 'User',

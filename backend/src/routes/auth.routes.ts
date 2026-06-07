@@ -20,5 +20,7 @@ router.post('/refresh', validateRequest(refreshTokenSchema), authController.refr
 router.post('/change-password', authenticate, validateRequest(changePasswordSchema), authController.changePassword);
 router.post('/forgot-password', validateRequest(forgotPasswordSchema), authController.forgotPassword);
 router.post('/reset-password', validateRequest(resetPasswordSchema), authController.resetPassword);
+router.get('/verify-magic-token', authController.verifyMagicToken);
+router.post('/activate-candidate', authController.activateCandidate);
 
 export default router;

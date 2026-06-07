@@ -76,6 +76,11 @@ export default function RecruitmentDashboard() {
               Candidates
             </span>
           </Link>
+          <Link href="/dashboard/recruitment/interviews">
+            <span className="text-xs font-semibold px-4 py-2 rounded-lg text-zinc-400 hover:text-white cursor-pointer block transition-colors border border-transparent">
+              AI Voice Interviews
+            </span>
+          </Link>
         </div>
         <div className="flex gap-2">
           <Link href="/careers" target="_blank">
@@ -127,6 +132,43 @@ export default function RecruitmentDashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* AI Voice Interviews Quick Access Banner */}
+      <Card className="bg-gradient-to-r from-violet-900/40 via-indigo-900/30 to-purple-900/40 border border-violet-500/20 shadow-2xl rounded-[24px] p-6 relative overflow-hidden group">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-violet-600/10 rounded-full blur-3xl pointer-events-none group-hover:scale-110 transition-transform duration-700" />
+        <div className="flex flex-col md:flex-row items-center justify-between gap-6 relative z-10">
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <span className="bg-violet-500/10 text-violet-300 border border-violet-500/20 text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+                Voice Interview AI
+              </span>
+              <span className="flex h-2 w-2 relative">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-violet-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-violet-500"></span>
+              </span>
+            </div>
+            <h2 className="text-base font-bold text-white tracking-tight flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-violet-400 animate-pulse shrink-0" />
+              Automated AI Voice Interviews & Candidate Rankings
+            </h2>
+            <p className="text-xs text-zinc-300 max-w-2xl leading-relaxed">
+              Unlock intelligent recruiting. Candidates moved to the shortlisted stage are automatically invited to set up access, sitting voice-driven interviews with simulated recruiters. Assess technical/communication strengths and view rank positions.
+            </p>
+          </div>
+          <div className="flex items-center gap-3 shrink-0">
+            <Link href="/dashboard/recruitment/interviews/templates">
+              <Button variant="outline" size="sm" className="text-xs font-semibold rounded-xl border-white/10 hover:bg-white/[0.06] bg-transparent text-white/80 hover:text-white h-9 px-4">
+                Manage Templates
+              </Button>
+            </Link>
+            <Link href="/dashboard/recruitment/interviews">
+              <Button size="sm" className="bg-gradient-to-tr from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white text-xs font-semibold rounded-xl border border-white/10 shadow-lg shadow-indigo-650/20 h-9 px-4">
+                View Interviews & Rankings
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </Card>
 
       {/* Main Funnel Stages and Feed Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

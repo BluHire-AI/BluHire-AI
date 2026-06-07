@@ -7,6 +7,8 @@ from app.screeners.screener import AIScreener
 from app.schemas.screening import ScreeningResult
 from app.services.openrouter import open_router_client
 from app.services.performance_coach import performance_coach_service
+from app.services.interview_engine import InterviewEngine
+from app.services.transcriber import SpeechTranscriber
 
 router = APIRouter(prefix="/api/v1/ai")
 
@@ -227,5 +229,90 @@ async def generate_rag_answer(payload: dict):
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"RAG completion failed: {str(e)}")
+
+@router.post("/generate-questions")
+async def generate_questions(payload: dict):
+    try:
+        job_title = payload.get("job_title", "")
+        job_description = payload.get("job_description", "")
+        job_required_skills = payload.get("job_required_skills", [])
+        experience_level = payload.get("experience_level", "Mid")
+        difficulty_level = payload.get("difficulty_level", "Medium")
+        resume_snapshot = payload.get("resume_snapshot", {})
+        num_questions = int(payload.get("num_questions", 5))
+
+        questions = await InterviewEngine.generate_questions(
+            job_title=job_title,
+            job_description=job_description,
+            job_required_skills=job_required_skills,
+            experience_level=experience_level,
+            difficulty_level=difficulty_level,
+            resume_snapshot=resume_snapshot,
+            num_questions=num_questions
+        )
+        return questions
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/generate-followup")
+async def generate_followup(payload: dict):
+    try:
+        previous_question = payload.get("previous_question", "")
+        previous_answer = payload.get("previous_answer", "")
+        resume_snapshot = payload.get("resume_snapshot", {})
+        experience_level = payload.get("experience_level", "Mid")
+        question_order = int(payload.get("question_order", 1))
+
+        followup = await InterviewEngine.generate_followup(
+            previous_question=previous_question,
+            previous_answer=previous_answer,
+            resume_snapshot=resume_snapshot,
+            experience_level=experience_level,
+            question_order=question_order
+        )
+        return followup
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/transcribe")
+async def transcribe_audio(file: UploadFile = File(...)):
+    try:
+        file_bytes = await file.read()
+        result = await SpeechTranscriber.transcribe(file_bytes, file.filename)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/evaluate-answer")
+async def evaluate_answer(payload: dict):
+    try:
+        question = payload.get("question", "")
+        answer = payload.get("answer", "")
+        resume_snapshot = payload.get("resume_snapshot", {})
+        experience_level = payload.get("experience_level", "Mid")
+
+        evaluation = await InterviewEngine.evaluate_answer(
+            question=question,
+            answer=answer,
+            resume_snapshot=resume_snapshot,
+            experience_level=experience_level
+        )
+        return evaluation
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/generate-report")
+async def generate_report(payload: dict):
+    try:
+        qa_history = payload.get("qa_history", [])
+        resume_snapshot = payload.get("resume_snapshot", {})
+
+        report = await InterviewEngine.generate_report(
+            qa_history=qa_history,
+            resume_snapshot=resume_snapshot
+        )
+        return report
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 

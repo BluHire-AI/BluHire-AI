@@ -60,10 +60,18 @@ export class ApplicationsController {
   async moveStage(req: any, res: Response): Promise<void> {
     try {
       const { id } = req.params;
-      const { stage, notes } = req.body;
+      const { stage, notes, employeeRole, departmentId, designationId, managerId, joiningDate } = req.body;
       const { user } = req;
 
-      const application = await applicationsService.moveStage(id, stage, user._id, notes);
+      const onboardingData = stage === 'HIRED' ? {
+        employeeRole,
+        departmentId,
+        designationId,
+        managerId,
+        joiningDate: joiningDate ? new Date(joiningDate) : undefined
+      } : undefined;
+
+      const application = await applicationsService.moveStage(id, stage, user._id, notes, onboardingData);
 
       res.json(createSuccessResponse(application, 'Application stage updated successfully'));
     } catch (error: any) {

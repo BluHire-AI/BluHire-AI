@@ -15,6 +15,10 @@ const employee_1 = require("../../employee");
 const Employee_1 = __importDefault(require("../../../models/Employee"));
 const employee_repository_1 = __importDefault(require("../../employee/repositories/employee.repository"));
 const path_1 = __importDefault(require("path"));
+const crypto_1 = __importDefault(require("crypto"));
+const mongoose_1 = __importDefault(require("mongoose"));
+const InterviewTemplate_1 = __importDefault(require("../../../models/InterviewTemplate"));
+const InterviewAssignment_1 = __importDefault(require("../../../models/InterviewAssignment"));
 class ApplicationsService {
     /**
      * Helper to generate a unique employee code
@@ -158,6 +162,66 @@ class ApplicationsService {
                 description: `Candidate ${candidate.firstName} ${candidate.lastName} was hired as employee ${empCode}.`,
                 createdBy: userId,
             });
+        }
+        if (stage === Application_1.ApplicationStage.SHORTLISTED && app.currentStage !== Application_1.ApplicationStage.SHORTLISTED) {
+            const candidateObj = app.candidateId;
+            const jobObj = app.jobId;
+            if (!candidateObj || !jobObj) {
+                throw new Error('Unable to shortlist: Candidate or Job record is missing.');
+            }
+            // 1. Resolve or Create InterviewTemplate
+            let template = await InterviewTemplate_1.default.findOne({ jobRole: jobObj.title, isArchived: false });
+            if (!template) {
+                template = await InterviewTemplate_1.default.create({
+                    name: `Default Template - ${jobObj.title}`,
+                    jobRole: jobObj.title,
+                    department: jobObj.departmentId?.name || 'Engineering',
+                    experienceLevel: jobObj.experienceRequired || 'Mid',
+                    difficultyLevel: 'Medium',
+                    skillsRequired: jobObj.requiredSkills || [],
+                    numQuestions: 5,
+                    timeLimit: 15,
+                    interviewType: 'Mixed',
+                    maxAttempts: 1,
+                    createdBy: new mongoose_1.default.Types.ObjectId(userId),
+                    updatedBy: new mongoose_1.default.Types.ObjectId(userId),
+                });
+            }
+            // 2. Generate magic link token
+            const magicToken = crypto_1.default.randomBytes(32).toString('hex');
+            const magicTokenExpiresAt = new Date(Date.now() + 72 * 60 * 60 * 1000); // 72 hours
+            // 3. Create Resume Screening snapshot
+            const resumeSnapshot = {
+                aiScore: app.aiScore || 0,
+                aiRecommendation: app.aiRecommendation || 'Needs Review',
+                matchingSkills: app.matchingSkills || [],
+                missingSkills: app.missingSkills || [],
+                screeningSummary: app.screeningSummary || 'Screening snapshot created.',
+            };
+            // 4. Create/Update InterviewAssignment
+            await InterviewAssignment_1.default.findOneAndUpdate({ candidateId: candidateObj._id, jobId: jobObj._id }, {
+                recruiterId: new mongoose_1.default.Types.ObjectId(userId),
+                interviewTemplateId: template._id,
+                status: 'Pending',
+                assignedAt: new Date(),
+                expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days expiration
+                magicToken,
+                magicTokenExpiresAt,
+                isTokenUsed: false,
+                maxAttempts: template.maxAttempts || 1,
+                attemptCount: 0,
+                resumeSnapshot,
+                resumeScore: app.aiScore || 0,
+                resumeAnalysis: app.screeningSummary || 'Screening snapshot created.',
+                screeningTimestamp: app.screenedAt || new Date(),
+                createdBy: new mongoose_1.default.Types.ObjectId(userId),
+                updatedBy: new mongoose_1.default.Types.ObjectId(userId),
+            }, { upsert: true, new: true });
+            // 5. Log magic invitation
+            console.log('--------------------------------------------------');
+            console.log(`[EMAIL DISPATCH] Magic Link sent to: ${candidateObj.email}`);
+            console.log(`URL: http://localhost:3000/careers/activate?token=${magicToken}`);
+            console.log('--------------------------------------------------');
         }
         // Update application stage
         const updatedApp = await application_repository_1.default.updateStage(applicationId, stage, userId, notes);

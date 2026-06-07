@@ -14,10 +14,12 @@ const analytics_routes_1 = __importDefault(require("../modules/analytics/analyti
 const copilot_routes_1 = __importDefault(require("../modules/copilot/copilot.routes"));
 const performance_1 = require("../modules/performance");
 const knowledge_routes_1 = __importDefault(require("../modules/knowledge/routes/knowledge.routes"));
+const interview_routes_1 = __importDefault(require("../modules/recruitment/interview/interview.routes"));
 const apiRouter = (0, express_1.Router)();
 apiRouter.use('/auth', auth_routes_1.default);
 apiRouter.use('/users', user_routes_1.default);
 apiRouter.use('/public/recruitment', recruitment_1.publicRecruitmentRouter);
+apiRouter.use('/recruitment/interviews', auth_middleware_1.authenticate, interview_routes_1.default);
 apiRouter.use('/recruitment', auth_middleware_1.authenticate, recruitment_1.adminRecruitmentRouter);
 apiRouter.use('/ai', auth_middleware_1.authenticate, ai_routes_1.default);
 apiRouter.use('/analytics', auth_middleware_1.authenticate, analytics_routes_1.default);

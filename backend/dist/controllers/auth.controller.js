@@ -104,6 +104,48 @@ class AuthController {
             });
         }
     }
+    async verifyMagicToken(req, res, next) {
+        try {
+            const { token } = req.query;
+            if (!token) {
+                res.status(400).json({ success: false, message: 'Token is required' });
+                return;
+            }
+            const assignment = await auth_service_1.authService.verifyMagicToken(token);
+            res.status(200).json({
+                success: true,
+                data: {
+                    assignmentId: assignment._id,
+                    candidate: assignment.candidateId,
+                    job: assignment.jobId
+                }
+            });
+        }
+        catch (error) {
+            res.status(400).json({ success: false, message: error.message || 'Token verification failed' });
+        }
+    }
+    async activateCandidate(req, res, next) {
+        try {
+            const { token, password } = req.body;
+            if (!token || !password) {
+                res.status(400).json({ success: false, message: 'Token and password are required' });
+                return;
+            }
+            const result = await auth_service_1.authService.activateCandidate(token, password);
+            res.status(200).json({
+                success: true,
+                data: {
+                    user: result.user,
+                    accessToken: result.accessToken,
+                    refreshToken: result.refreshToken
+                }
+            });
+        }
+        catch (error) {
+            res.status(400).json({ success: false, message: error.message || 'Activation failed' });
+        }
+    }
 }
 exports.AuthController = AuthController;
 exports.authController = new AuthController();

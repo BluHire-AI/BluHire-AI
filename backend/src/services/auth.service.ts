@@ -2,6 +2,8 @@ import { userRepository } from '../repositories/user.repository';
 import { hashPassword, comparePassword } from '../utils/password.util';
 import { generateTokens, verifyRefreshToken, generateResetToken, verifyResetToken } from '../utils/jwt.util';
 import { RegisterDTO, LoginDTO } from '../dto/user.dto';
+import { SystemRoles } from '../models/roles';
+import InterviewAssignment from '../models/InterviewAssignment';
 
 export class AuthService {
   async register(data: any) {
@@ -102,6 +104,68 @@ export class AuthService {
     } catch (error: any) {
       throw new Error(error.message || 'Invalid or expired reset token');
     }
+  }
+
+  async verifyMagicToken(token: string) {
+    const assignment = await InterviewAssignment.findOne({
+      magicToken: token,
+      isTokenUsed: false,
+      magicTokenExpiresAt: { $gt: new Date() }
+    }).populate({
+      path: 'candidateId',
+      match: { isDeleted: false }
+    }).populate({
+      path: 'jobId',
+      match: { isDeleted: false }
+    });
+
+    if (!assignment) {
+      throw new Error('Invalid or expired activation token');
+    }
+
+    return assignment;
+  }
+
+  async activateCandidate(token: string, password: any) {
+    const assignment = await this.verifyMagicToken(token);
+    const candidate: any = assignment.candidateId;
+
+    if (!candidate) {
+      throw new Error('Candidate associated with this token not found');
+    }
+
+    let user = await userRepository.findByEmail(candidate.email);
+    const hashedPassword = await hashPassword(password);
+
+    if (!user) {
+      // Create new candidate User account
+      user = await userRepository.create({
+        firstName: candidate.firstName,
+        lastName: candidate.lastName,
+        email: candidate.email,
+        phone: candidate.phone,
+        employeeId: `CAND-${candidate.candidateCode}`,
+        role: SystemRoles.CANDIDATE as any,
+        passwordHash: hashedPassword,
+        isActive: true
+      } as any);
+    } else {
+      // Update existing user with candidate credentials/role
+      user = await userRepository.updateById(user._id.toString(), {
+        role: SystemRoles.CANDIDATE as any,
+        passwordHash: hashedPassword,
+        isActive: true
+      } as any) as any;
+    }
+
+    // Invalidate the single-use token
+    assignment.isTokenUsed = true;
+    await assignment.save();
+
+    const { accessToken, refreshToken } = generateTokens(user as any);
+    await userRepository.updateRefreshToken(user!.id as string, refreshToken);
+
+    return { user, accessToken, refreshToken };
   }
 }
 

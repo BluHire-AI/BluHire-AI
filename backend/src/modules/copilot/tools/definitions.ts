@@ -13,6 +13,8 @@ import toolRegistry from './registry';
 import mongoDBQueryProvider from '../providers/MongoDBQueryProvider';
 import vectorSearchProvider from '../providers/VectorSearchProvider';
 import KnowledgeDocument from '../../../models/KnowledgeDocument';
+import InterviewAssignment from '../../../models/InterviewAssignment';
+import InterviewReport from '../../../models/InterviewReport';
 import { PerformanceReview } from '../../../models/PerformanceReview';
 import { EmployeeGoal } from '../../../models/EmployeeGoal';
 import { SkillAssessment } from '../../../models/SkillAssessment';
@@ -1623,6 +1625,149 @@ toolRegistry.register({
       .select('title fileName documentType status chunkCount isApprovedForEmployees')
       .lean();
     return docs;
+  }
+});
+
+// 30. compareCandidates
+toolRegistry.register({
+  name: 'compareCandidates',
+  description: 'Compare interview performance, final scores, resume scores, ranking positions, strengths, and weaknesses for two or more candidates.',
+  parameters: {
+    type: 'object',
+    properties: {
+      candidateIdentifiers: {
+        type: 'array',
+        items: { type: 'string' },
+        description: 'List of candidate names or candidate codes to compare (e.g. ["John Doe", "CAND-0012"])'
+      }
+    },
+    required: ['candidateIdentifiers']
+  },
+  roles: RECRUITER_ROLES,
+  isWrite: false,
+  handler: async (args, user) => {
+    const results = [];
+
+    for (const ident of args.candidateIdentifiers) {
+      let candQuery: any = {};
+      const isObjectId = mongoose.Types.ObjectId.isValid(ident);
+      
+      if (isObjectId) {
+        candQuery = { _id: ident };
+      } else if (ident.toUpperCase().startsWith('CAND-')) {
+        candQuery = { candidateCode: ident.toUpperCase() };
+      } else {
+        const parts = ident.trim().split(/\s+/);
+        if (parts.length > 1) {
+          candQuery = {
+            firstName: { $regex: new RegExp(parts[0], 'i') },
+            lastName: { $regex: new RegExp(parts[1], 'i') }
+          };
+        } else {
+          candQuery = {
+            $or: [
+              { firstName: { $regex: new RegExp(ident, 'i') } },
+              { lastName: { $regex: new RegExp(ident, 'i') } }
+            ]
+          };
+        }
+      }
+
+      candQuery.isDeleted = false;
+      const candidate = await CandidateModel.findOne(candQuery);
+      if (!candidate) {
+        results.push({ identifier: ident, error: 'Candidate record not found' });
+        continue;
+      }
+
+      const assignment = await InterviewAssignment.findOne({ candidateId: candidate._id })
+        .populate('interviewTemplateId', 'name jobRole')
+        .populate('jobId', 'title jobCode')
+        .lean();
+
+      if (!assignment) {
+        results.push({
+          candidateName: `${candidate.firstName} ${candidate.lastName}`,
+          candidateCode: candidate.candidateCode,
+          status: 'Not Shortlisted',
+          error: 'No interview assignment found for this candidate'
+        });
+        continue;
+      }
+
+      // Fetch report if completed
+      let report = null;
+      if (assignment.status === 'Completed' || assignment.status === 'Reviewed') {
+        report = await InterviewReport.findOne({ candidateId: candidate._id }).lean();
+      }
+
+      results.push({
+        candidateName: `${candidate.firstName} ${candidate.lastName}`,
+        candidateCode: candidate.candidateCode,
+        jobTitle: (assignment.jobId as any)?.title || 'N/A',
+        jobCode: (assignment.jobId as any)?.jobCode || 'N/A',
+        assignmentStatus: assignment.status,
+        resumeScore: assignment.resumeScore || 0,
+        interviewScore: assignment.interviewScore || null,
+        finalScore: assignment.finalCandidateScore || null,
+        rankingPosition: assignment.rankingPosition || null,
+        strengths: report?.strengths || [],
+        weaknesses: report?.weaknesses || [],
+        hiringRecommendation: report?.hiringRecommendation || 'N/A',
+        recommendationReasoning: report?.recommendationReasoning || '',
+        transcriptSummary: report?.transcriptSummary || ''
+      });
+    }
+
+    return results;
+  }
+});
+
+// 31. getJobCandidatesLeaderboard
+toolRegistry.register({
+  name: 'getJobCandidatesLeaderboard',
+  description: 'Get a list of all candidates for a job ranked by their final candidate score, showing final scores, resume scores, interview scores, and ranking positions.',
+  parameters: {
+    type: 'object',
+    properties: {
+      jobIdentifier: { type: 'string', description: 'Job Code (e.g. JOB-2026-0001) or Job ObjectId' }
+    },
+    required: ['jobIdentifier']
+  },
+  roles: RECRUITER_ROLES,
+  isWrite: false,
+  handler: async (args, user) => {
+    let targetJobId: any = args.jobIdentifier;
+    const isObjectId = mongoose.Types.ObjectId.isValid(args.jobIdentifier);
+    
+    if (!isObjectId) {
+      const job = await JobModel.findOne({ jobCode: args.jobIdentifier.toUpperCase(), isDeleted: false });
+      if (!job) return { error: 'Job not found' };
+      targetJobId = job._id;
+    }
+
+    const assignments = await InterviewAssignment.find({
+      jobId: targetJobId,
+      status: { $in: ['Completed', 'Reviewed'] },
+      finalCandidateScore: { $ne: null }
+    })
+      .sort({ finalCandidateScore: -1 })
+      .populate('candidateId', 'firstName lastName candidateCode email')
+      .populate('jobId', 'title jobCode')
+      .lean();
+
+    return assignments.map((a: any) => ({
+      rankingPosition: a.rankingPosition,
+      candidateName: a.candidateId ? `${a.candidateId.firstName} ${a.candidateId.lastName}` : 'N/A',
+      candidateCode: a.candidateId?.candidateCode || 'N/A',
+      email: a.candidateId?.email || 'N/A',
+      jobTitle: a.jobId?.title || 'N/A',
+      jobCode: a.jobId?.jobCode || 'N/A',
+      resumeScore: a.resumeScore || 0,
+      interviewScore: a.interviewScore || 0,
+      finalCandidateScore: a.finalCandidateScore || 0,
+      rankingReasoning: a.rankingReasoning
+    }));
   }
 });
 

@@ -18,6 +18,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { api } from '@/lib/api';
 
 const ACTIVE_STAGES = ['APPLIED', 'SCREENING', 'SHORTLISTED', 'INTERVIEW', 'OFFER', 'HIRED'] as const;
 
@@ -63,6 +65,19 @@ export default function PipelineBoard() {
   // Recruiter score/evaluation local state
   const [recruiterScoreVal, setRecruiterScoreVal] = useState<number>(3);
   const [recruiterNotesVal, setRecruiterNotesVal] = useState<string>('');
+
+  // Hiring Modal States
+  const [hiringModalOpen, setHiringModalOpen] = useState(false);
+  const [hiringAppId, setHiringAppId] = useState<string | null>(null);
+  const [hiringRole, setHiringRole] = useState<string>('EMPLOYEE');
+  const [hiringDeptId, setHiringDeptId] = useState<string>('');
+  const [hiringDesigId, setHiringDesigId] = useState<string>('');
+  const [hiringManagerId, setHiringManagerId] = useState<string>('NONE');
+  const [hiringJoiningDate, setHiringJoiningDate] = useState<string>(
+    new Date().toISOString().substring(0, 10)
+  );
+  const [activeEmployees, setActiveEmployees] = useState<any[]>([]);
+  const [designations, setDesignations] = useState<any[]>([]);
 
   // Fetch applications list with all query parameters
   const fetchApplications = useCallback(async () => {
@@ -115,6 +130,9 @@ export default function PipelineBoard() {
 
       const deptsRes = await departmentService.getActive();
       setDepartments(deptsRes);
+
+      const desgsRes = await api.get('/designations');
+      setDesignations(desgsRes.data?.data?.data || desgsRes.data?.data || []);
     } catch (error) {
       console.error('Error loading metadata:', error);
     }
@@ -146,9 +164,70 @@ export default function PipelineBoard() {
     }
   };
 
+  const fetchActiveEmployees = async () => {
+    try {
+      const response = await api.get('/employees?limit=100&employmentStatus=ACTIVE');
+      setActiveEmployees(response.data?.data?.data || response.data?.data || []);
+    } catch (err) {
+      console.error("Failed to load active employees list", err);
+    }
+  };
+
   const handleHireCandidate = async (appId: string) => {
-    if (!window.confirm('Are you sure you want to HIRE this candidate? This will generate their employee profile.')) return;
-    await handleStageChange(appId, 'HIRED', 'Candidate successfully hired.');
+    const app = applications.find(a => a._id === appId) || selectedApp;
+    if (!app) return;
+
+    fetchActiveEmployees();
+
+    setHiringAppId(appId);
+    setHiringRole('EMPLOYEE');
+    
+    // Set default department and designation from job
+    const deptId = app.jobId?.departmentId?._id || app.jobId?.departmentId || '';
+    const desigId = app.jobId?.designationId?._id || app.jobId?.designationId || '';
+    setHiringDeptId(typeof deptId === 'object' ? deptId._id : deptId);
+    setHiringDesigId(typeof desigId === 'object' ? desigId._id : desigId);
+    
+    setHiringManagerId('NONE');
+    setHiringJoiningDate(new Date().toISOString().substring(0, 10));
+    setHiringModalOpen(true);
+  };
+
+  const submitHiring = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!hiringAppId) return;
+
+    try {
+      setSubmittingStage(true);
+      
+      const onboardingData = {
+        employeeRole: hiringRole,
+        departmentId: hiringDeptId || undefined,
+        designationId: hiringDesigId || undefined,
+        managerId: hiringManagerId === 'NONE' ? undefined : hiringManagerId,
+        joiningDate: hiringJoiningDate ? new Date(hiringJoiningDate) : undefined
+      };
+
+      const updated = await recruitmentService.moveStage(
+        hiringAppId, 
+        'HIRED', 
+        `Candidate hired successfully. Onboarded to role: ${hiringRole}.`, 
+        onboardingData
+      );
+
+      toast.success('Candidate successfully hired and employee record created!');
+      setHiringModalOpen(false);
+
+      if (selectedApp?._id === hiringAppId) {
+        setSelectedApp(prev => prev ? { ...prev, currentStage: 'HIRED' as any } : null);
+      }
+
+      fetchApplications();
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || error.message || 'Failed to complete hiring onboarding');
+    } finally {
+      setSubmittingStage(false);
+    }
   };
 
   const handleRejectCandidate = async (appId: string) => {
@@ -462,6 +541,11 @@ export default function PipelineBoard() {
           <Link href="/dashboard/recruitment/candidates">
             <span className="text-xs font-bold px-4 py-2 rounded-xl text-white/60 hover:text-white cursor-pointer block transition-all">
               Candidates Catalog
+            </span>
+          </Link>
+          <Link href="/dashboard/recruitment/interviews">
+            <span className="text-xs font-bold px-4 py-2 rounded-xl text-white/60 hover:text-white cursor-pointer block transition-all">
+              AI Voice Interviews
             </span>
           </Link>
         </div>
@@ -917,6 +1001,127 @@ export default function PipelineBoard() {
         </div>
       </Card>
 
+      {/* Hiring Onboarding Details Modal Dialog */}
+      <Dialog open={hiringModalOpen} onOpenChange={setHiringModalOpen}>
+        <DialogContent className="bg-[#0b0b0c] border border-white/10 rounded-[28px] max-w-md text-white select-none">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold flex items-center gap-2">
+              <UserCheck className="w-5 h-5 text-emerald-400" />
+              Complete Onboarding Conversion
+            </DialogTitle>
+            <DialogDescription className="text-xs text-white/45">
+              Confirm onboarding parameters to promote candidate to an employee.
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={submitHiring} className="space-y-4 my-2 text-xs">
+            {/* Assigned Role */}
+            <div className="space-y-1.5">
+              <Label htmlFor="hiringRole">Assigned Employee System Role</Label>
+              <select
+                id="hiringRole"
+                value={hiringRole}
+                onChange={(e) => setHiringRole(e.target.value)}
+                className="w-full bg-white/[0.03] border border-white/10 rounded-xl h-9 px-3 text-xs text-white focus:outline-none focus:ring-1 focus:ring-[#8B5CF6] cursor-pointer"
+                required
+              >
+                <option className="bg-[#0b0b0c]" value="EMPLOYEE">Employee (Standard HRMS Access)</option>
+                <option className="bg-[#0b0b0c]" value="HR_RECRUITER">HR Recruiter (Recruitment & Directory)</option>
+                <option className="bg-[#0b0b0c]" value="SENIOR_MANAGER">Senior Manager (Performance & Hierarchy)</option>
+                <option className="bg-[#0b0b0c]" value="MANAGEMENT_ADMIN">Management Admin (Full System Administrator)</option>
+              </select>
+            </div>
+
+            {/* Department Selection */}
+            <div className="space-y-1.5">
+              <Label htmlFor="hiringDept">Department</Label>
+              <select
+                id="hiringDept"
+                value={hiringDeptId}
+                onChange={(e) => setHiringDeptId(e.target.value)}
+                className="w-full bg-white/[0.03] border border-white/10 rounded-xl h-9 px-3 text-xs text-white focus:outline-none focus:ring-1 focus:ring-[#8B5CF6] cursor-pointer"
+                required
+              >
+                <option className="bg-[#0b0b0c]" value="">Select Department...</option>
+                {departments.map((dept) => (
+                  <option key={dept._id} className="bg-[#0b0b0c]" value={dept._id}>
+                    {dept.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Designation / Job Title */}
+            <div className="space-y-1.5">
+              <Label htmlFor="hiringDesig">Designation</Label>
+              <select
+                id="hiringDesig"
+                value={hiringDesigId}
+                onChange={(e) => setHiringDesigId(e.target.value)}
+                className="w-full bg-white/[0.03] border border-white/10 rounded-xl h-9 px-3 text-xs text-white focus:outline-none focus:ring-1 focus:ring-[#8B5CF6] cursor-pointer"
+                required
+              >
+                <option className="bg-[#0b0b0c]" value="">Select Designation...</option>
+                {designations.map((d: any) => (
+                  <option key={d._id} className="bg-[#0b0b0c]" value={d._id}>
+                    {d.title}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Manager Assignment */}
+            <div className="space-y-1.5">
+              <Label htmlFor="hiringManager">Reporting Manager</Label>
+              <select
+                id="hiringManager"
+                value={hiringManagerId}
+                onChange={(e) => setHiringManagerId(e.target.value)}
+                className="w-full bg-white/[0.03] border border-white/10 rounded-xl h-9 px-3 text-xs text-white focus:outline-none focus:ring-1 focus:ring-[#8B5CF6] cursor-pointer"
+              >
+                <option className="bg-[#0b0b0c]" value="NONE">Unassigned / No Manager</option>
+                {activeEmployees.map((emp) => (
+                  <option key={emp._id} className="bg-[#0b0b0c]" value={emp._id}>
+                    {emp.firstName} {emp.lastName} ({emp.employeeCode})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Joining Date */}
+            <div className="space-y-1.5">
+              <Label htmlFor="hiringJoiningDate">Joining Date</Label>
+              <Input
+                id="hiringJoiningDate"
+                type="date"
+                value={hiringJoiningDate}
+                onChange={(e) => setHiringJoiningDate(e.target.value)}
+                className="bg-white/[0.03] border-white/10 text-white rounded-xl h-9 text-xs"
+                required
+              />
+            </div>
+
+            <DialogFooter className="pt-4 gap-3">
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setHiringModalOpen(false)}
+                className="rounded-xl border border-white/10 text-white/70 hover:text-white"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={submittingStage}
+                className="rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white border-0 cursor-pointer px-6 font-bold"
+              >
+                {submittingStage ? 'Onboarding...' : 'Onboard Employee'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
       {/* Slide-out Candidate Profiler Drawer Panel */}
       {drawerOpen && selectedApp && (
         <>
@@ -963,7 +1168,14 @@ export default function PipelineBoard() {
                   <span className="text-[9px] font-bold uppercase text-muted-foreground">Advance Candidate:</span>
                   <select
                     value={selectedApp.currentStage}
-                    onChange={(e) => handleStageChange(selectedApp._id, e.target.value, 'Moved via drawer stage selectors')}
+                    onChange={(e) => {
+                      const newStage = e.target.value;
+                      if (newStage === 'HIRED') {
+                        handleHireCandidate(selectedApp._id);
+                      } else {
+                        handleStageChange(selectedApp._id, newStage, 'Moved via drawer stage selectors');
+                      }
+                    }}
                     disabled={submittingStage}
                     className="bg-muted/40 text-[10px] font-bold px-2 py-1 rounded-xl border border-border/60 text-foreground focus:outline-none cursor-pointer hover:bg-muted/65 transition-all"
                   >

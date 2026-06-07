@@ -184,8 +184,12 @@ export const recruitmentService = {
     return response.data.data;
   },
 
-  moveStage: async (id: string, stage: string, notes?: string): Promise<Application> => {
-    const response = await api.patch(`/recruitment/applications/${id}/stage`, { stage, notes });
+  moveStage: async (id: string, stage: string, notes?: string, onboardingData?: any): Promise<Application> => {
+    const response = await api.patch(`/recruitment/applications/${id}/stage`, { 
+      stage, 
+      notes,
+      ...onboardingData
+    });
     return response.data.data;
   },
 

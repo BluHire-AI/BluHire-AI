@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { 
   LayoutDashboard, Users, UserCircle, LogOut, Building, Briefcase, 
   Network, Contact, Sun, Moon, ChevronDown, ChevronRight,
@@ -22,6 +22,88 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
+import { api } from '@/lib/api';
+import { toast } from 'sonner';
+
+interface NavItem {
+  name: string;
+  href: string;
+  icon: React.ComponentType<any>;
+  roles?: string[];
+}
+
+interface NavSection {
+  title: string;
+  groupKey: string;
+  items: NavItem[];
+}
+
+const getNavigation = (role?: string): NavSection[] => {
+  if (role === 'CANDIDATE') {
+    return [
+      {
+        title: 'My Interviews',
+        groupKey: 'interviews',
+        items: [
+          { name: 'Active Interview', href: '/dashboard?tab=active', icon: Compass },
+          { name: 'Interview History', href: '/dashboard?tab=history', icon: Award }
+        ]
+      }
+    ];
+  }
+
+  if (role === 'EMPLOYEE') {
+    return [
+      {
+        title: 'Workforce',
+        groupKey: 'workforce',
+        items: [
+          { name: 'Employee Directory', href: '/dashboard/directory', icon: Contact },
+          { name: 'Organization Chart', href: '/dashboard/org-chart', icon: Network },
+          { name: 'Performance & Coaching', href: '/dashboard/performance', icon: Award }
+        ]
+      },
+      {
+        title: 'AI Features',
+        groupKey: 'aiFeatures',
+        items: [
+          { name: 'Knowledge Base', href: '/dashboard/knowledge', icon: BookOpen }
+        ]
+      }
+    ];
+  }
+
+  // Admin / Recruiter Menu
+  return [
+    {
+      title: 'Workforce Management',
+      groupKey: 'workforce',
+      items: [
+        { name: 'Employees', href: '/dashboard/employees', icon: Users, roles: ['MANAGEMENT_ADMIN', 'HR_RECRUITER', 'SENIOR_MANAGER'] },
+        { name: 'Employee Directory', href: '/dashboard/directory', icon: Contact },
+        { name: 'Organization Chart', href: '/dashboard/org-chart', icon: Network },
+        { name: 'Recruitment', href: '/dashboard/recruitment', icon: Compass, roles: ['MANAGEMENT_ADMIN', 'HR_RECRUITER'] },
+        { name: 'Performance & Coaching', href: '/dashboard/performance', icon: Award }
+      ]
+    },
+    {
+      title: 'AI Features',
+      groupKey: 'aiFeatures',
+      items: [
+        { name: 'AI Copilot', href: '/dashboard/copilot', icon: Bot, roles: ['MANAGEMENT_ADMIN', 'HR_RECRUITER', 'SENIOR_MANAGER'] },
+        { name: 'Knowledge Base', href: '/dashboard/knowledge', icon: BookOpen }
+      ]
+    },
+    {
+      title: 'Organization Setup',
+      groupKey: 'orgSetup',
+      items: [
+        { name: 'Departments', href: '/dashboard/departments', icon: Building, roles: ['MANAGEMENT_ADMIN', 'HR_RECRUITER', 'SENIOR_MANAGER'] },
+        { name: 'Designations', href: '/dashboard/designations', icon: Briefcase, roles: ['MANAGEMENT_ADMIN', 'HR_RECRUITER', 'SENIOR_MANAGER'] }
+      ]
+    }
+  ];
+};
 
 export default function DashboardLayout({
   children,
@@ -29,7 +111,8 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const { user, logout } = useAuthStore();
+  const router = useRouter();
+  const { user, logout, setUser, setTokens, refreshToken: storeRefreshToken } = useAuthStore();
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
@@ -39,7 +122,71 @@ export default function DashboardLayout({
     aiFeatures: true,
     orgSetup: true,
     account: true,
+    interviews: true,
   });
+
+  // Sync profile & handle token refresh if role upgraded
+  useEffect(() => {
+    if (!user) return;
+    
+    api.get('/users/me')
+      .then(res => {
+        const latestUser = res.data.data;
+        if (latestUser && latestUser.role !== user.role) {
+          console.log(`[Layout] Role upgrade detected: ${user.role} -> ${latestUser.role}`);
+          if (storeRefreshToken) {
+            api.post('/auth/refresh', { refreshToken: storeRefreshToken })
+              .then(refreshRes => {
+                const { accessToken, refreshToken: newRefreshToken } = refreshRes.data.data;
+                setTokens(accessToken, newRefreshToken || storeRefreshToken);
+                setUser(latestUser);
+                toast.success(`Welcome aboard! Account upgraded to ${latestUser.role.replace('_', ' ')}.`);
+                router.refresh();
+              })
+              .catch(err => {
+                console.error("Token refresh failed during role update", err);
+              });
+          } else {
+            setUser(latestUser);
+          }
+        } else if (latestUser) {
+          setUser(latestUser);
+        }
+      })
+      .catch(err => {
+        console.error("Profile sync failed", err);
+      });
+  }, [user, storeRefreshToken]);
+
+  // Frontend URL Guards
+  useEffect(() => {
+    if (!user) return;
+
+    const role = user.role;
+    
+    if (role === 'CANDIDATE') {
+      const allowedPaths = ['/dashboard', '/dashboard/profile'];
+      const isAllowed = allowedPaths.includes(pathname) || pathname.startsWith('/dashboard/interview/');
+      if (!isAllowed) {
+        console.warn(`[Guard] Blocked Candidate from route: ${pathname}`);
+        router.push('/dashboard');
+      }
+    } else if (role === 'EMPLOYEE') {
+      const forbiddenPrefixes = [
+        '/dashboard/employees',
+        '/dashboard/recruitment',
+        '/dashboard/copilot',
+        '/dashboard/departments',
+        '/dashboard/designations',
+        '/dashboard/analytics',
+      ];
+      const isForbidden = forbiddenPrefixes.some(pref => pathname.startsWith(pref));
+      if (isForbidden) {
+        console.warn(`[Guard] Blocked Employee from route: ${pathname}`);
+        router.push('/dashboard');
+      }
+    }
+  }, [user, pathname, router]);
 
   useEffect(() => {
     setMounted(true);
@@ -85,6 +232,9 @@ export default function DashboardLayout({
     );
   };
 
+  const navSections = mounted ? getNavigation(user?.role) : [];
+  const searchStr = typeof window !== 'undefined' ? window.location.search : '';
+
   return (
     <AuthProvider>
       <div className="flex h-screen w-screen bg-transparent overflow-hidden p-3 gap-4 text-foreground selection:bg-primary/25 selection:text-white">
@@ -107,12 +257,12 @@ export default function DashboardLayout({
                 <Link
                   href="/dashboard"
                   className={`relative flex items-center px-4 py-2.5 rounded-xl text-sidebar transition-all group duration-250 ${
-                    pathname === '/dashboard'
+                    pathname === '/dashboard' && searchStr === ''
                       ? 'text-white bg-[#8B5CF6]/10 border border-[#8B5CF6]/20 shadow-[0_0_15px_rgba(139,92,246,0.1)]'
                       : 'text-white/65 hover:text-white hover:bg-white/[0.04] border border-transparent'
                   }`}
                 >
-                  {pathname === '/dashboard' && (
+                  {pathname === '/dashboard' && searchStr === '' && (
                     <motion.div
                       layoutId="active-nav-glow"
                       className="absolute left-0 w-1 h-5 rounded-r bg-[#8B5CF6] shadow-[0_0_8px_rgba(139,92,246,0.5)]"
@@ -120,58 +270,57 @@ export default function DashboardLayout({
                     />
                   )}
                   <LayoutDashboard className={`w-4.5 h-4.5 mr-3 transition-transform duration-250 group-hover:scale-105 ${
-                    pathname === '/dashboard' ? 'text-[#8B5CF6]' : 'text-white/45 group-hover:text-white/80'
+                    pathname === '/dashboard' && searchStr === '' ? 'text-[#8B5CF6]' : 'text-white/45 group-hover:text-white/80'
                   }`} />
                   Dashboard
                 </Link>
               </div>
 
-              {/* Workforce Management Group */}
-              <div>
-                {renderGroupHeader('Workforce Management', 'workforce')}
-                <AnimatePresence initial={false}>
-                  {openGroups.workforce && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: 'auto', opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.15 }}
-                      className="overflow-hidden space-y-1 mt-1 pl-1"
-                    >
-                      {[
-                        { name: 'Employees', href: '/dashboard/employees', icon: Users, roles: ['MANAGEMENT_ADMIN', 'HR_RECRUITER', 'SENIOR_MANAGER'] },
-                        { name: 'Employee Directory', href: '/dashboard/directory', icon: Contact },
-                        { name: 'Organization Chart', href: '/dashboard/org-chart', icon: Network },
-                        { name: 'Recruitment', href: '/dashboard/recruitment', icon: Compass, roles: ['MANAGEMENT_ADMIN', 'HR_RECRUITER'] },
-                        { name: 'Performance & Coaching', href: '/dashboard/performance', icon: Award },
-                      ].map((item) => {
-                        if (item.roles && user && !item.roles.includes(user.role)) {
-                          return null;
-                        }
-                        const isActive = pathname === item.href;
-                        const Icon = item.icon;
-                        return (
-                          <Link
-                            key={item.name}
-                            href={item.href}
-                            className={`flex items-center px-4 py-2.5 rounded-xl text-sidebar transition-all group duration-250 ${
-                              isActive
-                                ? 'text-white bg-[#8B5CF6]/10 border border-[#8B5CF6]/20 shadow-[0_0_15px_rgba(139,92,246,0.1)]'
-                                : 'text-white/65 hover:text-white hover:bg-white/[0.04] border border-transparent'
-                            }`}
-                          >
-                            <Icon className={`w-4 h-4 mr-3 ${isActive ? 'text-[#8B5CF6]' : 'text-white/45 group-hover:text-white/80'}`} />
-                            {item.name}
-                          </Link>
-                        );
-                      })}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
+              {/* Dynamic Nav Sections */}
+              {navSections.map((section) => (
+                <div key={section.groupKey}>
+                  {renderGroupHeader(section.title, section.groupKey)}
+                  <AnimatePresence initial={false}>
+                    {openGroups[section.groupKey] && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.15 }}
+                        className="overflow-hidden space-y-1 mt-1 pl-1"
+                      >
+                        {section.items.map((item) => {
+                          if (item.roles && user && !item.roles.includes(user.role)) {
+                            return null;
+                          }
+                          const isTabActive = item.href.includes('?tab=')
+                            ? pathname === '/dashboard' && searchStr === item.href.substring(item.href.indexOf('?'))
+                            : pathname === item.href;
+                          
+                          const Icon = item.icon;
+                          return (
+                            <Link
+                              key={item.name}
+                              href={item.href}
+                              className={`flex items-center px-4 py-2.5 rounded-xl text-sidebar transition-all group duration-250 ${
+                                isTabActive
+                                  ? 'text-white bg-[#8B5CF6]/10 border border-[#8B5CF6]/20 shadow-[0_0_15px_rgba(139,92,246,0.1)]'
+                                  : 'text-white/65 hover:text-white hover:bg-white/[0.04] border border-transparent'
+                              }`}
+                            >
+                              <Icon className={`w-4 h-4 mr-3 ${isTabActive ? 'text-[#8B5CF6]' : 'text-white/45 group-hover:text-white/80'}`} />
+                              {item.name}
+                            </Link>
+                          );
+                        })}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              ))}
 
-              {/* Analytics Link (Standalone Top-level) */}
-              {user && ['MANAGEMENT_ADMIN', 'SENIOR_MANAGER', 'HR_RECRUITER'].includes(user.role) && (
+              {/* Analytics Link (Standalone Top-level for Admins) */}
+              {mounted && user && ['MANAGEMENT_ADMIN', 'SENIOR_MANAGER', 'HR_RECRUITER'].includes(user.role) && (
                 <div>
                   <Link
                     href="/dashboard/analytics"
@@ -196,115 +345,61 @@ export default function DashboardLayout({
                 </div>
               )}
 
-              {/* AI Features Group */}
-              <div>
-                {renderGroupHeader('AI Features', 'aiFeatures')}
-                <AnimatePresence initial={false}>
-                  {openGroups.aiFeatures && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: 'auto', opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.15 }}
-                      className="overflow-hidden space-y-1 mt-1 pl-1"
-                    >
-                      {[
-                        { name: 'AI Copilot', href: '/dashboard/copilot', icon: Bot, roles: ['MANAGEMENT_ADMIN', 'HR_RECRUITER', 'SENIOR_MANAGER'] },
-                        { name: 'Knowledge Base', href: '/dashboard/knowledge', icon: BookOpen, roles: ['MANAGEMENT_ADMIN', 'SENIOR_MANAGER', 'HR_RECRUITER', 'EMPLOYEE'] },
-                      ].map((item) => {
-                        if (item.roles && user && !item.roles.includes(user.role)) {
-                          return null;
-                        }
-                        const isActive = pathname === item.href;
-                        const Icon = item.icon;
-                        return (
-                          <Link
-                            key={item.name}
-                            href={item.href}
-                            className={`flex items-center px-4 py-2.5 rounded-xl text-sidebar transition-all group duration-250 ${
-                              isActive
-                                ? 'text-white bg-[#8B5CF6]/10 border border-[#8B5CF6]/20 shadow-[0_0_15px_rgba(139,92,246,0.1)]'
-                                : 'text-white/65 hover:text-white hover:bg-white/[0.04] border border-transparent'
-                            }`}
-                          >
-                            <Icon className={`w-4 h-4 mr-3 ${isActive ? 'text-[#8B5CF6]' : 'text-white/45 group-hover:text-white/80'}`} />
-                            {item.name}
-                          </Link>
-                        );
-                      })}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
+              {/* Profile Link (Standalone for Candidate and Employee, otherwise group-based) */}
+              {mounted && (user?.role === 'CANDIDATE' || user?.role === 'EMPLOYEE') && (
+                <div>
+                  <Link
+                    href="/dashboard/profile"
+                    className={`relative flex items-center px-4 py-2.5 rounded-xl text-sidebar transition-all group duration-250 ${
+                      pathname === '/dashboard/profile'
+                        ? 'text-white bg-[#8B5CF6]/10 border border-[#8B5CF6]/20 shadow-[0_0_15px_rgba(139,92,246,0.1)]'
+                        : 'text-white/65 hover:text-white hover:bg-white/[0.04] border border-transparent'
+                    }`}
+                  >
+                    {pathname === '/dashboard/profile' && (
+                      <motion.div
+                        layoutId="active-nav-glow"
+                        className="absolute left-0 w-1 h-5 rounded-r bg-[#8B5CF6]"
+                        transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                      />
+                    )}
+                    <UserCircle className={`w-4.5 h-4.5 mr-3 transition-transform duration-250 group-hover:scale-105 ${
+                      pathname === '/dashboard/profile' ? 'text-[#8B5CF6]' : 'text-white/45 group-hover:text-white/80'
+                    }`} />
+                    Profile
+                  </Link>
+                </div>
+              )}
 
-              {/* Organization Setup Group */}
-              <div>
-                {renderGroupHeader('Organization Setup', 'orgSetup')}
-                <AnimatePresence initial={false}>
-                  {openGroups.orgSetup && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: 'auto', opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.15 }}
-                      className="overflow-hidden space-y-1 mt-1 pl-1"
-                    >
-                      {[
-                        { name: 'Departments', href: '/dashboard/departments', icon: Building, roles: ['MANAGEMENT_ADMIN', 'HR_RECRUITER', 'SENIOR_MANAGER'] },
-                        { name: 'Designations', href: '/dashboard/designations', icon: Briefcase, roles: ['MANAGEMENT_ADMIN', 'HR_RECRUITER', 'SENIOR_MANAGER'] },
-                      ].map((item) => {
-                        if (item.roles && user && !item.roles.includes(user.role)) {
-                          return null;
-                        }
-                        const isActive = pathname === item.href;
-                        const Icon = item.icon;
-                        return (
-                          <Link
-                            key={item.name}
-                            href={item.href}
-                            className={`flex items-center px-4 py-2.5 rounded-xl text-sidebar transition-all group duration-250 ${
-                              isActive
-                                ? 'text-white bg-[#8B5CF6]/10 border border-[#8B5CF6]/20 shadow-[0_0_15px_rgba(139,92,246,0.1)]'
-                                : 'text-white/65 hover:text-white hover:bg-white/[0.04] border border-transparent'
-                            }`}
-                          >
-                            <Icon className={`w-4 h-4 mr-3 ${isActive ? 'text-[#8B5CF6]' : 'text-white/45 group-hover:text-white/80'}`} />
-                            {item.name}
-                          </Link>
-                        );
-                      })}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-
-              {/* My Account Group */}
-              <div>
-                {renderGroupHeader('My Account', 'account')}
-                <AnimatePresence initial={false}>
-                  {openGroups.account && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: 'auto', opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.15 }}
-                      className="overflow-hidden space-y-1 mt-1 pl-1"
-                    >
-                      <Link
-                        href="/dashboard/profile"
-                        className={`flex items-center px-4 py-2.5 rounded-xl text-sidebar transition-all group duration-300 ${
-                          pathname === '/dashboard/profile'
-                            ? 'text-white bg-[#8B5CF6]/10 border border-[#8B5CF6]/20 shadow-[0_0_15px_rgba(139,92,246,0.1)]'
-                            : 'text-white/65 hover:text-white hover:bg-white/[0.04] border border-transparent'
-                        }`}
+              {/* My Account Group (For Admins) */}
+              {mounted && user && !['CANDIDATE', 'EMPLOYEE'].includes(user.role) && (
+                <div>
+                  {renderGroupHeader('My Account', 'account')}
+                  <AnimatePresence initial={false}>
+                    {openGroups.account && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.15 }}
+                        className="overflow-hidden space-y-1 mt-1 pl-1"
                       >
-                        <UserCircle className={`w-4.5 h-4.5 mr-3 ${pathname === '/dashboard/profile' ? 'text-[#8B5CF6]' : 'text-white/45'}`} />
-                        Profile
-                      </Link>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
+                        <Link
+                          href="/dashboard/profile"
+                          className={`flex items-center px-4 py-2.5 rounded-xl text-sidebar transition-all group duration-300 ${
+                            pathname === '/dashboard/profile'
+                              ? 'text-white bg-[#8B5CF6]/10 border border-[#8B5CF6]/20 shadow-[0_0_15px_rgba(139,92,246,0.1)]'
+                              : 'text-white/65 hover:text-white hover:bg-white/[0.04] border border-transparent'
+                          }`}
+                        >
+                          <UserCircle className={`w-4.5 h-4.5 mr-3 ${pathname === '/dashboard/profile' ? 'text-[#8B5CF6]' : 'text-white/45'}`} />
+                          Profile
+                        </Link>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              )}
             </div>
           </nav>
 
@@ -353,39 +448,43 @@ export default function DashboardLayout({
 
               <div className="h-4 w-px bg-white/10" />
 
-              <span className="text-small-label px-3 py-1 rounded-full bg-[#8B5CF6]/10 text-[#8B5CF6] tracking-wider uppercase font-mono hidden sm:block border border-[#8B5CF6]/20">
-                {user?.role.replace('_', ' ')}
-              </span>
+              {mounted && user?.role && (
+                <span className="text-small-label px-3 py-1 rounded-full bg-[#8B5CF6]/10 text-[#8B5CF6] tracking-wider uppercase font-mono hidden sm:block border border-[#8B5CF6]/20">
+                  {user.role.replace('_', ' ')}
+                </span>
+              )}
 
-              <DropdownMenu>
-                <DropdownMenuTrigger className="relative h-8 w-8 rounded-xl focus:outline-none focus:ring-1 focus:ring-[#8B5CF6] cursor-pointer overflow-hidden border border-white/10">
-                  <Avatar className="h-8 w-8 rounded-xl">
-                    <AvatarImage src={user?.profileImage} alt={user?.firstName} />
-                    <AvatarFallback className="rounded-xl bg-gradient-to-tr from-violet-600 to-[#8B5CF6] text-white font-semibold text-xs">
-                      {getInitials(user?.firstName, user?.lastName)}
-                    </AvatarFallback>
-                  </Avatar>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56 rounded-xl p-1.5 shadow-2xl border-white/10 bg-[#0F0E17]/95 backdrop-blur-xl text-popover-foreground" align="end">
-                  <DropdownMenuLabel className="font-normal px-2.5 py-2">
-                    <div className="flex flex-col space-y-1">
-                      <p className="text-xs font-semibold leading-none text-white">{user?.firstName} {user?.lastName}</p>
-                      <p className="text-[10px] leading-none text-white/45">
-                        {user?.email}
-                      </p>
-                    </div>
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator className="bg-white/10" />
-                  <DropdownMenuItem className="rounded-lg py-2 focus:bg-white/[0.06] text-xs cursor-pointer">
-                    <Link href="/dashboard/profile" className="w-full">Profile Settings</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator className="bg-white/10" />
-                  <DropdownMenuItem className="text-red-400 focus:bg-[#EF4444]/10 rounded-lg py-2 cursor-pointer text-xs" onClick={handleLogout}>
-                    <LogOut className="mr-2 h-3.5 w-3.5" />
-                    <span>Log Out</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              {mounted && user && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger className="relative h-8 w-8 rounded-xl focus:outline-none focus:ring-1 focus:ring-[#8B5CF6] cursor-pointer overflow-hidden border border-white/10">
+                    <Avatar className="h-8 w-8 rounded-xl">
+                      <AvatarImage src={user?.profileImage} alt={user?.firstName} />
+                      <AvatarFallback className="rounded-xl bg-gradient-to-tr from-violet-600 to-[#8B5CF6] text-white font-semibold text-xs">
+                        {getInitials(user?.firstName, user?.lastName)}
+                      </AvatarFallback>
+                    </Avatar>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-56 rounded-xl p-1.5 shadow-2xl border-white/10 bg-[#0F0E17]/95 backdrop-blur-xl text-popover-foreground" align="end">
+                    <DropdownMenuLabel className="font-normal px-2.5 py-2">
+                      <div className="flex flex-col space-y-1">
+                        <p className="text-xs font-semibold leading-none text-white">{user?.firstName} {user?.lastName}</p>
+                        <p className="text-[10px] leading-none text-white/45">
+                          {user?.email}
+                        </p>
+                      </div>
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator className="bg-white/10" />
+                    <DropdownMenuItem className="rounded-lg py-2 focus:bg-white/[0.06] text-xs cursor-pointer">
+                      <Link href="/dashboard/profile" className="w-full">Profile Settings</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator className="bg-white/10" />
+                    <DropdownMenuItem className="text-red-400 focus:bg-[#EF4444]/10 rounded-lg py-2 cursor-pointer text-xs" onClick={handleLogout}>
+                      <LogOut className="mr-2 h-3.5 w-3.5" />
+                      <span>Log Out</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
             </div>
           </header>
 

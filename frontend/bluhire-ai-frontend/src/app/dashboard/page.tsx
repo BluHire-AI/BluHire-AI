@@ -11,6 +11,8 @@ import {
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
+import CandidateDashboard from '@/components/CandidateDashboard';
+import { Suspense } from 'react';
 
 interface Activity {
   _id: string;
@@ -42,6 +44,18 @@ interface RecentEmployee {
 
 export default function DashboardPage() {
   const { user } = useAuthStore();
+  if (user?.role === 'CANDIDATE') {
+    return (
+      <Suspense fallback={
+        <div className="flex flex-col items-center justify-center py-28 space-y-4">
+          <RefreshCw className="w-8 h-8 text-[#8B5CF6] animate-spin" />
+          <p className="text-xs text-white/45 font-medium">Reconstructing dashboard...</p>
+        </div>
+      }>
+        <CandidateDashboard />
+      </Suspense>
+    );
+  }
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
     totalEmployees: 0,

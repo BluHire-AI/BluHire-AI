@@ -86,6 +86,11 @@ export default function CandidatesDirectory() {
               Candidates
             </span>
           </Link>
+          <Link href="/dashboard/recruitment/interviews">
+            <span className="text-xs font-bold px-4 py-2 rounded-xl text-white/60 hover:text-white cursor-pointer block transition-all">
+              AI Voice Interviews
+            </span>
+          </Link>
         </div>
       </div>
 

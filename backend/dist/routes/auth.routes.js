@@ -13,4 +13,6 @@ router.post('/refresh', (0, validate_middleware_1.validateRequest)(authValidator
 router.post('/change-password', auth_middleware_1.authenticate, (0, validate_middleware_1.validateRequest)(authValidators_1.changePasswordSchema), auth_controller_1.authController.changePassword);
 router.post('/forgot-password', (0, validate_middleware_1.validateRequest)(authValidators_1.forgotPasswordSchema), auth_controller_1.authController.forgotPassword);
 router.post('/reset-password', (0, validate_middleware_1.validateRequest)(authValidators_1.resetPasswordSchema), auth_controller_1.authController.resetPassword);
+router.get('/verify-magic-token', auth_controller_1.authController.verifyMagicToken);
+router.post('/activate-candidate', auth_controller_1.authController.activateCandidate);
 exports.default = router;

@@ -174,6 +174,11 @@ const ApplicationSchema = new mongoose_1.Schema({
         default: false,
         index: true,
     },
+    isTestData: {
+        type: Boolean,
+        default: false,
+        index: true,
+    },
 }, {
     timestamps: true,
 });

@@ -42,3 +42,18 @@ export const authenticate = (
     });
   }
 };
+
+export const denyCandidate = (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+): void => {
+  if (req.user && req.user.role === 'CANDIDATE') {
+    res.status(403).json({
+      success: false,
+      message: 'Access denied: candidates are not allowed to access this resource.'
+    });
+    return;
+  }
+  next();
+};

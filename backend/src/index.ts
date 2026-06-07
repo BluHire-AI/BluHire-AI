@@ -5,6 +5,7 @@ import { connectDB } from './config/db';
 import apiRouter from './routes';
 import { errorHandler } from './middlewares/error.middleware';
 import screeningWorker from './modules/recruitment/queue/screening.worker';
+import './modules/recruitment/queue/interview.worker';
 
 const app = express();
 
@@ -14,7 +15,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
     ? ['https://bluhire-ai.vercel.app'] 
-    : ['http://localhost:3000', 'http://localhost:5173'],
+    : ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:5173'],
   credentials: true,
 }));
 

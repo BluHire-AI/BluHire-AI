@@ -11,6 +11,13 @@ import { employeeService } from '../../employee';
 import EmployeeModel from '../../../models/Employee';
 import EmployeeRepository from '../../employee/repositories/employee.repository';
 import path from 'path';
+import crypto from 'crypto';
+import mongoose from 'mongoose';
+import InterviewTemplate from '../../../models/InterviewTemplate';
+import InterviewAssignment from '../../../models/InterviewAssignment';
+import { userRepository } from '../../../repositories/user.repository';
+import DepartmentModel from '../../../models/Department';
+import DesignationModel from '../../../models/Designation';
 
 export class ApplicationsService {
   /**
@@ -122,7 +129,19 @@ export class ApplicationsService {
   /**
    * Move Application Stage
    */
-  async moveStage(applicationId: string, stage: ApplicationStage, userId: string, notes?: string): Promise<IApplication> {
+  async moveStage(
+    applicationId: string, 
+    stage: ApplicationStage, 
+    userId: string, 
+    notes?: string,
+    onboardingData?: {
+      employeeRole?: string;
+      departmentId?: string;
+      designationId?: string;
+      managerId?: string;
+      joiningDate?: Date;
+    }
+  ): Promise<IApplication> {
     const app = await applicationRepository.findById(applicationId);
     if (!app) {
       throw new Error('Application record not found');
@@ -145,26 +164,39 @@ export class ApplicationsService {
       // Generate unique code for new employee
       const empCode = await this.generateEmployeeCode();
 
-      const deptId = job.departmentId && typeof job.departmentId === 'object' && '_id' in job.departmentId
+      // Resolve department & designation (either from onboardingData or Job fallback)
+      const deptId = onboardingData?.departmentId || (job.departmentId && typeof job.departmentId === 'object' && '_id' in job.departmentId
         ? (job.departmentId as any)._id.toString()
-        : job.departmentId.toString();
+        : job.departmentId?.toString());
 
-      const desigId = job.designationId && typeof job.designationId === 'object' && '_id' in job.designationId
+      const desigId = onboardingData?.designationId || (job.designationId && typeof job.designationId === 'object' && '_id' in job.designationId
         ? (job.designationId as any)._id.toString()
-        : job.designationId.toString();
+        : job.designationId?.toString());
+
+      const managerId = onboardingData?.managerId || undefined;
+      const joiningDate = onboardingData?.joiningDate ? new Date(onboardingData.joiningDate) : new Date();
+
+      // Find user to associate
+      const user = await userRepository.findByEmail(candidate.email);
+      let userObjId: string | undefined;
+      if (user) {
+        userObjId = user._id.toString();
+      }
 
       // Create Employee profile
       const employee = await employeeService.createEmployee(
         {
           employeeCode: empCode,
+          userId: userObjId, // Link User to Employee record!
           firstName: candidate.firstName,
           lastName: candidate.lastName,
           email: candidate.email,
           phone: candidate.phone,
           departmentId: deptId,
           designationId: desigId,
+          managerId,
           employmentType: job.employmentType as any,
-          joiningDate: new Date(),
+          joiningDate,
           workLocation: job.location || 'Headquarters',
           skills: candidate.skills,
           experience: parseFloat(candidate.experience || '0') || 0,
@@ -175,6 +207,19 @@ export class ApplicationsService {
 
       employeeId = employee._id.toString();
 
+      // If user exists, promote their role and update details
+      if (user) {
+        const dept = await DepartmentModel.findById(deptId);
+        const desig = await DesignationModel.findById(desigId);
+        
+        await userRepository.updateById(user._id.toString(), {
+          employeeId: empCode,
+          role: (onboardingData?.employeeRole || 'EMPLOYEE') as any,
+          department: dept?.name || '',
+          designation: desig?.title || '',
+        } as any);
+      }
+
       // Log Recruitment activity for hire
       await recruitmentActivityRepository.create({
         applicationId: app._id,
@@ -184,6 +229,79 @@ export class ApplicationsService {
         description: `Candidate ${candidate.firstName} ${candidate.lastName} was hired as employee ${empCode}.`,
         createdBy: userId,
       });
+    }
+
+    if (stage === ApplicationStage.SHORTLISTED && app.currentStage !== ApplicationStage.SHORTLISTED) {
+      const candidateObj: any = app.candidateId;
+      const jobObj: any = app.jobId;
+
+      if (!candidateObj || !jobObj) {
+        throw new Error('Unable to shortlist: Candidate or Job record is missing.');
+      }
+
+      // 1. Resolve or Create InterviewTemplate
+      let template = await InterviewTemplate.findOne({ jobRole: jobObj.title, isArchived: false });
+      if (!template) {
+        template = await InterviewTemplate.create({
+          name: `Default Template - ${jobObj.title}`,
+          jobRole: jobObj.title,
+          department: jobObj.departmentId?.name || 'Engineering',
+          experienceLevel: jobObj.experienceRequired || 'Mid',
+          difficultyLevel: 'Medium',
+          skillsRequired: jobObj.requiredSkills || [],
+          numQuestions: 5,
+          timeLimit: 15,
+          interviewType: 'Mixed',
+          maxAttempts: 1,
+          showResultsToCandidate: false,
+          createdBy: new mongoose.Types.ObjectId(userId) as any,
+          updatedBy: new mongoose.Types.ObjectId(userId) as any,
+        });
+      }
+
+      // 2. Generate magic link token
+      const magicToken = crypto.randomBytes(32).toString('hex');
+      const magicTokenExpiresAt = new Date(Date.now() + 72 * 60 * 60 * 1000); // 72 hours
+
+      // 3. Create Resume Screening snapshot
+      const resumeSnapshot = {
+        aiScore: app.aiScore || 0,
+        aiRecommendation: app.aiRecommendation || 'Needs Review',
+        matchingSkills: app.matchingSkills || [],
+        missingSkills: app.missingSkills || [],
+        screeningSummary: app.screeningSummary || 'Screening snapshot created.',
+      };
+
+      // 4. Create/Update InterviewAssignment
+      await InterviewAssignment.findOneAndUpdate(
+        { candidateId: candidateObj._id, jobId: jobObj._id },
+        {
+          recruiterId: new mongoose.Types.ObjectId(userId),
+          interviewTemplateId: template._id,
+          status: 'Pending',
+          assignedAt: new Date(),
+          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days expiration
+          magicToken,
+          magicTokenExpiresAt,
+          isTokenUsed: false,
+          maxAttempts: template.maxAttempts || 1,
+          attemptCount: 0,
+          showResultsToCandidate: (template as any).showResultsToCandidate || false,
+          resumeSnapshot,
+          resumeScore: app.aiScore || 0,
+          resumeAnalysis: app.screeningSummary || 'Screening snapshot created.',
+          screeningTimestamp: app.screenedAt || new Date(),
+          createdBy: new mongoose.Types.ObjectId(userId),
+          updatedBy: new mongoose.Types.ObjectId(userId),
+        },
+        { upsert: true, new: true }
+      );
+
+      // 5. Log magic invitation
+      console.log('--------------------------------------------------');
+      console.log(`[EMAIL DISPATCH] Magic Link sent to: ${candidateObj.email}`);
+      console.log(`URL: http://localhost:3000/careers/activate?token=${magicToken}`);
+      console.log('--------------------------------------------------');
     }
 
     // Update application stage

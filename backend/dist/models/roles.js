@@ -7,4 +7,5 @@ var SystemRoles;
     SystemRoles["SENIOR_MANAGER"] = "SENIOR_MANAGER";
     SystemRoles["HR_RECRUITER"] = "HR_RECRUITER";
     SystemRoles["EMPLOYEE"] = "EMPLOYEE";
+    SystemRoles["CANDIDATE"] = "CANDIDATE";
 })(SystemRoles || (exports.SystemRoles = SystemRoles = {}));

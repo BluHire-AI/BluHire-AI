@@ -1,9 +1,14 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.authService = exports.AuthService = void 0;
 const user_repository_1 = require("../repositories/user.repository");
 const password_util_1 = require("../utils/password.util");
 const jwt_util_1 = require("../utils/jwt.util");
+const roles_1 = require("../models/roles");
+const InterviewAssignment_1 = __importDefault(require("../models/InterviewAssignment"));
 class AuthService {
     async register(data) {
         const existingUser = await user_repository_1.userRepository.findByEmail(data.email);
@@ -86,6 +91,59 @@ class AuthService {
         catch (error) {
             throw new Error(error.message || 'Invalid or expired reset token');
         }
+    }
+    async verifyMagicToken(token) {
+        const assignment = await InterviewAssignment_1.default.findOne({
+            magicToken: token,
+            isTokenUsed: false,
+            magicTokenExpiresAt: { $gt: new Date() }
+        }).populate({
+            path: 'candidateId',
+            match: { isDeleted: false }
+        }).populate({
+            path: 'jobId',
+            match: { isDeleted: false }
+        });
+        if (!assignment) {
+            throw new Error('Invalid or expired activation token');
+        }
+        return assignment;
+    }
+    async activateCandidate(token, password) {
+        const assignment = await this.verifyMagicToken(token);
+        const candidate = assignment.candidateId;
+        if (!candidate) {
+            throw new Error('Candidate associated with this token not found');
+        }
+        let user = await user_repository_1.userRepository.findByEmail(candidate.email);
+        const hashedPassword = await (0, password_util_1.hashPassword)(password);
+        if (!user) {
+            // Create new candidate User account
+            user = await user_repository_1.userRepository.create({
+                firstName: candidate.firstName,
+                lastName: candidate.lastName,
+                email: candidate.email,
+                phone: candidate.phone,
+                employeeId: `CAND-${candidate.candidateCode}`,
+                role: roles_1.SystemRoles.CANDIDATE,
+                passwordHash: hashedPassword,
+                isActive: true
+            });
+        }
+        else {
+            // Update existing user with candidate credentials/role
+            user = await user_repository_1.userRepository.updateById(user._id.toString(), {
+                role: roles_1.SystemRoles.CANDIDATE,
+                passwordHash: hashedPassword,
+                isActive: true
+            });
+        }
+        // Invalidate the single-use token
+        assignment.isTokenUsed = true;
+        await assignment.save();
+        const { accessToken, refreshToken } = (0, jwt_util_1.generateTokens)(user);
+        await user_repository_1.userRepository.updateRefreshToken(user.id, refreshToken);
+        return { user, accessToken, refreshToken };
     }
 }
 exports.AuthService = AuthService;

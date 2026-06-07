@@ -17,7 +17,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
-    ? ['https://bluhire-ai.vercel.app'] 
+    ? [process.env.FRONTEND_URL || 'https://bluhire-ai-frontend.vercel.app', 'https://bluhire-ai.vercel.app'] 
     : ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:5173'],
   credentials: true,
 }));

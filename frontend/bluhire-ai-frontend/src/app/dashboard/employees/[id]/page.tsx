@@ -19,6 +19,7 @@ import {
   Sparkles, Brain, ArrowUpRight, Flame, Target
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { 
   RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, 
   ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip 
@@ -1087,35 +1088,64 @@ export default function EmployeeDetailsPage() {
 
       {/* 7. Change Status */}
       <Dialog open={activeDialog === 'status'} onOpenChange={(open) => !open && setActiveDialog('none')}>
-        <DialogContent className="bg-card border border-border rounded-2xl max-w-md p-6">
-          <DialogHeader>
-            <DialogTitle className="text-lg font-bold text-foreground">Change Employment Status</DialogTitle>
+        <DialogContent className="bg-[#0B0B12] border border-[#8B5CF6]/20 rounded-[20px] max-w-md p-6 shadow-2xl shadow-[#8B5CF6]/5 backdrop-blur-xl">
+          <DialogHeader className="border-b border-white/5 pb-4.5 mb-2 flex flex-row items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-[#8B5CF6]/10 border border-[#8B5CF6]/20 flex items-center justify-center text-[#8B5CF6]">
+              <RefreshCw className="w-5 h-5 animate-pulse" />
+            </div>
+            <div>
+              <DialogTitle className="text-xl font-bold text-foreground">Change Status</DialogTitle>
+              <p className="text-[10px] text-muted-foreground mt-0.5">Update employee status parameters</p>
+            </div>
           </DialogHeader>
-          <form onSubmit={handleStatusChange} className="space-y-5 mt-4">
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">Employment Status <span className="text-destructive">*</span></label>
-              <select
-                value={statusVal}
-                onChange={(e) => setStatusVal(e.target.value)}
-                className="w-full h-10 px-3 rounded-xl border border-border bg-muted/40 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 text-foreground cursor-pointer transition-all"
+          <form onSubmit={handleStatusChange} className="space-y-5.5 mt-4">
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block mb-1">Employment Status <span className="text-destructive">*</span></label>
+              <Select value={statusVal} onValueChange={setStatusVal}>
+                <SelectTrigger className="w-full bg-[#111827] border border-[#374151] rounded-xl h-12 text-sm text-foreground focus:border-[#8B5CF6] focus:ring-2 focus:ring-[#8B5CF6]/20 focus-visible:border-[#8B5CF6] focus-visible:ring-2 focus-visible:ring-[#8B5CF6]/20 transition-all px-4">
+                  <SelectValue placeholder="Select Status..." />
+                </SelectTrigger>
+                <SelectContent className="bg-[#0B0B12] border border-[#8B5CF6]/20 rounded-xl shadow-2xl p-1.5 min-w-[240px]">
+                  <SelectItem value="ACTIVE">ACTIVE</SelectItem>
+                  <SelectItem value="ON_LEAVE">ON LEAVE</SelectItem>
+                  <SelectItem value="TERMINATED">TERMINATED</SelectItem>
+                  <SelectItem value="SUSPENDED">SUSPENDED</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block mb-1">Reason for Change (Optional)</label>
+              <Input 
+                placeholder="e.g. Parental leave, voluntary separation" 
+                value={statusReason} 
+                onChange={(e) => setStatusReason(e.target.value)} 
+                className="w-full bg-[#111827] border border-[#374151] rounded-xl h-12 text-sm text-foreground focus:border-[#8B5CF6] focus:ring-2 focus:ring-[#8B5CF6]/20 focus-visible:border-[#8B5CF6] focus-visible:ring-2 focus-visible:ring-[#8B5CF6]/20 transition-all px-4" 
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block mb-1">Effective Date</label>
+              <Input 
+                type="date" 
+                value={statusDate} 
+                onChange={(e) => setStatusDate(e.target.value)} 
+                className="w-full bg-[#111827] border border-[#374151] rounded-xl h-12 text-sm text-foreground focus:border-[#8B5CF6] focus:ring-2 focus:ring-[#8B5CF6]/20 focus-visible:border-[#8B5CF6] focus-visible:ring-2 focus-visible:ring-[#8B5CF6]/20 transition-all px-4 cursor-pointer [&::-webkit-calendar-picker-indicator]:invert [&::-webkit-calendar-picker-indicator]:opacity-50 [&::-webkit-calendar-picker-indicator]:cursor-pointer" 
+              />
+            </div>
+            <div className="flex justify-end gap-3.5 pt-3 border-t border-white/5">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => setActiveDialog('none')} 
+                className="bg-[#111827] text-zinc-350 hover:text-white hover:bg-[#1f2937] border border-[#374151] rounded-xl h-11 px-5 transition-all font-semibold text-xs cursor-pointer"
               >
-                <option value="ACTIVE">ACTIVE</option>
-                <option value="ON_LEAVE">ON LEAVE</option>
-                <option value="TERMINATED">TERMINATED</option>
-                <option value="SUSPENDED">SUSPENDED</option>
-              </select>
-            </div>
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">Reason for Change (Optional)</label>
-              <Input placeholder="e.g. Parental leave, voluntary separation" value={statusReason} onChange={(e) => setStatusReason(e.target.value)} className="rounded-xl" />
-            </div>
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">Effective Date</label>
-              <Input type="date" value={statusDate} onChange={(e) => setStatusDate(e.target.value)} className="rounded-xl cursor-pointer" />
-            </div>
-            <div className="flex justify-end gap-2.5 pt-2">
-              <Button type="button" variant="outline" onClick={() => setActiveDialog('none')} className="rounded-xl border-border/60 hover:bg-muted text-xs font-semibold">Cancel</Button>
-              <Button type="submit" className="bg-primary text-white hover:bg-primary/95 rounded-xl text-xs font-semibold">Confirm Change</Button>
+                Cancel
+              </Button>
+              <Button 
+                type="submit" 
+                className="bg-gradient-to-r from-[#8B5CF6] to-[#A855F7] text-white hover:from-[#9d76fd] hover:to-[#b76eff] border border-white/10 rounded-xl h-11 px-5 font-bold text-xs transition-all shadow-md hover:shadow-lg hover:shadow-[#8B5CF6]/25 cursor-pointer"
+              >
+                Confirm Change
+              </Button>
             </div>
           </form>
         </DialogContent>

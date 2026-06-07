@@ -2,6 +2,20 @@ import candidateRepository, { CandidateQueryDTO } from '../repositories/candidat
 import { ICandidate } from '../../../models/Candidate';
 import { PaginationDTO } from '../../employee/dtos/common.dto';
 import CandidateModel from '../../../models/Candidate';
+import ApplicationModel from '../../../models/Application';
+import InterviewSessionModel from '../../../models/InterviewSession';
+import InterviewTranscriptModel from '../../../models/InterviewTranscript';
+import InterviewResponseModel from '../../../models/InterviewResponse';
+import InterviewRecordingModel from '../../../models/InterviewRecording';
+import InterviewScoreModel from '../../../models/InterviewScore';
+import InterviewReportModel from '../../../models/InterviewReport';
+import TechnicalEvaluationModel from '../../../models/TechnicalEvaluation';
+import ProblemSolvingEvaluationModel from '../../../models/ProblemSolvingEvaluation';
+import CommunicationAnalysisModel from '../../../models/CommunicationAnalysis';
+import InterviewRecommendationModel from '../../../models/InterviewRecommendation';
+import InterviewTimelineModel from '../../../models/InterviewTimeline';
+import TranscriptAnalysisModel from '../../../models/TranscriptAnalysis';
+import RecruitmentActivityModel from '../../../models/RecruitmentActivity';
 
 export class CandidatesService {
   /**
@@ -108,6 +122,49 @@ export class CandidatesService {
    * Delete candidate (soft delete)
    */
   async deleteCandidate(candidateId: string): Promise<ICandidate | null> {
+    const candidate = await candidateRepository.findById(candidateId);
+    if (!candidate) return null;
+
+    // 1. Soft delete all applications
+    await ApplicationModel.updateMany(
+      { candidateId },
+      { isDeleted: true, updatedAt: new Date() }
+    );
+
+    // 2. Hard delete Recruitment activities
+    await RecruitmentActivityModel.deleteMany({ candidateId });
+
+    // 3. Find related Interview Sessions
+    const sessions = await InterviewSessionModel.find({ candidateId });
+    const sessionIds = sessions.map((s) => s._id);
+
+    if (sessionIds.length > 0) {
+      // Find related Transcripts
+      const transcripts = await InterviewTranscriptModel.find({ sessionId: { $in: sessionIds } });
+      const transcriptIds = transcripts.map((t) => t._id);
+
+      if (transcriptIds.length > 0) {
+        // Hard delete transcript-dependent models
+        await TechnicalEvaluationModel.deleteMany({ transcriptId: { $in: transcriptIds } });
+        await ProblemSolvingEvaluationModel.deleteMany({ transcriptId: { $in: transcriptIds } });
+        await CommunicationAnalysisModel.deleteMany({ transcriptId: { $in: transcriptIds } });
+        await TranscriptAnalysisModel.deleteMany({ transcriptId: { $in: transcriptIds } });
+      }
+
+      // Hard delete session-dependent models
+      await InterviewTranscriptModel.deleteMany({ sessionId: { $in: sessionIds } });
+      await InterviewResponseModel.deleteMany({ sessionId: { $in: sessionIds } });
+      await InterviewRecordingModel.deleteMany({ sessionId: { $in: sessionIds } });
+      await InterviewScoreModel.deleteMany({ sessionId: { $in: sessionIds } });
+      await InterviewReportModel.deleteMany({ sessionId: { $in: sessionIds } });
+      await InterviewRecommendationModel.deleteMany({ sessionId: { $in: sessionIds } });
+      await InterviewTimelineModel.deleteMany({ sessionId: { $in: sessionIds } });
+      
+      // Hard delete the sessions
+      await InterviewSessionModel.deleteMany({ candidateId });
+    }
+
+    // 4. Soft delete the candidate
     return await candidateRepository.softDelete(candidateId);
   }
 

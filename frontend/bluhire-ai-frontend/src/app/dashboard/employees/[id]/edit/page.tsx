@@ -340,7 +340,7 @@ export default function EditEmployeePage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <label className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">Department <span className="text-red-500">*</span></label>
-                <Select value={departmentId} onValueChange={setDepartmentId}>
+                <Select value={departmentId} onValueChange={setDepartmentId} searchable={true}>
                   <SelectTrigger className="w-full h-10">
                     <SelectValue placeholder="Select Department..." />
                   </SelectTrigger>
@@ -354,7 +354,7 @@ export default function EditEmployeePage() {
 
               <div className="space-y-2">
                 <label className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">Designation <span className="text-red-500">*</span></label>
-                <Select value={designationId} onValueChange={setDesignationId}>
+                <Select value={designationId} onValueChange={setDesignationId} searchable={true}>
                   <SelectTrigger className="w-full h-10">
                     <SelectValue placeholder="Select Designation..." />
                   </SelectTrigger>
@@ -368,7 +368,7 @@ export default function EditEmployeePage() {
 
               <div className="space-y-2">
                 <label className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">Reporting Manager</label>
-                <Select value={managerId} onValueChange={setManagerId}>
+                <Select value={managerId} onValueChange={setManagerId} searchable={true}>
                   <SelectTrigger className="w-full h-10">
                     <SelectValue placeholder="No Manager (e.g. CEO)" />
                   </SelectTrigger>

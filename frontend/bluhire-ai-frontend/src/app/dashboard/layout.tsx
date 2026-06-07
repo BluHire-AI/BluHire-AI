@@ -6,7 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { 
   LayoutDashboard, Users, UserCircle, LogOut, Building, Briefcase, 
   Network, Contact, Sun, Moon, ChevronDown, ChevronRight,
-  Compass, Award, BarChart3, Bot, BookOpen
+  Compass, Award, BarChart3, Bot, BookOpen, Calendar, ShieldAlert
 } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { useAuthStore } from '@/lib/store/auth';
@@ -60,7 +60,9 @@ const getNavigation = (role?: string): NavSection[] => {
         items: [
           { name: 'Employee Directory', href: '/dashboard/directory', icon: Contact },
           { name: 'Organization Chart', href: '/dashboard/org-chart', icon: Network },
-          { name: 'Performance & Coaching', href: '/dashboard/performance', icon: Award }
+          { name: 'Attendance & Leaves', href: '/dashboard/attendance', icon: Calendar },
+          { name: 'Performance & Coaching', href: '/dashboard/performance', icon: Award },
+          { name: 'My Payroll', href: '/dashboard/payroll', icon: BarChart3 }
         ]
       },
       {
@@ -82,8 +84,11 @@ const getNavigation = (role?: string): NavSection[] => {
         { name: 'Employees', href: '/dashboard/employees', icon: Users, roles: ['MANAGEMENT_ADMIN', 'HR_RECRUITER', 'SENIOR_MANAGER'] },
         { name: 'Employee Directory', href: '/dashboard/directory', icon: Contact },
         { name: 'Organization Chart', href: '/dashboard/org-chart', icon: Network },
+        { name: 'Attendance & Leaves', href: '/dashboard/attendance', icon: Calendar },
         { name: 'Recruitment', href: '/dashboard/recruitment', icon: Compass, roles: ['MANAGEMENT_ADMIN', 'HR_RECRUITER'] },
-        { name: 'Performance & Coaching', href: '/dashboard/performance', icon: Award }
+        { name: 'AI Interviews', href: '/dashboard/recruitment/ai-interviews', icon: Award, roles: ['MANAGEMENT_ADMIN', 'HR_RECRUITER'] },
+        { name: 'Performance & Coaching', href: '/dashboard/performance', icon: Award },
+        { name: 'Payroll Management', href: '/dashboard/payroll', icon: BarChart3, roles: ['MANAGEMENT_ADMIN', 'HR_RECRUITER'] }
       ]
     },
     {
@@ -115,6 +120,25 @@ export default function DashboardLayout({
   const { user, logout, setUser, setTokens, refreshToken: storeRefreshToken } = useAuthStore();
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const [apiOffline, setApiOffline] = useState(false);
+
+  useEffect(() => {
+    const checkHealth = async () => {
+      try {
+        const res = await api.get('/health');
+        if (res.data?.status === 'ok' && res.data?.database === 'connected') {
+          setApiOffline(false);
+        } else {
+          setApiOffline(true);
+        }
+      } catch {
+        setApiOffline(true);
+      }
+    };
+    checkHealth();
+    const interval = setInterval(checkHealth, 8000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Group accordion states
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({
@@ -150,7 +174,18 @@ export default function DashboardLayout({
             setUser(latestUser);
           }
         } else if (latestUser) {
-          setUser(latestUser);
+          // Check if key fields changed to avoid ref-update loop
+          if (
+            latestUser.role !== user.role ||
+            latestUser.email !== user.email ||
+            latestUser.firstName !== user.firstName ||
+            latestUser.lastName !== user.lastName ||
+            latestUser.profileImage !== user.profileImage ||
+            latestUser.isActive !== user.isActive ||
+            latestUser.mustChangePassword !== user.mustChangePassword
+          ) {
+            setUser(latestUser);
+          }
         }
       })
       .catch(err => {
@@ -496,6 +531,17 @@ export default function DashboardLayout({
               transition={{ duration: 0.4, ease: 'easeOut' }}
               className="max-w-7xl mx-auto space-y-6"
             >
+              {apiOffline && (
+                <div className="bg-red-500/10 border border-red-500/30 text-red-550 rounded-xl p-4 flex items-start gap-3 text-xs shadow-sm select-none z-50">
+                  <ShieldAlert className="w-5 h-5 animate-pulse text-red-500 shrink-0 mt-0.5" />
+                  <div className="space-y-1">
+                    <p className="font-bold uppercase tracking-wider text-[10px]">Critical: Unable to connect to HRMinds API</p>
+                    <p className="font-medium text-zinc-500 dark:text-zinc-400">
+                      The backend API server or the database is currently unreachable. Real-time logging, attendance check-ins, and payroll calculations will be disabled until services restore.
+                    </p>
+                  </div>
+                </div>
+              )}
               {children}
             </motion.div>
           </main>

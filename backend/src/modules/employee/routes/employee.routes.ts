@@ -82,7 +82,14 @@ router.get(
  * 3. Parameterized endpoints (/:id must be defined after specific endpoints)
  */
 
+// Get logged-in user's employee record
+router.get(
+  '/me',
+  EmployeeController.getMyEmployeeRecord.bind(EmployeeController)
+);
+
 // Get employee by ID
+
 router.get(
   '/:id',
   requireEmployeeAccess(),

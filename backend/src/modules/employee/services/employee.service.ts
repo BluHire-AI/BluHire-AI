@@ -100,6 +100,18 @@ export class EmployeeService {
   }
 
   /**
+   * Get employee by User ID
+   */
+  async getEmployeeByUserId(userId: string): Promise<IEmployee> {
+    const employee = await EmployeeRepository.findByUserId(userId);
+    if (!employee) {
+      throw new Error('Employee record not found for this user');
+    }
+    return employee;
+  }
+
+
+  /**
    * Get employee by code
    */
   async getEmployeeByCode(employeeCode: string): Promise<IEmployee> {

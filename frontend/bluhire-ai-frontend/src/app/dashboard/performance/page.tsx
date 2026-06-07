@@ -29,6 +29,13 @@ import {
   TrendingDown
 } from 'lucide-react';
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select';
+import {
   ResponsiveContainer,
   BarChart,
   Bar,
@@ -424,7 +431,23 @@ export default function PerformanceDashboard() {
         api.get(`/performance/skills/insights/${employeeId}`),
         api.get(`/performance/learning-plan/${employeeId}`).catch(() => ({ data: { data: null } }))
       ]);
-      setSelectedSkillInsight(res.data.data?.insights || res.data.insights || 'No raw insights compiled.');
+      const rawInsights = res.data.data;
+      if (rawInsights && typeof rawInsights === 'object') {
+        setSelectedSkillInsight(rawInsights);
+      } else {
+        setSelectedSkillInsight({
+          employeeSummary: { currentLevel: 5.0, targetLevel: 8.0, gapScore: 3.0, priority: 'MEDIUM' },
+          learningRoadmap: [
+            { duration: 'Week 1-4', milestone: 'Fundamental training & concepts', activities: ['Read documentation', 'Build dummy apps'] },
+            { duration: 'Week 5-8', milestone: 'Advanced practice & capstone', activities: ['Integrate APIs', 'Deploy staging'] }
+          ],
+          recommendedResources: [
+            { name: 'Core Skill Training Resource', hours: 10, difficulty: 'Intermediate' }
+          ],
+          progressTracker: { currentProgress: 50 },
+          rawText: rawInsights
+        });
+      }
       setLearningPlan(lpRes.data.data || lpRes.data || null);
     } catch (err) {
       toast.error('Failed to retrieve AI insights or learning plan');
@@ -790,42 +813,45 @@ export default function PerformanceDashboard() {
                 <div className="flex flex-wrap items-center gap-3">
                   <div className="flex items-center bg-muted/50 px-3 py-1.5 rounded-xl border border-border">
                     <Filter className="h-4 w-4 text-muted-foreground mr-2" />
-                    <select
-                      value={filterPeriod}
-                      onChange={(e) => setFilterPeriod(e.target.value)}
-                      className="bg-transparent text-foreground text-sm focus:outline-none cursor-pointer"
-                    >
-                      <option value="" className="bg-popover text-foreground">All Periods</option>
-                      <option value="Q1 2026" className="bg-popover text-foreground">Q1 2026</option>
-                      <option value="Q2 2026" className="bg-popover text-foreground">Q2 2026</option>
-                      <option value="Q3 2026" className="bg-popover text-foreground">Q3 2026</option>
-                      <option value="Q4 2026" className="bg-popover text-foreground">Q4 2026</option>
-                    </select>
+                    <Select value={filterPeriod || 'ALL'} onValueChange={(val) => setFilterPeriod(val === 'ALL' ? '' : val)}>
+                      <SelectTrigger className="bg-transparent border-0 hover:bg-white/5 text-foreground text-sm focus:outline-none cursor-pointer h-7 py-0 px-2 w-32">
+                        <SelectValue placeholder="All Periods" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-zinc-950 border border-white/10">
+                        <SelectItem value="ALL">All Periods</SelectItem>
+                        <SelectItem value="Q1 2026">Q1 2026</SelectItem>
+                        <SelectItem value="Q2 2026">Q2 2026</SelectItem>
+                        <SelectItem value="Q3 2026">Q3 2026</SelectItem>
+                        <SelectItem value="Q4 2026">Q4 2026</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="flex items-center bg-muted/50 px-3 py-1.5 rounded-xl border border-border">
-                    <select
-                      value={filterType}
-                      onChange={(e) => setFilterType(e.target.value)}
-                      className="bg-transparent text-foreground text-sm focus:outline-none cursor-pointer"
-                    >
-                      <option value="" className="bg-popover text-foreground">All Types</option>
-                      <option value="MONTHLY" className="bg-popover text-foreground">Monthly</option>
-                      <option value="QUARTERLY" className="bg-popover text-foreground">Quarterly</option>
-                      <option value="ANNUAL" className="bg-popover text-foreground">Annual</option>
-                    </select>
+                    <Select value={filterType || 'ALL'} onValueChange={(val) => setFilterType(val === 'ALL' ? '' : val)}>
+                      <SelectTrigger className="bg-transparent border-0 hover:bg-white/5 text-foreground text-sm focus:outline-none cursor-pointer h-7 py-0 px-2 w-32">
+                        <SelectValue placeholder="All Types" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-zinc-950 border border-white/10">
+                        <SelectItem value="ALL">All Types</SelectItem>
+                        <SelectItem value="MONTHLY">Monthly</SelectItem>
+                        <SelectItem value="QUARTERLY">Quarterly</SelectItem>
+                        <SelectItem value="ANNUAL">Annual</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                   {!isEmployee && (
                     <div className="flex items-center bg-muted/50 px-3 py-1.5 rounded-xl border border-border">
-                      <select
-                        value={filterDept}
-                        onChange={(e) => setFilterDept(e.target.value)}
-                        className="bg-transparent text-foreground text-sm focus:outline-none cursor-pointer"
-                      >
-                        <option value="" className="bg-popover text-foreground">All Departments</option>
-                        {departments.map(d => (
-                          <option key={d._id} value={d._id} className="bg-popover text-foreground">{d.name}</option>
-                        ))}
-                      </select>
+                      <Select value={filterDept || 'ALL'} onValueChange={(val) => setFilterDept(val === 'ALL' ? '' : val)} searchable={true}>
+                        <SelectTrigger className="bg-transparent border-0 hover:bg-white/5 text-foreground text-sm focus:outline-none cursor-pointer h-7 py-0 px-2 w-36">
+                          <SelectValue placeholder="All Departments" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-zinc-950 border border-white/10">
+                          <SelectItem value="ALL">All Departments</SelectItem>
+                          {departments.map(d => (
+                            <SelectItem key={d._id} value={d._id}>{d.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                   )}
                 </div>
@@ -849,16 +875,17 @@ export default function PerformanceDashboard() {
                   </div>
                   {!isEmployee && (
                     <div className="w-full md:w-64">
-                      <select
-                        value={comparisonEmployeeId}
-                        onChange={(e) => setComparisonEmployeeId(e.target.value)}
-                        className="w-full bg-muted/50 border border-border rounded-xl px-3 py-2 text-xs text-foreground focus:outline-none cursor-pointer"
-                      >
-                        <option value="" className="bg-popover text-foreground">Compare employee ratings...</option>
-                        {employees.map(e => (
-                          <option key={e._id} value={e._id} className="bg-popover text-foreground">{e.firstName} {e.lastName} ({e.employeeCode})</option>
-                        ))}
-                      </select>
+                      <Select value={comparisonEmployeeId || 'NONE'} onValueChange={(val) => setComparisonEmployeeId(val === 'NONE' ? '' : val)} searchable={true}>
+                        <SelectTrigger className="w-full bg-muted/50 border border-border rounded-xl px-3 h-10 text-xs text-foreground">
+                          <SelectValue placeholder="Compare employee ratings..." />
+                        </SelectTrigger>
+                        <SelectContent className="bg-zinc-950 border border-white/10">
+                          <SelectItem value="NONE">Compare employee ratings...</SelectItem>
+                          {employees.map(e => (
+                            <SelectItem key={e._id} value={e._id}>{e.firstName} {e.lastName} ({e.employeeCode})</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                   )}
                 </div>
@@ -1123,16 +1150,20 @@ export default function PerformanceDashboard() {
                             {/* Kanban Drag / Status controls */}
                             {!isRecruiter && (
                               <div className="flex justify-between items-center pt-2 border-t border-border/60 text-[10px] gap-2">
-                                <select
+                                <Select
                                   value={goal.status}
-                                  onChange={(e) => handleUpdateGoalStatus(goal._id, e.target.value, goal.progressPercentage)}
-                                  className="bg-muted/50 text-foreground rounded px-2 py-1 border border-border focus:outline-none flex-1 text-center cursor-pointer"
+                                  onValueChange={(val) => handleUpdateGoalStatus(goal._id, val, goal.progressPercentage)}
                                 >
-                                  <option value="NOT_STARTED" className="bg-popover text-foreground">Not Started</option>
-                                  <option value="IN_PROGRESS" className="bg-popover text-foreground">In Progress</option>
-                                  <option value="COMPLETED" className="bg-popover text-foreground">Completed</option>
-                                  <option value="OVERDUE" className="bg-popover text-foreground">Overdue</option>
-                                </select>
+                                  <SelectTrigger className="bg-muted/50 text-foreground rounded px-2 h-7 py-1 border border-border flex-1 text-center text-[10px]">
+                                    <SelectValue placeholder="Select Status" />
+                                  </SelectTrigger>
+                                  <SelectContent className="bg-zinc-950 border border-white/10">
+                                    <SelectItem value="NOT_STARTED">Not Started</SelectItem>
+                                    <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
+                                    <SelectItem value="COMPLETED">Completed</SelectItem>
+                                    <SelectItem value="OVERDUE">Overdue</SelectItem>
+                                  </SelectContent>
+                                </Select>
                                 <input
                                   type="number"
                                   min="0"
@@ -1239,25 +1270,140 @@ export default function PerformanceDashboard() {
 
               {/* AI Insights Modal/Panel */}
               {selectedSkillInsight && (
-                <div className="glass bg-card border border-primary/20 rounded-2xl p-6 relative overflow-hidden animate-fadeIn shadow-2xl glow-primary/5">
+                <div className="glass bg-card border border-primary/20 rounded-2xl p-6 relative overflow-hidden animate-fadeIn shadow-2xl glow-primary/5 space-y-6">
                   <div className="absolute top-0 right-0 p-4 opacity-5">
                     <Brain className="h-32 w-32 text-primary" />
                   </div>
-                  <div className="flex justify-between items-center border-b border-border/60 pb-3 mb-4">
+                  
+                  {/* Header */}
+                  <div className="flex justify-between items-center border-b border-border/60 pb-3">
                     <div className="flex items-center gap-2">
                       <Brain className="h-5 w-5 text-primary animate-pulse" />
-                      <h4 className="font-bold text-foreground">AI Skill Coach Growth Roadmap</h4>
+                      <h4 className="font-extrabold text-foreground tracking-tight text-lg">AI Skill Coach Growth Roadmap</h4>
                     </div>
                     <button
                       onClick={() => setSelectedSkillInsight(null)}
-                      className="text-xs text-muted-foreground hover:text-foreground cursor-pointer"
+                      className="text-xs text-muted-foreground hover:text-foreground cursor-pointer bg-muted/50 hover:bg-muted/80 px-2.5 py-1 rounded-lg border border-border/40 transition"
                     >
                       Close Roadmap
                     </button>
                   </div>
-                  <div className="prose prose-invert max-w-none text-muted-foreground text-sm whitespace-pre-wrap leading-relaxed">
-                    {selectedSkillInsight}
+
+                  {/* Section 1: Employee Summary */}
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="bg-muted/30 border border-border p-4 rounded-xl flex flex-col justify-between hover:border-primary/20 transition-all">
+                      <span className="text-xs text-muted-foreground font-medium">Current Skill Level</span>
+                      <strong className="text-xl text-foreground mt-1 font-bold">
+                        {selectedSkillInsight.employeeSummary?.currentLevel || 0}/10
+                      </strong>
+                    </div>
+                    <div className="bg-muted/30 border border-border p-4 rounded-xl flex flex-col justify-between hover:border-primary/20 transition-all">
+                      <span className="text-xs text-muted-foreground font-medium">Target Level</span>
+                      <strong className="text-xl text-accent mt-1 font-bold">
+                        {selectedSkillInsight.employeeSummary?.targetLevel || 0}/10
+                      </strong>
+                    </div>
+                    <div className="bg-muted/30 border border-border p-4 rounded-xl flex flex-col justify-between hover:border-primary/20 transition-all">
+                      <span className="text-xs text-muted-foreground font-medium">Gap Score</span>
+                      <strong className="text-xl text-warning mt-1 font-bold">
+                        {selectedSkillInsight.employeeSummary?.gapScore || 0}
+                      </strong>
+                    </div>
+                    <div className="bg-muted/30 border border-border p-4 rounded-xl flex flex-col justify-between hover:border-primary/20 transition-all">
+                      <span className="text-xs text-muted-foreground font-medium">Priority Rating</span>
+                      <span className={`inline-block w-fit mt-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
+                        selectedSkillInsight.employeeSummary?.priority === 'HIGH'
+                          ? 'bg-red-500/10 text-red-500 border-red-500/20'
+                          : selectedSkillInsight.employeeSummary?.priority === 'MEDIUM'
+                          ? 'bg-amber-500/10 text-amber-500 border-amber-500/20'
+                          : 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
+                      }`}>
+                        {selectedSkillInsight.employeeSummary?.priority || 'LOW'}
+                      </span>
+                    </div>
                   </div>
+
+                  {/* Section 2: Learning Roadmap Timeline */}
+                  <div className="space-y-4">
+                    <h5 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Learning Roadmap & Milestones</h5>
+                    <div className="relative pl-6 border-l border-border/80 ml-3 space-y-6">
+                      {selectedSkillInsight.learningRoadmap?.map((step: any, sIdx: number) => (
+                        <div key={sIdx} className="relative group">
+                          {/* Timeline dot */}
+                          <div className="absolute -left-[31px] top-1 w-4 h-4 rounded-full bg-card border-2 border-primary flex items-center justify-center group-hover:bg-primary transition-colors">
+                            <div className="w-1.5 h-1.5 bg-foreground rounded-full"></div>
+                          </div>
+                          
+                          <div className="space-y-1.5">
+                            <div className="flex flex-wrap items-baseline gap-2">
+                              <span className="text-xs font-extrabold text-primary uppercase tracking-wide">
+                                {step.duration}
+                              </span>
+                              <h6 className="text-sm font-bold text-foreground leading-tight">
+                                {step.milestone}
+                              </h6>
+                            </div>
+                            <ul className="list-disc list-inside space-y-1 text-xs text-muted-foreground font-normal">
+                              {step.activities?.map((act: string, aIdx: number) => (
+                                <li key={aIdx} className="leading-relaxed">{act}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        </div>
+                      ))}
+                      {(!selectedSkillInsight.learningRoadmap || selectedSkillInsight.learningRoadmap.length === 0) && (
+                        <p className="text-xs text-muted-foreground">No custom learning steps defined.</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Section 3: Recommended Course Resources */}
+                  <div className="space-y-3">
+                    <h5 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Recommended Growth Resources</h5>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {selectedSkillInsight.recommendedResources?.map((course: any, cIdx: number) => (
+                        <div key={cIdx} className="bg-muted/20 border border-border/85 p-4 rounded-xl flex justify-between items-start hover:border-primary/20 transition-all animate-fadeIn">
+                          <div className="space-y-1">
+                            <h6 className="font-bold text-foreground text-xs">{course.name}</h6>
+                            <p className="text-[10px] text-muted-foreground font-normal">Estimate: {course.hours} hours</p>
+                          </div>
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-semibold border ${
+                            course.difficulty === 'Advanced'
+                              ? 'bg-red-500/10 text-red-500 border-red-500/20'
+                              : course.difficulty === 'Intermediate'
+                              ? 'bg-amber-500/10 text-amber-500 border-amber-500/20'
+                              : 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
+                          }`}>
+                            {course.difficulty}
+                          </span>
+                        </div>
+                      ))}
+                      {(!selectedSkillInsight.recommendedResources || selectedSkillInsight.recommendedResources.length === 0) && (
+                        <p className="text-xs text-muted-foreground col-span-full">No courses recommended.</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Section 4: Progress Tracker */}
+                  <div className="space-y-2 border-t border-border/50 pt-4">
+                    <div className="flex justify-between items-center text-xs text-muted-foreground">
+                      <span className="font-medium">Estimated Roadmap Completion Progress</span>
+                      <strong className="text-foreground">{selectedSkillInsight.progressTracker?.currentProgress || 0}%</strong>
+                    </div>
+                    <div className="w-full bg-muted h-2 rounded-full overflow-hidden border border-border">
+                      <div
+                        className="bg-gradient-to-r from-primary to-success h-full rounded-full transition-all duration-500"
+                        style={{ width: `${selectedSkillInsight.progressTracker?.currentProgress || 0}%` }}
+                      ></div>
+                    </div>
+                  </div>
+
+                  {/* Raw Text Fallback details (if any) */}
+                  {selectedSkillInsight.rawText && (
+                    <div className="mt-4 p-3 bg-muted/40 rounded-xl border border-border text-xs text-muted-foreground whitespace-pre-wrap leading-relaxed font-normal">
+                      {selectedSkillInsight.rawText}
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -1506,16 +1652,17 @@ export default function PerformanceDashboard() {
                     <p className="text-xs text-muted-foreground mt-0.5 font-sans">Track historical rating trajectories and rolling score averages.</p>
                   </div>
                   <div className="w-full md:w-64">
-                    <select
-                      value={trendEmployeeId}
-                      onChange={(e) => setTrendEmployeeId(e.target.value)}
-                      className="w-full bg-muted/50 border border-border rounded-xl px-3 py-2 text-xs text-foreground focus:outline-none cursor-pointer"
-                    >
-                      <option value="" className="bg-popover text-foreground">Select employee for trend chart...</option>
-                      {employees.map(e => (
-                        <option key={e._id} value={e._id} className="bg-popover text-foreground">{e.firstName} {e.lastName} ({e.employeeCode})</option>
-                      ))}
-                    </select>
+                    <Select value={trendEmployeeId || 'NONE'} onValueChange={(val) => setTrendEmployeeId(val === 'NONE' ? '' : val)} searchable={true}>
+                      <SelectTrigger className="w-full bg-muted/50 border border-border rounded-xl px-3 h-10 text-xs text-foreground">
+                        <SelectValue placeholder="Select employee for trend chart..." />
+                      </SelectTrigger>
+                      <SelectContent className="bg-zinc-950 border border-white/10">
+                        <SelectItem value="NONE">Select employee for trend chart...</SelectItem>
+                        {employees.map(e => (
+                          <SelectItem key={e._id} value={e._id}>{e.firstName} {e.lastName} ({e.employeeCode})</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
 
@@ -1644,45 +1791,57 @@ export default function PerformanceDashboard() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-semibold text-muted-foreground uppercase mb-1">Select Employee</label>
-                  <select
+                  <Select
                     disabled={!!selectedReview}
-                    value={reviewForm.employeeId}
-                    onChange={(e) => setReviewForm({ ...reviewForm, employeeId: e.target.value })}
-                    required
-                    className="w-full bg-muted/50 border border-border rounded-xl px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer hover:bg-muted/80"
+                    value={reviewForm.employeeId || 'NONE'}
+                    onValueChange={(val) => setReviewForm({ ...reviewForm, employeeId: val === 'NONE' ? '' : val })}
+                    searchable={true}
                   >
-                    <option value="" className="bg-popover text-foreground">Choose employee...</option>
-                    {employees.map(e => (
-                      <option key={e._id} value={e._id} className="bg-popover text-foreground">{e.firstName} {e.lastName} ({e.employeeCode})</option>
-                    ))}
-                  </select>
+                    <SelectTrigger className="w-full bg-muted/50 border border-border rounded-xl px-3 h-10 text-sm text-foreground">
+                      <SelectValue placeholder="Choose employee..." />
+                    </SelectTrigger>
+                    <SelectContent className="bg-zinc-950 border border-white/10">
+                      <SelectItem value="NONE">Choose employee...</SelectItem>
+                      {employees.map(e => (
+                        <SelectItem key={e._id} value={e._id}>{e.firstName} {e.lastName} ({e.employeeCode})</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div>
                   <label className="block text-xs font-semibold text-muted-foreground uppercase mb-1">Review Period</label>
-                  <select
+                  <Select
                     value={reviewForm.reviewPeriod}
-                    onChange={(e) => setReviewForm({ ...reviewForm, reviewPeriod: e.target.value })}
-                    className="w-full bg-muted/50 border border-border rounded-xl px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer hover:bg-muted/80"
+                    onValueChange={(val) => setReviewForm({ ...reviewForm, reviewPeriod: val })}
                   >
-                    <option value="Q1 2026" className="bg-popover text-foreground">Q1 2026</option>
-                    <option value="Q2 2026" className="bg-popover text-foreground">Q2 2026</option>
-                    <option value="Q3 2026" className="bg-popover text-foreground">Q3 2026</option>
-                    <option value="Q4 2026" className="bg-popover text-foreground">Q4 2026</option>
-                  </select>
+                    <SelectTrigger className="w-full bg-muted/50 border border-border rounded-xl px-3 h-10 text-sm text-foreground">
+                      <SelectValue placeholder="Select Period" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-zinc-950 border border-white/10">
+                      <SelectItem value="Q1 2026">Q1 2026</SelectItem>
+                      <SelectItem value="Q2 2026">Q2 2026</SelectItem>
+                      <SelectItem value="Q3 2026">Q3 2026</SelectItem>
+                      <SelectItem value="Q4 2026">Q4 2026</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div>
                   <label className="block text-xs font-semibold text-muted-foreground uppercase mb-1">Review Type</label>
-                  <select
+                  <Select
                     value={reviewForm.reviewType}
-                    onChange={(e) => setReviewForm({ ...reviewForm, reviewType: e.target.value })}
-                    className="w-full bg-muted/50 border border-border rounded-xl px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer hover:bg-muted/80"
+                    onValueChange={(val) => setReviewForm({ ...reviewForm, reviewType: val })}
                   >
-                    <option value="MONTHLY" className="bg-popover text-foreground">Monthly</option>
-                    <option value="QUARTERLY" className="bg-popover text-foreground">Quarterly</option>
-                    <option value="ANNUAL" className="bg-popover text-foreground">Annual</option>
-                  </select>
+                    <SelectTrigger className="w-full bg-muted/50 border border-border rounded-xl px-3 h-10 text-sm text-foreground">
+                      <SelectValue placeholder="Select Type" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-zinc-950 border border-white/10">
+                      <SelectItem value="MONTHLY">Monthly</SelectItem>
+                      <SelectItem value="QUARTERLY">Quarterly</SelectItem>
+                      <SelectItem value="ANNUAL">Annual</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div>
@@ -1805,14 +1964,18 @@ export default function PerformanceDashboard() {
               <div className="flex justify-between items-center border-t border-border/60 pt-4">
                 <div className="flex items-center gap-2">
                   <label className="text-xs text-muted-foreground">Submission Mode:</label>
-                  <select
+                  <Select
                     value={reviewForm.status}
-                    onChange={(e) => setReviewForm({ ...reviewForm, status: e.target.value })}
-                    className="bg-muted/50 border border-border rounded-xl px-2 py-1 text-xs text-foreground cursor-pointer focus:outline-none"
+                    onValueChange={(val) => setReviewForm({ ...reviewForm, status: val })}
                   >
-                    <option value="DRAFT" className="bg-popover text-foreground">DRAFT</option>
-                    <option value="SUBMITTED" className="bg-popover text-foreground">SUBMITTED (Triggers AI coach)</option>
-                  </select>
+                    <SelectTrigger className="bg-muted/50 border border-border rounded-xl px-2 h-8 text-xs text-foreground">
+                      <SelectValue placeholder="Select Status" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-zinc-950 border border-white/10">
+                      <SelectItem value="DRAFT">DRAFT</SelectItem>
+                      <SelectItem value="SUBMITTED">SUBMITTED (Triggers AI coach)</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div className="space-x-3">
@@ -1848,17 +2011,21 @@ export default function PerformanceDashboard() {
             <form onSubmit={handleCreateGoal} className="space-y-4">
               <div>
                 <label className="block text-xs font-semibold text-muted-foreground uppercase mb-1">Select Employee</label>
-                <select
-                  value={goalForm.employeeId}
-                  onChange={(e) => setGoalForm({ ...goalForm, employeeId: e.target.value })}
-                  required
-                  className="w-full bg-muted/50 border border-border rounded-xl px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer hover:bg-muted/80"
+                <Select
+                  value={goalForm.employeeId || 'NONE'}
+                  onValueChange={(val) => setGoalForm({ ...goalForm, employeeId: val === 'NONE' ? '' : val })}
+                  searchable={true}
                 >
-                  <option value="" className="bg-popover text-foreground">Choose employee...</option>
-                  {employees.map(e => (
-                    <option key={e._id} value={e._id} className="bg-popover text-foreground">{e.firstName} {e.lastName} ({e.employeeCode})</option>
-                  ))}
-                </select>
+                  <SelectTrigger className="w-full bg-muted/50 border border-border rounded-xl px-3 h-10 text-sm text-foreground">
+                    <SelectValue placeholder="Choose employee..." />
+                  </SelectTrigger>
+                  <SelectContent className="bg-zinc-950 border border-white/10">
+                    <SelectItem value="NONE">Choose employee...</SelectItem>
+                    {employees.map(e => (
+                      <SelectItem key={e._id} value={e._id}>{e.firstName} {e.lastName} ({e.employeeCode})</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               <div>
@@ -1887,29 +2054,37 @@ export default function PerformanceDashboard() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-semibold text-muted-foreground uppercase mb-1">Goal Category</label>
-                  <select
+                  <Select
                     value={goalForm.category}
-                    onChange={(e) => setGoalForm({ ...goalForm, category: e.target.value })}
-                    className="w-full bg-muted/50 border border-border rounded-xl px-3 py-2 text-sm text-foreground cursor-pointer focus:ring-2 focus:ring-primary"
+                    onValueChange={(val) => setGoalForm({ ...goalForm, category: val })}
                   >
-                    <option value="Technical" className="bg-popover text-foreground">Technical</option>
-                    <option value="Operations" className="bg-popover text-foreground">Operations</option>
-                    <option value="Leadership" className="bg-popover text-foreground">Leadership</option>
-                    <option value="General" className="bg-popover text-foreground">General</option>
-                  </select>
+                    <SelectTrigger className="w-full bg-muted/50 border border-border rounded-xl px-3 h-10 text-sm text-foreground">
+                      <SelectValue placeholder="Select Category" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-zinc-950 border border-white/10">
+                      <SelectItem value="Technical">Technical</SelectItem>
+                      <SelectItem value="Operations">Operations</SelectItem>
+                      <SelectItem value="Leadership">Leadership</SelectItem>
+                      <SelectItem value="General">General</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div>
                   <label className="block text-xs font-semibold text-muted-foreground uppercase mb-1">Priority</label>
-                  <select
+                  <Select
                     value={goalForm.priority}
-                    onChange={(e) => setGoalForm({ ...goalForm, priority: e.target.value })}
-                    className="w-full bg-muted/50 border border-border rounded-xl px-3 py-2 text-sm text-foreground cursor-pointer focus:ring-2 focus:ring-primary"
+                    onValueChange={(val) => setGoalForm({ ...goalForm, priority: val })}
                   >
-                    <option value="LOW" className="bg-popover text-foreground">Low</option>
-                    <option value="MEDIUM" className="bg-popover text-foreground">Medium</option>
-                    <option value="HIGH" className="bg-popover text-foreground">High</option>
-                  </select>
+                    <SelectTrigger className="w-full bg-muted/50 border border-border rounded-xl px-3 h-10 text-sm text-foreground">
+                      <SelectValue placeholder="Select Priority" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-zinc-950 border border-white/10">
+                      <SelectItem value="LOW">Low</SelectItem>
+                      <SelectItem value="MEDIUM">Medium</SelectItem>
+                      <SelectItem value="HIGH">High</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 
@@ -1983,17 +2158,21 @@ export default function PerformanceDashboard() {
             <form onSubmit={handleAssessSkill} className="space-y-4">
               <div>
                 <label className="block text-xs font-semibold text-muted-foreground uppercase mb-1">Select Employee</label>
-                <select
-                  value={skillForm.employeeId}
-                  onChange={(e) => setSkillForm({ ...skillForm, employeeId: e.target.value })}
-                  required
-                  className="w-full bg-muted/50 border border-border rounded-xl px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer hover:bg-muted/80"
+                <Select
+                  value={skillForm.employeeId || 'NONE'}
+                  onValueChange={(val) => setSkillForm({ ...skillForm, employeeId: val === 'NONE' ? '' : val })}
+                  searchable={true}
                 >
-                  <option value="" className="bg-popover text-foreground">Choose employee...</option>
-                  {employees.map(e => (
-                    <option key={e._id} value={e._id} className="bg-popover text-foreground">{e.firstName} {e.lastName} ({e.employeeCode})</option>
-                  ))}
-                </select>
+                  <SelectTrigger className="w-full bg-muted/50 border border-border rounded-xl px-3 h-10 text-sm text-foreground">
+                    <SelectValue placeholder="Choose employee..." />
+                  </SelectTrigger>
+                  <SelectContent className="bg-zinc-950 border border-white/10">
+                    <SelectItem value="NONE">Choose employee...</SelectItem>
+                    {employees.map(e => (
+                      <SelectItem key={e._id} value={e._id}>{e.firstName} {e.lastName} ({e.employeeCode})</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               <div>

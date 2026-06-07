@@ -76,9 +76,9 @@ export default function RecruitmentDashboard() {
               Candidates
             </span>
           </Link>
-          <Link href="/dashboard/recruitment/interviews">
+          <Link href="/dashboard/recruitment/ai-interviews">
             <span className="text-xs font-semibold px-4 py-2 rounded-lg text-zinc-400 hover:text-white cursor-pointer block transition-colors border border-transparent">
-              AI Voice Interviews
+              AI Interviews
             </span>
           </Link>
         </div>
@@ -156,12 +156,12 @@ export default function RecruitmentDashboard() {
             </p>
           </div>
           <div className="flex items-center gap-3 shrink-0">
-            <Link href="/dashboard/recruitment/interviews/templates">
+            <Link href="/dashboard/recruitment/ai-interviews">
               <Button variant="outline" size="sm" className="text-xs font-semibold rounded-xl border-white/10 hover:bg-white/[0.06] bg-transparent text-white/80 hover:text-white h-9 px-4">
                 Manage Templates
               </Button>
             </Link>
-            <Link href="/dashboard/recruitment/interviews">
+            <Link href="/dashboard/recruitment/ai-interviews">
               <Button size="sm" className="bg-gradient-to-tr from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white text-xs font-semibold rounded-xl border border-white/10 shadow-lg shadow-indigo-650/20 h-9 px-4">
                 View Interviews & Rankings
               </Button>

@@ -332,6 +332,17 @@ export class AnalyticsService {
         }
       },
       {
+        $addFields: {
+          employeeAvgScore: {
+            $cond: [
+              { $gt: [{ $size: '$submittedReviews' }, 0] },
+              { $avg: '$submittedReviews.overallScore' },
+              null
+            ]
+          }
+        }
+      },
+      {
         $lookup: {
           from: 'employeegoals',
           localField: '_id',
@@ -343,7 +354,7 @@ export class AnalyticsService {
         $group: {
           _id: '$managerId',
           teamCount: { $sum: 1 },
-          avgPerformanceScore: { $avg: { $avg: '$submittedReviews.overallScore' } },
+          avgPerformanceScore: { $avg: '$employeeAvgScore' },
           totalGoals: { $sum: { $size: '$goals' } },
           completedGoals: {
             $sum: {

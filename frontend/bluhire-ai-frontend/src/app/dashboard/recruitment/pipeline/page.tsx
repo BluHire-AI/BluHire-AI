@@ -19,6 +19,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { api } from '@/lib/api';
 
 const ACTIVE_STAGES = ['APPLIED', 'SCREENING', 'SHORTLISTED', 'INTERVIEW', 'OFFER', 'HIRED'] as const;
@@ -304,10 +305,37 @@ export default function PipelineBoard() {
     }
     try {
       setLoading(true);
-      await Promise.all(
+      const results = await Promise.allSettled(
         selectedIds.map(id => recruitmentService.moveStage(id, bulkActionStage, 'Bulk stage transition.'))
       );
-      toast.success(`Successfully moved ${selectedIds.length} candidates to ${bulkActionStage}`);
+
+      const fulfilled = results.filter(r => r.status === 'fulfilled');
+      const rejected = results.filter(r => r.status === 'rejected') as PromiseRejectedResult[];
+
+      if (rejected.length === 0) {
+        toast.success(`Successfully moved ${selectedIds.length} candidates to ${bulkActionStage}`);
+      } else {
+        const errorMessages = rejected.map(r => {
+          const reason = r.reason?.response?.data?.message || r.reason?.message || 'Unknown error';
+          return `- ${reason}`;
+        });
+        const uniqueErrors = Array.from(new Set(errorMessages));
+
+        toast.error(
+          <div className="text-xs">
+            <p className="font-bold">Failed to update {rejected.length} candidate{rejected.length !== 1 ? 's' : ''}.</p>
+            <p className="mt-1 font-semibold">Reason:</p>
+            <ul className="list-disc pl-4 mt-0.5 space-y-0.5 text-[10px] opacity-90">
+              {uniqueErrors.map((err, i) => <li key={i}>{err}</li>)}
+            </ul>
+          </div>,
+          { duration: 8000 }
+        );
+
+        if (fulfilled.length > 0) {
+          toast.success(`Successfully moved ${fulfilled.length} candidates to ${bulkActionStage}`);
+        }
+      }
       setSelectedIds([]);
       setBulkActionStage('');
       fetchApplications();
@@ -323,10 +351,37 @@ export default function PipelineBoard() {
     if (reason === null) return;
     try {
       setLoading(true);
-      await Promise.all(
+      const results = await Promise.allSettled(
         selectedIds.map(id => recruitmentService.moveStage(id, 'REJECTED', reason || 'Bulk rejected.'))
       );
-      toast.success(`Rejected ${selectedIds.length} candidates successfully.`);
+
+      const fulfilled = results.filter(r => r.status === 'fulfilled');
+      const rejected = results.filter(r => r.status === 'rejected') as PromiseRejectedResult[];
+
+      if (rejected.length === 0) {
+        toast.success(`Rejected ${selectedIds.length} candidates successfully.`);
+      } else {
+        const errorMessages = rejected.map(r => {
+          const reasonMsg = r.reason?.response?.data?.message || r.reason?.message || 'Unknown error';
+          return `- ${reasonMsg}`;
+        });
+        const uniqueErrors = Array.from(new Set(errorMessages));
+
+        toast.error(
+          <div className="text-xs">
+            <p className="font-bold">Failed to reject {rejected.length} candidate{rejected.length !== 1 ? 's' : ''}.</p>
+            <p className="mt-1 font-semibold">Reason:</p>
+            <ul className="list-disc pl-4 mt-0.5 space-y-0.5 text-[10px] opacity-90">
+              {uniqueErrors.map((err, i) => <li key={i}>{err}</li>)}
+            </ul>
+          </div>,
+          { duration: 8000 }
+        );
+
+        if (fulfilled.length > 0) {
+          toast.success(`Rejected ${fulfilled.length} candidates successfully.`);
+        }
+      }
       setSelectedIds([]);
       fetchApplications();
     } catch (error) {
@@ -543,9 +598,9 @@ export default function PipelineBoard() {
               Candidates Catalog
             </span>
           </Link>
-          <Link href="/dashboard/recruitment/interviews">
+          <Link href="/dashboard/recruitment/ai-interviews">
             <span className="text-xs font-bold px-4 py-2 rounded-xl text-white/60 hover:text-white cursor-pointer block transition-all">
-              AI Voice Interviews
+              AI Interviews
             </span>
           </Link>
         </div>
@@ -627,10 +682,30 @@ export default function PipelineBoard() {
       <div className="bg-card/65 backdrop-blur-md p-4.5 rounded-xl border border-border/80 space-y-4 shadow-md">
         <div className="flex items-center justify-between">
           <h4 className="text-[10px] font-bold tracking-wider uppercase text-muted-foreground">Recruiter Filters Panel</h4>
-          <Button onClick={handleResetFilters} variant="ghost" size="sm" className="text-xs h-7 text-muted-foreground hover:text-foreground font-bold flex items-center gap-1 hover:bg-muted/50 rounded-lg">
-            <RotateCcw className="w-3.5 h-3.5" />
-            Reset Filters
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={async () => {
+                const toastId = toast.loading('Recalculating all candidate scores...');
+                try {
+                  await recruitmentService.recalculateScores();
+                  toast.success('Successfully calculated and synchronized all applicant scores!', { id: toastId });
+                  fetchApplications();
+                } catch (err) {
+                  toast.error('Failed to recalculate scores.', { id: toastId });
+                }
+              }}
+              variant="outline"
+              size="sm"
+              className="text-xs h-7 border-white/10 hover:bg-white/[0.06] bg-transparent text-white/80 hover:text-white font-bold flex items-center gap-1 rounded-lg"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              Recalculate Scores
+            </Button>
+            <Button onClick={handleResetFilters} variant="ghost" size="sm" className="text-xs h-7 text-muted-foreground hover:text-foreground font-bold flex items-center gap-1 hover:bg-muted/50 rounded-lg">
+              <RotateCcw className="w-3.5 h-3.5" />
+              Reset Filters
+            </Button>
+          </div>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
           {/* Candidate Search */}
@@ -656,55 +731,59 @@ export default function PipelineBoard() {
           </div>
 
           {/* Job Position Filter */}
-          <select
-            value={selectedJobId}
-            onChange={(e) => { setSelectedJobId(e.target.value); setCurrentPage(1); }}
-            className="bg-muted/20 border border-border/60 text-xs font-bold px-2.5 py-1.5 rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-primary/45 h-9 cursor-pointer transition-all hover:bg-muted/30"
-          >
-            <option value="ALL">All Jobs</option>
-            {jobs.map((job) => (
-              <option key={job._id} value={job._id}>{job.title}</option>
-            ))}
-          </select>
+          <Select value={selectedJobId} onValueChange={(val: string) => { setSelectedJobId(val); setCurrentPage(1); }} searchable={true}>
+            <SelectTrigger className="bg-muted/20 border border-border/60 text-xs font-bold px-2.5 h-9 w-44 rounded-xl text-foreground">
+              <SelectValue placeholder="All Jobs" />
+            </SelectTrigger>
+            <SelectContent className="bg-zinc-950 border border-white/10">
+              <SelectItem value="ALL">All Jobs</SelectItem>
+              {jobs.map((job) => (
+                <SelectItem key={job._id} value={job._id}>{job.title}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
           {/* Stage Filter */}
-          <select
-            value={selectedStage}
-            onChange={(e) => { setSelectedStage(e.target.value); setCurrentPage(1); }}
-            className="bg-muted/20 border border-border/60 text-xs font-bold px-2.5 py-1.5 rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-primary/45 h-9 cursor-pointer transition-all hover:bg-muted/30"
-          >
-            <option value="ALL">All Stages</option>
-            {ACTIVE_STAGES.map((s) => (
-              <option key={s} value={s}>{s}</option>
-            ))}
-            <option value="REJECTED">REJECTED</option>
-          </select>
+          <Select value={selectedStage} onValueChange={(val: string) => { setSelectedStage(val); setCurrentPage(1); }}>
+            <SelectTrigger className="bg-muted/20 border border-border/60 text-xs font-bold px-2.5 h-9 w-36 rounded-xl text-foreground">
+              <SelectValue placeholder="All Stages" />
+            </SelectTrigger>
+            <SelectContent className="bg-zinc-950 border border-white/10">
+              <SelectItem value="ALL">All Stages</SelectItem>
+              {ACTIVE_STAGES.map((s) => (
+                <SelectItem key={s} value={s}>{s}</SelectItem>
+              ))}
+              <SelectItem value="REJECTED">REJECTED</SelectItem>
+            </SelectContent>
+          </Select>
 
           {/* Experience Filter */}
-          <select
-            value={selectedExperience}
-            onChange={(e) => { setSelectedExperience(e.target.value); setCurrentPage(1); }}
-            className="bg-muted/20 border border-border/60 text-xs font-bold px-2.5 py-1.5 rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-primary/45 h-9 cursor-pointer transition-all hover:bg-muted/30"
-          >
-            <option value="ALL">All Experience</option>
-            <option value="Entry">Entry (0-2 years)</option>
-            <option value="Mid">Mid (3-5 years)</option>
-            <option value="Senior">Senior (5+ years)</option>
-            <option value="Lead">Lead / Executive</option>
-          </select>
+          <Select value={selectedExperience} onValueChange={(val: string) => { setSelectedExperience(val); setCurrentPage(1); }}>
+            <SelectTrigger className="bg-muted/20 border border-border/60 text-xs font-bold px-2.5 h-9 w-40 rounded-xl text-foreground">
+              <SelectValue placeholder="All Experience" />
+            </SelectTrigger>
+            <SelectContent className="bg-zinc-950 border border-white/10">
+              <SelectItem value="ALL">All Experience</SelectItem>
+              <SelectItem value="Entry">Entry (0-2 years)</SelectItem>
+              <SelectItem value="Mid">Mid (3-5 years)</SelectItem>
+              <SelectItem value="Senior">Senior (5+ years)</SelectItem>
+              <SelectItem value="Lead">Lead / Executive</SelectItem>
+            </SelectContent>
+          </Select>
 
           {/* AI Score Filter */}
-          <select
-            value={selectedAiScoreRange}
-            onChange={(e) => { setSelectedAiScoreRange(e.target.value); setCurrentPage(1); }}
-            className="bg-muted/20 border border-border/60 text-xs font-bold px-2.5 py-1.5 rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-primary/45 h-9 cursor-pointer transition-all hover:bg-muted/30"
-          >
-            <option value="ALL">All AI Scores</option>
-            <option value="90">90%+ Match</option>
-            <option value="80">80%+ Match</option>
-            <option value="70">70%+ Match</option>
-            <option value="low">Under 70% Match</option>
-          </select>
+          <Select value={selectedAiScoreRange} onValueChange={(val: string) => { setSelectedAiScoreRange(val); setCurrentPage(1); }}>
+            <SelectTrigger className="bg-muted/20 border border-border/60 text-xs font-bold px-2.5 h-9 w-40 rounded-xl text-foreground">
+              <SelectValue placeholder="All AI Scores" />
+            </SelectTrigger>
+            <SelectContent className="bg-zinc-950 border border-white/10">
+              <SelectItem value="ALL">All AI Scores</SelectItem>
+              <SelectItem value="90">90%+ Match</SelectItem>
+              <SelectItem value="80">80%+ Match</SelectItem>
+              <SelectItem value="70">70%+ Match</SelectItem>
+              <SelectItem value="low">Under 70% Match</SelectItem>
+            </SelectContent>
+          </Select>
 
           {/* Date Picker Range (HTML date) */}
           <div className="flex items-center gap-1.5 min-w-[170px]">
@@ -774,11 +853,26 @@ export default function PipelineBoard() {
                     <ArrowUpDown className={`w-3.5 h-3.5 ${sortBy === 'currentStage' ? 'text-primary' : 'text-muted-foreground/60'}`} />
                   </div>
                 </TableHead>
-                <TableHead onClick={() => handleSort('aiScore')} className="text-small-label text-muted-foreground cursor-pointer select-none">
+                <TableHead onClick={() => handleSort('screeningScore')} className="text-small-label text-muted-foreground cursor-pointer select-none">
                   <div className="flex items-center gap-1 hover:text-foreground transition-colors">
-                    AI Match
-                    <ArrowUpDown className={`w-3.5 h-3.5 ${sortBy === 'aiScore' ? 'text-primary' : 'text-muted-foreground/60'}`} />
+                    Screening
+                    <ArrowUpDown className={`w-3.5 h-3.5 ${sortBy === 'screeningScore' ? 'text-primary' : 'text-muted-foreground/60'}`} />
                   </div>
+                </TableHead>
+                <TableHead onClick={() => handleSort('interviewScore')} className="text-small-label text-muted-foreground cursor-pointer select-none">
+                  <div className="flex items-center gap-1 hover:text-foreground transition-colors">
+                    Interview
+                    <ArrowUpDown className={`w-3.5 h-3.5 ${sortBy === 'interviewScore' ? 'text-primary' : 'text-muted-foreground/60'}`} />
+                  </div>
+                </TableHead>
+                <TableHead onClick={() => handleSort('finalScore')} className="text-small-label text-muted-foreground cursor-pointer select-none">
+                  <div className="flex items-center gap-1 hover:text-foreground transition-colors">
+                    Final Score
+                    <ArrowUpDown className={`w-3.5 h-3.5 ${sortBy === 'finalScore' ? 'text-primary' : 'text-muted-foreground/60'}`} />
+                  </div>
+                </TableHead>
+                <TableHead className="text-small-label text-muted-foreground select-none">
+                  AI Rec
                 </TableHead>
                 <TableHead onClick={() => handleSort('experience')} className="text-small-label text-muted-foreground cursor-pointer select-none">
                   <div className="flex items-center gap-1 hover:text-foreground transition-colors">
@@ -804,7 +898,7 @@ export default function PipelineBoard() {
             <TableBody>
               {applications.length === 0 ? (
                 <TableRow className="hover:bg-transparent border-border/60">
-                  <TableCell colSpan={9} className="text-center py-20">
+                  <TableCell colSpan={12} className="text-center py-20">
                     <div className="flex flex-col items-center justify-center space-y-2 text-muted-foreground">
                       <HelpCircle className="w-10 h-10 text-muted-foreground/40" />
                       <p className="text-xs font-bold uppercase tracking-wider text-foreground">No Candidates Found</p>
@@ -874,7 +968,7 @@ export default function PipelineBoard() {
                         </span>
                       </TableCell>
 
-                      {/* AI Score */}
+                      {/* Screening Score */}
                       <TableCell>
                         {app.screeningStatus === 'PENDING' ? (
                           <span className="text-small-label text-amber-500 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-full animate-pulse">Queued</span>
@@ -882,6 +976,16 @@ export default function PipelineBoard() {
                           <span className="text-small-label text-primary bg-primary/10 border border-primary/20 px-2 py-0.5 rounded-full animate-pulse">Screening...</span>
                         ) : app.screeningStatus === 'FAILED' ? (
                           <span className="text-small-label text-destructive bg-destructive/10 border border-destructive/20 px-2 py-0.5 rounded-full" title={app.notes || 'Screening failed'}>Failed</span>
+                        ) : app.screeningScore !== undefined && app.screeningScore !== null ? (
+                          <div className="flex items-center gap-1.5 min-w-[70px]">
+                            <span className="text-small-label text-foreground font-bold">{app.screeningScore}%</span>
+                            <div className="w-12 h-1.5 bg-muted border border-border/80 rounded-full overflow-hidden shrink-0">
+                              <div
+                                className="h-full bg-gradient-to-r from-primary to-cyan-500"
+                                style={{ width: `${app.screeningScore}%` }}
+                              />
+                            </div>
+                          </div>
                         ) : app.aiScore !== undefined && app.aiScore !== null ? (
                           <div className="flex items-center gap-1.5 min-w-[70px]">
                             <span className="text-small-label text-foreground font-bold">{app.aiScore}%</span>
@@ -893,7 +997,64 @@ export default function PipelineBoard() {
                             </div>
                           </div>
                         ) : (
-                          <span className="text-small-label text-muted-foreground/60 italic">Not Run</span>
+                          <span className="text-small-label text-muted-foreground/60 italic">-</span>
+                        )}
+                      </TableCell>
+
+                      {/* Interview Score */}
+                      <TableCell>
+                        {app.interviewStatus === 'COMPLETED' || (app.interviewScore !== undefined && app.interviewScore !== null) ? (
+                          app.interviewScore !== undefined && app.interviewScore !== null ? (
+                            <div className="flex items-center gap-1.5 min-w-[70px]">
+                              <span className="text-small-label text-foreground font-bold">{app.interviewScore}%</span>
+                              <div className="w-12 h-1.5 bg-muted border border-border/80 rounded-full overflow-hidden shrink-0">
+                                <div
+                                  className="h-full bg-gradient-to-r from-violet-500 to-fuchsia-500"
+                                  style={{ width: `${app.interviewScore}%` }}
+                                />
+                              </div>
+                            </div>
+                          ) : (
+                            <span className="text-small-label text-muted-foreground/60 italic">-</span>
+                          )
+                        ) : app.interviewStatus === 'PENDING' || app.interviewStatus === 'SCHEDULED' ? (
+                          <span className="text-small-label text-amber-500 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-full">Scheduled</span>
+                        ) : (
+                          <span className="text-small-label text-muted-foreground/60 italic">-</span>
+                        )}
+                      </TableCell>
+
+                      {/* Final Score */}
+                      <TableCell>
+                        {app.finalScore !== undefined && app.finalScore !== null ? (
+                          <div className="flex items-center gap-1.5 min-w-[70px]">
+                            <span className="text-small-label text-foreground font-bold">{app.finalScore}%</span>
+                            <div className="w-12 h-1.5 bg-muted border border-border/80 rounded-full overflow-hidden shrink-0">
+                              <div
+                                className="h-full bg-gradient-to-r from-emerald-500 to-teal-500"
+                                style={{ width: `${app.finalScore}%` }}
+                              />
+                            </div>
+                          </div>
+                        ) : (
+                          <span className="text-small-label text-muted-foreground/60 italic">-</span>
+                        )}
+                      </TableCell>
+
+                      {/* AI Rec */}
+                      <TableCell>
+                        {app.aiRecommendation ? (
+                          <span className={`text-[8px] font-bold px-2 py-0.5 rounded-full tracking-wider uppercase inline-block ${
+                            app.aiRecommendation === 'HIRE' 
+                              ? 'bg-emerald-500/10 text-emerald-450 border border-emerald-500/20' 
+                              : app.aiRecommendation === 'REJECT' 
+                                ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20' 
+                                : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                          }`}>
+                            {app.aiRecommendation}
+                          </span>
+                        ) : (
+                          <span className="text-small-label text-muted-foreground/60 italic">-</span>
                         )}
                       </TableCell>
 
@@ -962,16 +1123,17 @@ export default function PipelineBoard() {
         <div className="p-4 bg-muted/10 border-t border-border/60 flex flex-wrap items-center justify-between gap-4 text-xs font-bold text-muted-foreground">
           <div className="flex items-center gap-1.5">
             <span>View rows:</span>
-            <select
-              value={itemsPerPage}
-              onChange={(e) => { setItemsPerPage(Number(e.target.value)); setCurrentPage(1); }}
-              className="bg-card border border-border/80 rounded-xl px-2.5 py-1 focus:outline-none cursor-pointer text-foreground hover:bg-muted/50 transition-all"
-            >
-              <option value="10">10</option>
-              <option value="15">15</option>
-              <option value="25">25</option>
-              <option value="50">50</option>
-            </select>
+            <Select value={String(itemsPerPage)} onValueChange={(val: string) => { setItemsPerPage(Number(val)); setCurrentPage(1); }}>
+              <SelectTrigger className="bg-card border border-border/80 rounded-xl px-2.5 h-8 w-20 text-foreground">
+                <SelectValue placeholder="10" />
+              </SelectTrigger>
+              <SelectContent className="bg-zinc-950 border border-white/10">
+                <SelectItem value="10">10</SelectItem>
+                <SelectItem value="15">15</SelectItem>
+                <SelectItem value="25">25</SelectItem>
+                <SelectItem value="50">50</SelectItem>
+              </SelectContent>
+            </Select>
             <span className="text-muted-foreground/60 ml-2 font-medium">
               Showing {applications.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0} - {Math.min(currentPage * itemsPerPage, totalItems)} of {totalItems} candidates
             </span>
@@ -1018,74 +1180,69 @@ export default function PipelineBoard() {
             {/* Assigned Role */}
             <div className="space-y-1.5">
               <Label htmlFor="hiringRole">Assigned Employee System Role</Label>
-              <select
-                id="hiringRole"
-                value={hiringRole}
-                onChange={(e) => setHiringRole(e.target.value)}
-                className="w-full bg-white/[0.03] border border-white/10 rounded-xl h-9 px-3 text-xs text-white focus:outline-none focus:ring-1 focus:ring-[#8B5CF6] cursor-pointer"
-                required
-              >
-                <option className="bg-[#0b0b0c]" value="EMPLOYEE">Employee (Standard HRMS Access)</option>
-                <option className="bg-[#0b0b0c]" value="HR_RECRUITER">HR Recruiter (Recruitment & Directory)</option>
-                <option className="bg-[#0b0b0c]" value="SENIOR_MANAGER">Senior Manager (Performance & Hierarchy)</option>
-                <option className="bg-[#0b0b0c]" value="MANAGEMENT_ADMIN">Management Admin (Full System Administrator)</option>
-              </select>
+              <Select value={hiringRole} onValueChange={setHiringRole}>
+                <SelectTrigger id="hiringRole" className="w-full bg-white/[0.03] border border-white/10 rounded-xl h-9 px-3 text-xs text-white">
+                  <SelectValue placeholder="Select System Role..." />
+                </SelectTrigger>
+                <SelectContent className="bg-zinc-950 border border-white/10">
+                  <SelectItem value="EMPLOYEE">Employee (Standard HRMS Access)</SelectItem>
+                  <SelectItem value="HR_RECRUITER">HR Recruiter (Recruitment & Directory)</SelectItem>
+                  <SelectItem value="SENIOR_MANAGER">Senior Manager (Performance & Hierarchy)</SelectItem>
+                  <SelectItem value="MANAGEMENT_ADMIN">Management Admin (Full System Administrator)</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Department Selection */}
             <div className="space-y-1.5">
               <Label htmlFor="hiringDept">Department</Label>
-              <select
-                id="hiringDept"
-                value={hiringDeptId}
-                onChange={(e) => setHiringDeptId(e.target.value)}
-                className="w-full bg-white/[0.03] border border-white/10 rounded-xl h-9 px-3 text-xs text-white focus:outline-none focus:ring-1 focus:ring-[#8B5CF6] cursor-pointer"
-                required
-              >
-                <option className="bg-[#0b0b0c]" value="">Select Department...</option>
-                {departments.map((dept) => (
-                  <option key={dept._id} className="bg-[#0b0b0c]" value={dept._id}>
-                    {dept.name}
-                  </option>
-                ))}
-              </select>
+              <Select value={hiringDeptId} onValueChange={setHiringDeptId} searchable={true}>
+                <SelectTrigger id="hiringDept" className="w-full bg-white/[0.03] border border-white/10 rounded-xl h-9 px-3 text-xs text-white">
+                  <SelectValue placeholder="Select Department..." />
+                </SelectTrigger>
+                <SelectContent className="bg-zinc-950 border border-white/10">
+                  {departments.map((dept) => (
+                    <SelectItem key={dept._id} value={dept._id}>
+                      {dept.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Designation / Job Title */}
             <div className="space-y-1.5">
               <Label htmlFor="hiringDesig">Designation</Label>
-              <select
-                id="hiringDesig"
-                value={hiringDesigId}
-                onChange={(e) => setHiringDesigId(e.target.value)}
-                className="w-full bg-white/[0.03] border border-white/10 rounded-xl h-9 px-3 text-xs text-white focus:outline-none focus:ring-1 focus:ring-[#8B5CF6] cursor-pointer"
-                required
-              >
-                <option className="bg-[#0b0b0c]" value="">Select Designation...</option>
-                {designations.map((d: any) => (
-                  <option key={d._id} className="bg-[#0b0b0c]" value={d._id}>
-                    {d.title}
-                  </option>
-                ))}
-              </select>
+              <Select value={hiringDesigId} onValueChange={setHiringDesigId} searchable={true}>
+                <SelectTrigger id="hiringDesig" className="w-full bg-white/[0.03] border border-white/10 rounded-xl h-9 px-3 text-xs text-white">
+                  <SelectValue placeholder="Select Designation..." />
+                </SelectTrigger>
+                <SelectContent className="bg-zinc-950 border border-white/10">
+                  {designations.map((d: any) => (
+                    <SelectItem key={d._id} value={d._id}>
+                      {d.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Manager Assignment */}
             <div className="space-y-1.5">
               <Label htmlFor="hiringManager">Reporting Manager</Label>
-              <select
-                id="hiringManager"
-                value={hiringManagerId}
-                onChange={(e) => setHiringManagerId(e.target.value)}
-                className="w-full bg-white/[0.03] border border-white/10 rounded-xl h-9 px-3 text-xs text-white focus:outline-none focus:ring-1 focus:ring-[#8B5CF6] cursor-pointer"
-              >
-                <option className="bg-[#0b0b0c]" value="NONE">Unassigned / No Manager</option>
-                {activeEmployees.map((emp) => (
-                  <option key={emp._id} className="bg-[#0b0b0c]" value={emp._id}>
-                    {emp.firstName} {emp.lastName} ({emp.employeeCode})
-                  </option>
-                ))}
-              </select>
+              <Select value={hiringManagerId} onValueChange={setHiringManagerId} searchable={true}>
+                <SelectTrigger id="hiringManager" className="w-full bg-white/[0.03] border border-white/10 rounded-xl h-9 px-3 text-xs text-white">
+                  <SelectValue placeholder="Unassigned / No Manager" />
+                </SelectTrigger>
+                <SelectContent className="bg-zinc-950 border border-white/10">
+                  <SelectItem value="NONE">Unassigned / No Manager</SelectItem>
+                  {activeEmployees.map((emp) => (
+                    <SelectItem key={emp._id} value={emp._id}>
+                      {emp.firstName} {emp.lastName} ({emp.employeeCode})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Joining Date */}
@@ -1166,10 +1323,9 @@ export default function PipelineBoard() {
               <div className="px-5 py-3 bg-muted/15 border-b border-border/60 flex items-center justify-between gap-4 flex-wrap sm:flex-nowrap">
                 <div className="flex items-center gap-1.5">
                   <span className="text-[9px] font-bold uppercase text-muted-foreground">Advance Candidate:</span>
-                  <select
+                  <Select
                     value={selectedApp.currentStage}
-                    onChange={(e) => {
-                      const newStage = e.target.value;
+                    onValueChange={(newStage: string) => {
                       if (newStage === 'HIRED') {
                         handleHireCandidate(selectedApp._id);
                       } else {
@@ -1177,12 +1333,16 @@ export default function PipelineBoard() {
                       }
                     }}
                     disabled={submittingStage}
-                    className="bg-muted/40 text-[10px] font-bold px-2 py-1 rounded-xl border border-border/60 text-foreground focus:outline-none cursor-pointer hover:bg-muted/65 transition-all"
                   >
-                    {ACTIVE_STAGES.map((s) => (
-                      <option key={s} value={s}>{s}</option>
-                    ))}
-                  </select>
+                    <SelectTrigger className="bg-muted/40 text-[10px] font-bold px-2 h-8 w-36 rounded-xl border border-border/60 text-foreground">
+                      <SelectValue placeholder="Select Stage..." />
+                    </SelectTrigger>
+                    <SelectContent className="bg-zinc-950 border border-white/10">
+                      {ACTIVE_STAGES.map((s) => (
+                        <SelectItem key={s} value={s}>{s}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="flex gap-2">
                   <Button
@@ -1546,12 +1706,23 @@ export default function PipelineBoard() {
 
                   {/* Score & Recommendation */}
                   {selectedApp.screeningStatus !== 'PENDING' && selectedApp.screeningStatus !== 'PROCESSING' && (
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                       <div className="bg-gradient-to-br from-primary/5 to-indigo-500/5 p-4 rounded-xl border border-primary/10">
-                        <p className="text-[9px] text-muted-foreground font-bold uppercase tracking-wider">Match Score</p>
+                        <p className="text-[9px] text-muted-foreground font-bold uppercase tracking-wider">Screening</p>
                         <div className="flex items-baseline gap-1 mt-1">
-                          <span className="text-2xl font-black text-primary">{selectedApp.aiScore || 0}%</span>
-                          <span className="text-[9px] text-muted-foreground font-bold">Match rating</span>
+                          <span className="text-2xl font-black text-primary">{selectedApp.screeningScore !== undefined && selectedApp.screeningScore !== null ? selectedApp.screeningScore : (selectedApp.aiScore || 0)}%</span>
+                        </div>
+                      </div>
+                      <div className="bg-gradient-to-br from-violet-500/5 to-fuchsia-500/5 p-4 rounded-xl border border-violet-500/10">
+                        <p className="text-[9px] text-muted-foreground font-bold uppercase tracking-wider">Interview</p>
+                        <div className="flex items-baseline gap-1 mt-1">
+                          <span className="text-2xl font-black text-violet-400">{selectedApp.interviewScore !== undefined && selectedApp.interviewScore !== null ? `${selectedApp.interviewScore}%` : 'N/A'}</span>
+                        </div>
+                      </div>
+                      <div className="bg-gradient-to-br from-emerald-500/5 to-teal-500/5 p-4 rounded-xl border border-emerald-500/10">
+                        <p className="text-[9px] text-muted-foreground font-bold uppercase tracking-wider">Final Score</p>
+                        <div className="flex items-baseline gap-1 mt-1">
+                          <span className="text-2xl font-black text-emerald-450">{selectedApp.finalScore !== undefined && selectedApp.finalScore !== null ? `${selectedApp.finalScore}%` : 'N/A'}</span>
                         </div>
                       </div>
                       <div className="bg-gradient-to-br from-purple-500/5 to-indigo-500/5 p-4 rounded-xl border border-purple-500/10">
@@ -1737,10 +1908,10 @@ export default function PipelineBoard() {
               </select>
               <Button
                 onClick={handleBulkMove}
-                disabled={!bulkActionStage}
+                disabled={!bulkActionStage || loading}
                 className="h-10 px-4 rounded-full bg-transparent hover:bg-white/[0.06] text-white/80 hover:text-white disabled:opacity-40 font-medium text-xs border border-white/[0.08] cursor-pointer transition-all"
               >
-                Apply
+                {loading && bulkActionStage ? `Updating ${selectedIds.length} candidates...` : 'Apply'}
               </Button>
             </div>
 
@@ -1748,7 +1919,8 @@ export default function PipelineBoard() {
             <div className="shrink-0">
               <Button
                 onClick={handleBulkScreen}
-                className="h-10 px-4 rounded-full font-medium text-xs flex items-center justify-center cursor-pointer transition-all hover:bg-[#A855F7]"
+                disabled={loading}
+                className="h-10 px-4 rounded-full font-medium text-xs flex items-center justify-center cursor-pointer transition-all hover:bg-[#A855F7] disabled:opacity-40"
                 style={{
                   background: '#8B5CF6',
                   color: 'white',
@@ -1764,7 +1936,8 @@ export default function PipelineBoard() {
             <div className="flex items-center gap-1 shrink-0">
               <Button
                 onClick={handleBulkAssign}
-                className="h-10 px-4 rounded-full bg-transparent text-white/80 hover:text-white hover:bg-white/[0.06] font-medium text-xs border-0 cursor-pointer flex items-center justify-center transition-all"
+                disabled={loading}
+                className="h-10 px-4 rounded-full bg-transparent text-white/80 hover:text-white hover:bg-white/[0.06] font-medium text-xs border-0 cursor-pointer flex items-center justify-center transition-all disabled:opacity-40"
                 title="Assign recruiter"
               >
                 <UserPlus className="w-4 h-4 mr-2 shrink-0 text-white/70" strokeWidth={2} />
@@ -1773,7 +1946,8 @@ export default function PipelineBoard() {
 
               <Button
                 onClick={handleBulkSendEmail}
-                className="h-10 px-4 rounded-full bg-transparent text-white/80 hover:text-white hover:bg-white/[0.06] font-medium text-xs border-0 cursor-pointer flex items-center justify-center transition-all"
+                disabled={loading}
+                className="h-10 px-4 rounded-full bg-transparent text-white/80 hover:text-white hover:bg-white/[0.06] font-medium text-xs border-0 cursor-pointer flex items-center justify-center transition-all disabled:opacity-40"
                 title="Email selected candidates"
               >
                 <Mail className="w-4 h-4 mr-2 shrink-0 text-white/70" strokeWidth={2} />
@@ -1782,7 +1956,8 @@ export default function PipelineBoard() {
 
               <Button
                 onClick={handleBulkExport}
-                className="h-10 px-4 rounded-full bg-transparent text-white/80 hover:text-white hover:bg-white/[0.06] font-medium text-xs border-0 cursor-pointer flex items-center justify-center transition-all"
+                disabled={loading}
+                className="h-10 px-4 rounded-full bg-transparent text-white/80 hover:text-white hover:bg-white/[0.06] font-medium text-xs border-0 cursor-pointer flex items-center justify-center transition-all disabled:opacity-40"
                 title="Export to CSV"
               >
                 <FileSpreadsheet className="w-4 h-4 mr-2 shrink-0 text-white/70" strokeWidth={2} />
@@ -1794,7 +1969,8 @@ export default function PipelineBoard() {
             <div className="shrink-0">
               <Button
                 onClick={handleBulkReject}
-                className="h-10 px-4 rounded-full font-medium text-xs flex items-center justify-center cursor-pointer transition-all hover:bg-red-500/15"
+                disabled={loading}
+                className="h-10 px-4 rounded-full font-medium text-xs flex items-center justify-center cursor-pointer transition-all hover:bg-red-500/15 disabled:opacity-40"
                 style={{
                   background: 'rgba(239, 68, 68, 0.08)',
                   color: '#EF4444',
@@ -1802,7 +1978,7 @@ export default function PipelineBoard() {
                 }}
               >
                 <UserX className="w-4 h-4 mr-2 shrink-0" strokeWidth={2} />
-                Reject
+                {loading && !bulkActionStage ? 'Rejecting...' : 'Reject'}
               </Button>
             </div>
           </div>

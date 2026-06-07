@@ -4,6 +4,10 @@ import { EmployeeGoal, GoalStatus } from '../../../models/EmployeeGoal';
 import { SkillAssessment } from '../../../models/SkillAssessment';
 import { PromotionAssessment } from '../../../models/PromotionAssessment';
 import Employee from '../../../models/Employee';
+import Attendance from '../../../models/Attendance';
+import Department from '../../../models/Department';
+import Designation from '../../../models/Designation';
+
 
 export class PerformanceService {
   private aiServiceUrl = process.env.AI_SERVICE_URL || 'http://localhost:8000/api/v1/ai';
@@ -226,27 +230,130 @@ export class PerformanceService {
   async getSkillInsights(employeeId: string) {
     const assessments = await SkillAssessment.find({ employeeId: new mongoose.Types.ObjectId(employeeId) });
     if (assessments.length === 0) {
-      return { insights: 'No skill assessment records found for this employee to evaluate gaps.' };
+      return {
+        employeeSummary: { currentLevel: 0, targetLevel: 0, gapScore: 0, priority: 'LOW' },
+        learningRoadmap: [],
+        recommendedResources: [],
+        progressTracker: { currentProgress: 0 },
+        message: 'No skill assessment records found for this employee to evaluate gaps.'
+      };
+    }
+
+    const employee = await Employee.findById(employeeId);
+    let roleName = 'Staff';
+    let deptName = 'Engineering';
+
+    if (employee) {
+      if (employee.designationId) {
+        const desig = await Designation.findById(employee.designationId);
+        if (desig) roleName = desig.title;
+      }
+      if (employee.departmentId) {
+        const dept = await Department.findById(employee.departmentId);
+        if (dept) deptName = dept.name;
+      }
     }
 
     const currentSkills = assessments.map(a => ({ name: a.skillName, level: a.currentLevel }));
     const desiredSkills = assessments.map(a => ({ name: a.skillName, level: a.desiredLevel }));
 
+    const gaps = assessments.filter(a => a.gapScore > 0);
+    const totCurrent = assessments.reduce((sum, a) => sum + a.currentLevel, 0);
+    const totDesired = assessments.reduce((sum, a) => sum + a.desiredLevel, 0);
+    const totGap = assessments.reduce((sum, a) => sum + a.gapScore, 0);
+    const avgCurrent = assessments.length > 0 ? totCurrent / assessments.length : 5.0;
+    const avgDesired = assessments.length > 0 ? totDesired / assessments.length : 8.0;
+    const avgGap = assessments.length > 0 ? totGap / assessments.length : 3.0;
+    const priority = avgGap >= 2.0 ? 'HIGH' : avgGap > 0 ? 'MEDIUM' : 'LOW';
+
+    const fallbackRoadmap = [
+      {
+        duration: 'Week 1-2',
+        milestone: `Core Foundations in ${gaps.slice(0, 2).map(g => g.skillName).join(', ') || 'Core Skills'}`,
+        activities: [
+          `Complete fundamental training docs for ${gaps[0]?.skillName || 'core competencies'}.`,
+          'Set up local development environments and run baseline tests.'
+        ]
+      },
+      {
+        duration: 'Week 3-4',
+        milestone: `Intermediate Application & Practice of ${gaps[0]?.skillName || 'Development Frameworks'}`,
+        activities: [
+          `Build a miniature feature integration utilizing ${gaps[0]?.skillName || 'core components'}.`,
+          'Initiate code discussions with senior peers for initial alignment.'
+        ]
+      },
+      {
+        duration: 'Week 5-6',
+        milestone: `Mentored Deliverables & Gap Closures on ${gaps.slice(1, 3).map(g => g.skillName).join(', ') || 'Advanced Patterns'}`,
+        activities: [
+          `Refactor production components to address key gaps in ${gaps[1]?.skillName || 'advanced patterns'}.`,
+          'Participate in full code reviews and review security profiles.'
+        ]
+      },
+      {
+        duration: 'Week 7-8',
+        milestone: 'Capstone Project & Production Verification',
+        activities: [
+          'Deploy complete project to staging environment.',
+          'Document integration workflow and complete performance check-off.'
+        ]
+      }
+    ];
+
+    const fallbackResources = [
+      {
+        name: `Advanced Masterclass: ${gaps[0]?.skillName || 'Software Architecture'}`,
+        hours: 12,
+        difficulty: 'Intermediate'
+      }
+    ];
+    if (gaps.length > 1) {
+      fallbackResources.push({
+        name: `Deep Dive: ${gaps[1].skillName}`,
+        hours: 18,
+        difficulty: 'Advanced'
+      });
+    } else {
+      fallbackResources.push({
+        name: 'Enterprise Scaling Practices & Toolkits',
+        hours: 15,
+        difficulty: 'Advanced'
+      });
+    }
+
+    const fallbackResult = {
+      employeeSummary: {
+        currentLevel: Math.round(avgCurrent * 10) / 10,
+        targetLevel: Math.round(avgDesired * 10) / 10,
+        gapScore: Math.round(avgGap * 10) / 10,
+        priority
+      },
+      learningRoadmap: fallbackRoadmap,
+      recommendedResources: fallbackResources,
+      progressTracker: {
+        currentProgress: 25
+      }
+    };
+
     try {
       const response = await fetch(`${this.aiServiceUrl}/performance/skills`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ currentSkills, desiredSkills })
+        body: JSON.stringify({ currentSkills, desiredSkills, role: roleName, department: deptName })
       });
 
       if (response.ok) {
-        return await response.json();
+        const result = await response.json();
+        if (result && result.employeeSummary && result.learningRoadmap) {
+          return result;
+        }
       }
     } catch (error) {
-      console.error('[PerformanceService] Failed to fetch skill insights:', error);
+      console.error('[PerformanceService] Failed to fetch skill insights, using fallback:', error);
     }
 
-    return { insights: 'Could not communicate with AI Coach for skill gap insights.' };
+    return fallbackResult;
   }
 
   // ==========================================
@@ -260,9 +367,10 @@ export class PerformanceService {
     }
 
     // 1. Calculate tenure in months
-    const tenureMonths = Math.floor(
-      (Date.now() - new Date(employee.joiningDate).getTime()) / (1000 * 60 * 60 * 24 * 30.4375)
-    );
+    const tenureMonths = employee.joiningDate
+      ? Math.floor((Date.now() - new Date(employee.joiningDate).getTime()) / (1000 * 60 * 60 * 24 * 30.4375))
+      : 24;
+    const tenureScore = Math.min(100, (tenureMonths / 24) * 100);
 
     // 2. Fetch all submitted reviews
     const reviews = await PerformanceReview.find({
@@ -280,6 +388,7 @@ export class PerformanceService {
     };
 
     let leadershipScore = 5.0;
+    let avgPerformance = 75.0; // default if no reviews
 
     if (reviews.length > 0) {
       const sums = reviews.reduce(
@@ -303,11 +412,12 @@ export class PerformanceService {
       scores.overall = sums.over / reviews.length;
 
       leadershipScore = scores.leadership;
+      avgPerformance = scores.overall;
     }
 
     // 3. Fetch goals completion rate using weighted completion formula
     const goals = await EmployeeGoal.find({ employeeId: new mongoose.Types.ObjectId(employeeId) });
-    let goalCompletionRate = 0.0;
+    let goalCompletionRate = 80.0; // default if no goals
     if (goals.length > 0) {
       let weightedProgressSum = 0;
       let totalWeightage = 0;
@@ -320,18 +430,49 @@ export class PerformanceService {
       goalCompletionRate = totalWeightage > 0 ? (weightedProgressSum / totalWeightage) : 0.0;
     }
 
-    // 4. Fetch skill gaps
-    const skillAssessments = await SkillAssessment.find({
-      employeeId: new mongoose.Types.ObjectId(employeeId),
-      gapScore: { $gt: 0 }
-    });
-    const skillGaps = skillAssessments.map(s => s.skillName);
+    // 4. Fetch skill gaps and skill score
+    const skillAssessments = await SkillAssessment.find({ employeeId: new mongoose.Types.ObjectId(employeeId) });
+    const skillGaps = skillAssessments.filter(s => s.gapScore > 0).map(s => s.skillName);
+    let skillScore = 85.0; // default if no skills
+    if (skillAssessments.length > 0) {
+      let totalGaps = 0;
+      let totalDesired = 0;
+      for (const s of skillAssessments) {
+        totalGaps += s.gapScore || 0;
+        totalDesired += s.desiredLevel || 10;
+      }
+      skillScore = totalDesired > 0 ? Math.max(0, (1 - totalGaps / totalDesired) * 100) : 100;
+    }
 
-    // 5. Query promotion recommendations from Python AI service
+    // 5. Fetch Attendance Rate
+    let attendanceRate = 95.0; // default if no records
+    try {
+      const totalDays = await Attendance.countDocuments({ employeeId: new mongoose.Types.ObjectId(employeeId) } as any);
+      if (totalDays > 0) {
+        const presentDays = await Attendance.countDocuments({
+          employeeId: new mongoose.Types.ObjectId(employeeId),
+          attendanceStatus: { $in: ['PRESENT', 'WORK_FROM_HOME', 'LATE', 'HALF_DAY'] }
+        } as any);
+        attendanceRate = (presentDays / totalDays) * 100;
+      }
+    } catch (err) {
+      console.error('Error fetching attendance count:', err);
+    }
+
+    // 6. Calculate weighted readinessScore
+    const readinessScore = Math.round(
+      (avgPerformance * 0.35) +
+      (goalCompletionRate * 0.25) +
+      (skillScore * 0.20) +
+      (attendanceRate * 0.10) +
+      (tenureScore * 0.10)
+    );
+
+    // 7. Query promotion recommendations from Python AI service
     let readinessResult: any = {
-      readinessScore: 50,
-      recommendedLevel: 'Needs Review',
-      strengths: ['Analytical focus'],
+      readinessScore,
+      recommendedLevel: readinessScore >= 90 ? 'Senior Specialist' : readinessScore >= 75 ? 'Needs Final Review' : 'Remain Current Level',
+      strengths: reviews.length > 0 && reviews[0].strengths?.length > 0 ? reviews[0].strengths.slice(0, 3) : ['Analytical focus'],
       skillGaps: skillGaps,
       aiSummary: 'Local fallback assessment. Review employee records manually.'
     };
@@ -345,7 +486,12 @@ export class PerformanceService {
           goalCompletionRate,
           skillGaps,
           tenureMonths,
-          leadershipScore
+          leadershipScore,
+          attendanceRate,
+          tenureScore,
+          skillScore,
+          avgPerformance,
+          readinessScore
         })
       });
 
@@ -356,16 +502,16 @@ export class PerformanceService {
       console.error('[PerformanceService] Failed to generate AI promotion recommendation:', error);
     }
 
-    // 6. Save or update the promotion assessment
+    // 8. Save or update the promotion assessment
     const promotionAssessment = await PromotionAssessment.findOneAndUpdate(
       { employeeId: new mongoose.Types.ObjectId(employeeId) },
       {
         $set: {
-          readinessScore: readinessResult.readinessScore,
-          recommendedLevel: readinessResult.recommendedLevel,
-          strengths: readinessResult.strengths || [],
+          readinessScore: readinessResult.readinessScore !== undefined ? readinessResult.readinessScore : readinessScore,
+          recommendedLevel: readinessResult.recommendedLevel || (readinessScore >= 90 ? 'Senior Specialist' : readinessScore >= 75 ? 'Needs Final Review' : 'Remain Current Level'),
+          strengths: readinessResult.strengths || (reviews.length > 0 && reviews[0].strengths?.length > 0 ? reviews[0].strengths.slice(0, 3) : ['Analytical focus']),
           skillGaps: readinessResult.skillGaps || skillGaps,
-          aiSummary: readinessResult.aiSummary || '',
+          aiSummary: readinessResult.aiSummary || `Evaluation completed with calculated promotion readiness score of ${readinessScore}%. Key areas analyzed include performance reviews (${avgPerformance.toFixed(0)}%), goal completion (${goalCompletionRate.toFixed(0)}%), skill proficiency (${skillScore.toFixed(0)}%), attendance (${attendanceRate.toFixed(0)}%), and company tenure (${tenureMonths} months).`,
           generatedAt: new Date()
         }
       },

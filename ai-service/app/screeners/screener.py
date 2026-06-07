@@ -68,6 +68,13 @@ class AIScreener:
 
         # Validate required fields and assign fallbacks
         ai_score = parsed.get("aiScore")
+        if ai_score is None:
+            ai_score = parsed.get("matchScore")
+        if ai_score is None:
+            ai_score = parsed.get("score")
+        if ai_score is None:
+            ai_score = parsed.get("match_score")
+
         try:
             ai_score = int(ai_score)
         except Exception:
@@ -82,9 +89,23 @@ class AIScreener:
             missing_skills = [str(missing_skills)] if missing_skills else []
 
         recs = ["Strong Hire", "Hire", "Needs Review", "Reject"]
-        recommendation = parsed.get("aiRecommendation", "Needs Review")
+        recommendation = parsed.get("aiRecommendation")
+        if recommendation is None:
+            recommendation = parsed.get("recommendation")
+        if recommendation is None:
+            recommendation = parsed.get("ai_recommendation")
+        
         if recommendation not in recs:
-            recommendation = "Needs Review"
+            matched_rec = "Needs Review"
+            if isinstance(recommendation, str):
+                rec_lower = recommendation.lower()
+                if "strong" in rec_lower:
+                    matched_rec = "Strong Hire"
+                elif "reject" in rec_lower:
+                    matched_rec = "Reject"
+                elif "hire" in rec_lower:
+                    matched_rec = "Hire"
+            recommendation = matched_rec
 
         return {
             "aiScore": ai_score,

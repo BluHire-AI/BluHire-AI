@@ -15,53 +15,97 @@ export class PerformanceRiskService {
     let riskScore = 10;
     const reasons: string[] = [];
 
-    // 1. Check review score declines
+    // 1. Check review score declines & low scores
     const reviews = await PerformanceReview.find({
       employeeId: new mongoose.Types.ObjectId(employeeId),
       status: ReviewStatus.SUBMITTED
     }).sort({ createdAt: -1 }).limit(3);
 
-    if (reviews.length >= 2) {
+    if (reviews.length > 0) {
       const latest = reviews[0].overallScore;
-      const prev = reviews[1].overallScore;
-      if (latest < prev) {
-        riskScore += 20;
-        reasons.push(`Latest performance score declined from ${prev} to ${latest}`);
-        
-        if (reviews.length >= 3) {
-          const prevPrev = reviews[2].overallScore;
-          if (prev < prevPrev) {
-            riskScore += 25;
-            reasons.push(`Consecutive decline in performance scores across the last 3 review periods`);
+      
+      // Performance Risk: Review Score < 40%
+      if (latest < 40) {
+        riskScore += 30;
+        reasons.push(`Critical performance risk: review score is low (${latest}%)`);
+      }
+
+      if (reviews.length >= 2) {
+        const prev = reviews[1].overallScore;
+        if (latest < prev) {
+          riskScore += 20;
+          reasons.push(`Review score dropped from ${prev} → ${latest}`);
+          
+          if (reviews.length >= 3) {
+            const prevPrev = reviews[2].overallScore;
+            if (prev < prevPrev) {
+              riskScore += 25;
+              reasons.push(`Consecutive decline in performance scores across the last 3 review periods`);
+            }
           }
         }
       }
     }
 
-    // 2. Overdue goals
+    // 2. Overdue goals & low goal completion rates
     const now = new Date();
-    const overdueGoalsCount = await EmployeeGoal.countDocuments({
+    const overdueGoals = await EmployeeGoal.find({
       employeeId: new mongoose.Types.ObjectId(employeeId),
       status: { $ne: GoalStatus.COMPLETED },
       targetDate: { $lt: now }
     });
 
-    if (overdueGoalsCount > 0) {
-      const points = Math.min(overdueGoalsCount * 15, 30);
+    if (overdueGoals.length > 0) {
+      const points = Math.min(overdueGoals.length * 15, 30);
       riskScore += points;
-      reasons.push(`Has ${overdueGoalsCount} overdue performance goals`);
+      for (const goal of overdueGoals) {
+        const overdueMs = now.getTime() - new Date(goal.targetDate).getTime();
+        const overdueDays = Math.max(1, Math.ceil(overdueMs / (1000 * 60 * 60 * 24)));
+        reasons.push(`Goal overdue by ${overdueDays} days`);
+      }
     }
 
-    // 3. Skill gaps
-    const skillGapsCount = await SkillAssessment.countDocuments({
+    const allGoals = await EmployeeGoal.find({ employeeId: new mongoose.Types.ObjectId(employeeId) });
+    if (allGoals.length > 0) {
+      let weightedProgress = 0;
+      let totalWeight = 0;
+      for (const g of allGoals) {
+        const weight = g.weightage !== undefined ? g.weightage : 100;
+        weightedProgress += (g.progressPercentage || 0) * weight;
+        totalWeight += weight;
+      }
+      const goalCompletionRate = totalWeight > 0 ? (weightedProgress / totalWeight) : 0;
+      if (goalCompletionRate < 50) {
+        riskScore += 20;
+        reasons.push(`Goal completion rate is low (${Math.round(goalCompletionRate)}%)`);
+      }
+    }
+
+    // 3. Skill gaps > Threshold
+    const THRESHOLD = 2; // threshold for critical skill gap
+    const criticalSkillGaps = await SkillAssessment.find({
       employeeId: new mongoose.Types.ObjectId(employeeId),
-      gapScore: { $gt: 0 }
+      gapScore: { $gt: THRESHOLD }
     });
 
-    if (skillGapsCount > 0) {
-      const points = Math.min(skillGapsCount * 5, 20);
+    if (criticalSkillGaps.length > 0) {
+      const points = Math.min(criticalSkillGaps.length * 10, 20);
       riskScore += points;
-      reasons.push(`Has ${skillGapsCount} identified skill gaps`);
+      for (const gap of criticalSkillGaps) {
+        reasons.push(`Critical skill gap detected in ${gap.skillName}`);
+      }
+    }
+
+    // 4. Promotion / Trend Risk: Promotion Readiness Declining
+    try {
+      const { performanceTrendService } = require('./trend.service');
+      const trend = await performanceTrendService.getEmployeeTrend(employeeId);
+      if (trend.trendDirection === 'DOWNWARD') {
+        riskScore += 25;
+        reasons.push(`Promotion readiness declining (performance trend is downward)`);
+      }
+    } catch (err) {
+      console.error('Error fetching trend for risk assessment:', err);
     }
 
     // Clamp score
@@ -100,7 +144,6 @@ export class PerformanceRiskService {
   }
 
   async getEmployeeRisk(employeeId: string) {
-    // Dynamically calculate first to ensure it is fresh
     return await this.calculateAndSaveRisk(employeeId);
   }
 

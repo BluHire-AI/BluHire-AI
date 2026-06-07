@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
   BookOpen, UploadCloud, Search, Trash2, RefreshCw, BarChart2, FileText, 
   CheckCircle, AlertTriangle, Play, HelpCircle, ArrowRight, ShieldCheck, 
-  ExternalLink, Sparkles, Clock, Layers, Users2
+  ExternalLink, Sparkles, Clock, Layers
 } from 'lucide-react';
 import { 
   ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Legend, 

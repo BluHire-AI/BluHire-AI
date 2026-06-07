@@ -104,6 +104,11 @@ export interface ActivityStats {
 }
 
 export const analyticsService = {
+  getExecutiveAnalytics: async () => {
+    const response = await api.get('/analytics/executive');
+    return response.data.data;
+  },
+
   getOverview: async (query?: any): Promise<OverviewStats> => {
     const response = await api.get('/analytics/recruitment/overview', { params: query });
     return response.data.data;
@@ -186,4 +191,5 @@ export const analyticsService = {
     window.URL.revokeObjectURL(downloadUrl);
   },
 };
+export const getExecutiveAnalytics = analyticsService.getExecutiveAnalytics;
 export default analyticsService;

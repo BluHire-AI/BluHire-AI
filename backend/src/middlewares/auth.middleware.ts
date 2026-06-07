@@ -1,15 +1,16 @@
 import { Request, Response, NextFunction } from 'express';
 import { verifyAccessToken } from '../utils/jwt.util';
+import EmployeeModel from '../models/Employee';
 
 export interface AuthRequest extends Request {
   user?: any;
 }
 
-export const authenticate = (
+export const authenticate = async (
   req: AuthRequest,
   res: Response,
   next: NextFunction
-): void => {
+): Promise<void> => {
   const authHeader = req.headers.authorization;
   console.log(`[AUTH] Incoming Authorization Header:`, authHeader ? `${authHeader.substring(0, 25)}...` : 'NONE');
 
@@ -27,11 +28,23 @@ export const authenticate = (
     const decoded: any = verifyAccessToken(token);
     console.log(`[AUTH] JWT verification successful. User ID extracted: ${decoded.id}, Role: ${decoded.role}`);
 
+    // Base user info from token
     req.user = {
+      id: decoded.id,
       _id: decoded.id,
       email: decoded.email,
       role: decoded.role,
     };
+
+    // Enrich with Employee record _id so attendance/leave routes can scope correctly
+    try {
+      const employee = await EmployeeModel.findOne({ userId: decoded.id, isDeleted: false }).select('_id').lean();
+      if (employee) {
+        req.user.employeeId = employee._id.toString();
+      }
+    } catch {
+      // Non-critical — employee record may not exist yet (e.g. HR/Admin users)
+    }
 
     next();
   } catch (error: any) {
@@ -41,19 +54,4 @@ export const authenticate = (
       message: 'Invalid or expired token'
     });
   }
-};
-
-export const denyCandidate = (
-  req: AuthRequest,
-  res: Response,
-  next: NextFunction
-): void => {
-  if (req.user && req.user.role === 'CANDIDATE') {
-    res.status(403).json({
-      success: false,
-      message: 'Access denied: candidates are not allowed to access this resource.'
-    });
-    return;
-  }
-  next();
 };

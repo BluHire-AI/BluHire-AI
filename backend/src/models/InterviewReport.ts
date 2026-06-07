@@ -1,91 +1,42 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import { RecommendationDecision } from '../types/interview.types';
 
 export interface IInterviewReport extends Document {
-  sessionId: mongoose.Types.ObjectId;
-  candidateId: mongoose.Types.ObjectId;
-  jobId: mongoose.Types.ObjectId;
-  overallScore: number;
-  technicalAnalysis: string;
-  communicationAnalysis: string;
+  _id: any;
+  sessionId: string; // Reference to InterviewSession _id
+  candidateSummary: string;
   strengths: string[];
   weaknesses: string[];
-  hiringRecommendation: 'Strong Hire' | 'Hire' | 'Consider' | 'Weak Consider' | 'Reject';
-  recommendationReasoning: string;
-  transcriptSummary: string;
-  skillsBreakdown: Record<string, number>;
-  isPublished: boolean;
+  improvementAreas: string[];
+  technicalFeedback: string;
+  communicationFeedback: string;
+  finalRecommendation: RecommendationDecision;
   createdAt: Date;
   updatedAt: Date;
 }
 
-const InterviewReportSchema = new Schema<IInterviewReport>(
+const InterviewReportSchema = new Schema<any>(
   {
     sessionId: {
       type: Schema.Types.ObjectId,
       ref: 'InterviewSession',
-      required: [true, 'Interview Session ID is required'],
+      required: [true, 'Session ID is required'],
       index: true,
-      unique: true,
+      unique: true, // One final report per session
     },
-    candidateId: {
-      type: Schema.Types.ObjectId,
-      ref: 'Candidate',
-      required: [true, 'Candidate ID is required'],
-      index: true,
-    },
-    jobId: {
-      type: Schema.Types.ObjectId,
-      ref: 'Job',
-      required: [true, 'Job ID is required'],
-      index: true,
-    },
-    overallScore: {
-      type: Number,
+    candidateSummary: { type: String, required: true },
+    strengths: { type: [String], default: [] },
+    weaknesses: { type: [String], default: [] },
+    improvementAreas: { type: [String], default: [] },
+    technicalFeedback: { type: String, required: true },
+    communicationFeedback: { type: String, required: true },
+    finalRecommendation: {
+      type: String,
+      enum: Object.values(RecommendationDecision),
       required: true,
-      min: 0,
-      max: 100,
-    },
-    technicalAnalysis: {
-      type: String,
-      default: '',
-    },
-    communicationAnalysis: {
-      type: String,
-      default: '',
-    },
-    strengths: {
-      type: [String],
-      default: [],
-    },
-    weaknesses: {
-      type: [String],
-      default: [],
-    },
-    hiringRecommendation: {
-      type: String,
-      enum: ['Strong Hire', 'Hire', 'Consider', 'Weak Consider', 'Reject'],
-      required: true,
-    },
-    recommendationReasoning: {
-      type: String,
-      default: '',
-    },
-    transcriptSummary: {
-      type: String,
-      default: '',
-    },
-    skillsBreakdown: {
-      type: Schema.Types.Mixed,
-      default: {},
-    },
-    isPublished: {
-      type: Boolean,
-      default: false,
     },
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
 
 export default mongoose.model<IInterviewReport>('InterviewReport', InterviewReportSchema);

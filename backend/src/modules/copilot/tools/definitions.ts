@@ -13,8 +13,6 @@ import toolRegistry from './registry';
 import mongoDBQueryProvider from '../providers/MongoDBQueryProvider';
 import vectorSearchProvider from '../providers/VectorSearchProvider';
 import KnowledgeDocument from '../../../models/KnowledgeDocument';
-import InterviewAssignment from '../../../models/InterviewAssignment';
-import InterviewReport from '../../../models/InterviewReport';
 import { PerformanceReview } from '../../../models/PerformanceReview';
 import { EmployeeGoal } from '../../../models/EmployeeGoal';
 import { SkillAssessment } from '../../../models/SkillAssessment';
@@ -1628,147 +1626,182 @@ toolRegistry.register({
   }
 });
 
-// 30. compareCandidates
+// ==========================================
+// PAYROLL TOOLS
+// ==========================================
+
+import SalaryStructureModel from '../../../models/SalaryStructure';
+import PayrollRunModel from '../../../models/PayrollRun';
+import PayrollModel from '../../../models/Payroll';
+import PayslipModel from '../../../models/Payslip';
+
+// 30. explainSalaryBreakdown
 toolRegistry.register({
-  name: 'compareCandidates',
-  description: 'Compare interview performance, final scores, resume scores, ranking positions, strengths, and weaknesses for two or more candidates.',
+  name: 'explainSalaryBreakdown',
+  description: 'Explain the details of an employee\'s salary breakdown (base, HRA, allowances, TDS tax deductions, net salary, etc.).',
   parameters: {
     type: 'object',
     properties: {
-      candidateIdentifiers: {
-        type: 'array',
-        items: { type: 'string' },
-        description: 'List of candidate names or candidate codes to compare (e.g. ["John Doe", "CAND-0012"])'
-      }
-    },
-    required: ['candidateIdentifiers']
+      employeeId: { type: 'string', description: 'Optional Employee ID or Code (only for HR/Admin users to check other profiles)' }
+    }
   },
-  roles: RECRUITER_ROLES,
+  roles: KNOWLEDGE_ROLES,
   isWrite: false,
   handler: async (args, user) => {
-    const results = [];
+    const isHR = user.role === SystemRoles.MANAGEMENT_ADMIN || user.role === SystemRoles.HR_RECRUITER;
+    let targetEmpId = null;
 
-    for (const ident of args.candidateIdentifiers) {
-      let candQuery: any = {};
-      const isObjectId = mongoose.Types.ObjectId.isValid(ident);
-      
-      if (isObjectId) {
-        candQuery = { _id: ident };
-      } else if (ident.toUpperCase().startsWith('CAND-')) {
-        candQuery = { candidateCode: ident.toUpperCase() };
-      } else {
-        const parts = ident.trim().split(/\s+/);
-        if (parts.length > 1) {
-          candQuery = {
-            firstName: { $regex: new RegExp(parts[0], 'i') },
-            lastName: { $regex: new RegExp(parts[1], 'i') }
-          };
-        } else {
-          candQuery = {
-            $or: [
-              { firstName: { $regex: new RegExp(ident, 'i') } },
-              { lastName: { $regex: new RegExp(ident, 'i') } }
-            ]
-          };
+    if (!isHR || !args.employeeId) {
+      // Find own employee profile
+      const ownEmp = await EmployeeModel.findOne({ userId: user._id, isDeleted: false });
+      if (!ownEmp) return { error: 'No employee profile linked to user' };
+      targetEmpId = ownEmp._id;
+    } else {
+      // Resolve target employee
+      const isObjectId = mongoose.Types.ObjectId.isValid(args.employeeId);
+      const query = isObjectId ? { _id: args.employeeId } : { employeeCode: args.employeeId.toUpperCase() };
+      const targetEmp = await EmployeeModel.findOne({ ...query, isDeleted: false });
+      if (!targetEmp) return { error: `Employee not found: ${args.employeeId}` };
+      targetEmpId = targetEmp._id;
+    }
+
+    // Fetch latest payslip snapshot or latest payroll item
+    const latestPayslip = await PayslipModel.findOne({ employeeId: targetEmpId }).sort({ year: -1, month: -1 }).lean();
+    if (latestPayslip) {
+      return {
+        message: `Breakdown for payslip ${latestPayslip.payslipCode} (${latestPayslip.month}/${latestPayslip.year})`,
+        snapshot: latestPayslip.salarySnapshot
+      };
+    }
+
+    const latestPayroll = await PayrollModel.findOne({ employeeId: targetEmpId }).sort({ createdAt: -1 }).lean();
+    if (latestPayroll) {
+      return {
+        message: `Calculated breakdown (not paid yet) for employee`,
+        payroll: {
+          baseSalary: latestPayroll.baseSalary,
+          allowancesAmount: latestPayroll.allowancesAmount,
+          bonusesAmount: latestPayroll.bonusesAmount,
+          overtimeAmount: latestPayroll.overtimeAmount,
+          deductionsAmount: latestPayroll.deductionsAmount,
+          taxAmount: latestPayroll.taxAmount,
+          netSalary: latestPayroll.netSalary,
+          attendance: latestPayroll.attendance
         }
-      }
-
-      candQuery.isDeleted = false;
-      const candidate = await CandidateModel.findOne(candQuery);
-      if (!candidate) {
-        results.push({ identifier: ident, error: 'Candidate record not found' });
-        continue;
-      }
-
-      const assignment = await InterviewAssignment.findOne({ candidateId: candidate._id })
-        .populate('interviewTemplateId', 'name jobRole')
-        .populate('jobId', 'title jobCode')
-        .lean();
-
-      if (!assignment) {
-        results.push({
-          candidateName: `${candidate.firstName} ${candidate.lastName}`,
-          candidateCode: candidate.candidateCode,
-          status: 'Not Shortlisted',
-          error: 'No interview assignment found for this candidate'
-        });
-        continue;
-      }
-
-      // Fetch report if completed
-      let report = null;
-      if (assignment.status === 'Completed' || assignment.status === 'Reviewed') {
-        report = await InterviewReport.findOne({ candidateId: candidate._id }).lean();
-      }
-
-      results.push({
-        candidateName: `${candidate.firstName} ${candidate.lastName}`,
-        candidateCode: candidate.candidateCode,
-        jobTitle: (assignment.jobId as any)?.title || 'N/A',
-        jobCode: (assignment.jobId as any)?.jobCode || 'N/A',
-        assignmentStatus: assignment.status,
-        resumeScore: assignment.resumeScore || 0,
-        interviewScore: assignment.interviewScore || null,
-        finalScore: assignment.finalCandidateScore || null,
-        rankingPosition: assignment.rankingPosition || null,
-        strengths: report?.strengths || [],
-        weaknesses: report?.weaknesses || [],
-        hiringRecommendation: report?.hiringRecommendation || 'N/A',
-        recommendationReasoning: report?.recommendationReasoning || '',
-        transcriptSummary: report?.transcriptSummary || ''
-      });
+      };
     }
 
-    return results;
+    return { error: 'No payroll or payslip records found for employee.' };
   }
 });
 
-// 31. getJobCandidatesLeaderboard
+// 31. predictPayrollCosts
 toolRegistry.register({
-  name: 'getJobCandidatesLeaderboard',
-  description: 'Get a list of all candidates for a job ranked by their final candidate score, showing final scores, resume scores, interview scores, and ranking positions.',
+  name: 'predictPayrollCosts',
+  description: 'Predict upcoming monthly payroll costs based on historical trends.',
   parameters: {
     type: 'object',
-    properties: {
-      jobIdentifier: { type: 'string', description: 'Job Code (e.g. JOB-2026-0001) or Job ObjectId' }
-    },
-    required: ['jobIdentifier']
+    properties: {}
   },
   roles: RECRUITER_ROLES,
   isWrite: false,
   handler: async (args, user) => {
-    let targetJobId: any = args.jobIdentifier;
-    const isObjectId = mongoose.Types.ObjectId.isValid(args.jobIdentifier);
-    
-    if (!isObjectId) {
-      const job = await JobModel.findOne({ jobCode: args.jobIdentifier.toUpperCase(), isDeleted: false });
-      if (!job) return { error: 'Job not found' };
-      targetJobId = job._id;
+    // Get last 6 paid payroll runs
+    const runs = await PayrollRunModel.find({ status: 'PAID' }).sort({ year: -1, month: -1 }).limit(6).lean();
+    if (runs.length === 0) {
+      return { note: 'No completed payroll runs found to build projections. Seeding a default estimate based on active employees.', predictedCost: 0 };
     }
 
-    const assignments = await InterviewAssignment.find({
-      jobId: targetJobId,
-      status: { $in: ['Completed', 'Reviewed'] },
-      finalCandidateScore: { $ne: null }
-    })
-      .sort({ finalCandidateScore: -1 })
-      .populate('candidateId', 'firstName lastName candidateCode email')
-      .populate('jobId', 'title jobCode')
-      .lean();
+    // Compute simple linear growth or average
+    runs.reverse(); // chronologic
+    const costs = runs.map(r => r.totalCost);
+    const avgCost = costs.reduce((sum, c) => sum + c, 0) / costs.length;
+    
+    let growthRate = 0;
+    if (costs.length > 1) {
+      const first = costs[0];
+      const last = costs[costs.length - 1];
+      growthRate = (last - first) / first;
+    }
 
-    return assignments.map((a: any) => ({
-      rankingPosition: a.rankingPosition,
-      candidateName: a.candidateId ? `${a.candidateId.firstName} ${a.candidateId.lastName}` : 'N/A',
-      candidateCode: a.candidateId?.candidateCode || 'N/A',
-      email: a.candidateId?.email || 'N/A',
-      jobTitle: a.jobId?.title || 'N/A',
-      jobCode: a.jobId?.jobCode || 'N/A',
-      resumeScore: a.resumeScore || 0,
-      interviewScore: a.interviewScore || 0,
-      finalCandidateScore: a.finalCandidateScore || 0,
-      rankingReasoning: a.rankingReasoning
-    }));
+    const nextPredicted = Math.round(costs[costs.length - 1] * (1 + growthRate / (costs.length || 1)));
+
+    return {
+      historicalRuns: runs.map(r => ({ period: `${r.month}/${r.year}`, cost: r.totalCost, count: r.employeesCount })),
+      growthRateOverPeriod: `${(growthRate * 100).toFixed(1)}%`,
+      averageCost: Math.round(avgCost),
+      predictedCostForNextMonth: nextPredicted
+    };
   }
 });
+
+// 32. detectPayrollAnomalies
+toolRegistry.register({
+  name: 'detectPayrollAnomalies',
+  description: 'Analyze recent payroll logs for deviations, abnormal overtime jumps, or salary spikes.',
+  parameters: {
+    type: 'object',
+    properties: {}
+  },
+  roles: RECRUITER_ROLES,
+  isWrite: false,
+  handler: async (args, user) => {
+    // Check latest run vs previous run for matching employees
+    const paidRuns = await PayrollRunModel.find({ status: { $in: ['APPROVED', 'PAID'] } }).sort({ year: -1, month: -1 }).limit(2).lean();
+    if (paidRuns.length < 1) {
+      return { message: 'Not enough payroll runs found to analyze anomalies.' };
+    }
+
+    const latestRun = paidRuns[0];
+    const latestItems = await PayrollModel.find({ payrollRunId: latestRun._id }).populate('employeeId').lean();
+    
+    const anomalies: any[] = [];
+
+    for (const item of latestItems) {
+      const emp = item.employeeId as any;
+      if (!emp) continue;
+
+      // 1. Check spike: netSalary > baseSalary * 1.25 (or other allowance/bonus spikes)
+      const basePlusAllow = item.baseSalary + item.allowancesAmount;
+      const totalBonusOvertime = item.bonusesAmount + item.overtimeAmount;
+      if (totalBonusOvertime > basePlusAllow * 0.25) {
+        anomalies.push({
+          employeeCode: emp.employeeCode,
+          employeeName: `${emp.firstName} ${emp.lastName}`,
+          anomalyType: 'SALARY_SPIKE',
+          details: `Extra payout (bonuses + overtime) is $${totalBonusOvertime}, which exceeds 25% of base salary ($${basePlusAllow}).`
+        });
+      }
+
+      // 2. Check Overtime hours spike (> 30 hours)
+      if (item.attendance?.overtimeHours > 30) {
+        anomalies.push({
+          employeeCode: emp.employeeCode,
+          employeeName: `${emp.firstName} ${emp.lastName}`,
+          anomalyType: 'OVERTIME_SPIKE',
+          details: `Employee logged ${item.attendance.overtimeHours} overtime hours this month.`
+        });
+      }
+
+      // 3. Check high deductions (> 30% of base salary)
+      if (item.deductionsAmount > item.baseSalary * 0.3) {
+        anomalies.push({
+          employeeCode: emp.employeeCode,
+          employeeName: `${emp.firstName} ${emp.lastName}`,
+          anomalyType: 'HIGH_DEDUCTIONS',
+          details: `Deductions ($${item.deductionsAmount}) exceed 30% of base salary ($${item.baseSalary}).`
+        });
+      }
+    }
+
+    return {
+      payrollRunPeriod: `${latestRun.month}/${latestRun.year}`,
+      totalItemsAnalyzed: latestItems.length,
+      anomaliesFoundCount: anomalies.length,
+      anomalies
+    };
+  }
+});
+
 
 

@@ -8,6 +8,7 @@ import KnowledgeChunk from '../../../models/KnowledgeChunk';
 import { CopilotAuditLog } from '../../../models/CopilotAuditLog';
 import { SystemRoles } from '../../../models/roles';
 import knowledgeService from '../services/knowledge.service';
+import { analyticsService } from '../services/analytics.service';
 import { 
   uploadQuerySchema, 
   searchSchema, 
@@ -114,12 +115,28 @@ export class KnowledgeController {
    * POST /api/v1/knowledge/search
    */
   async search(req: AuthRequest, res: Response): Promise<void> {
+    const startTime = Date.now();
     try {
       console.log(req.body);
       const { query, limit } = searchSchema.parse(req.body);
       const userRole = req.user.role;
 
       const results = await knowledgeService.semanticSearch(query, userRole, limit);
+      const latency = Date.now() - startTime;
+
+      const documentsHit = Array.from(
+        new Set(results.map(r => r.document?.title || r.document?.fileName || ''))
+      ).filter(Boolean);
+
+      // Record direct search analytics
+      await analyticsService.recordSearch({
+        query,
+        resultsFound: results.length,
+        latency,
+        documentsHit,
+        userId: req.user._id
+      });
+
       res.json({ success: true, data: results });
     } catch (error: any) {
       console.error('[DEBUG Backend search] error:', error);

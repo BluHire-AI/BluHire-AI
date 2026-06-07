@@ -2,8 +2,7 @@ import { userRepository } from '../repositories/user.repository';
 import { hashPassword, comparePassword } from '../utils/password.util';
 import { generateTokens, verifyRefreshToken, generateResetToken, verifyResetToken } from '../utils/jwt.util';
 import { RegisterDTO, LoginDTO } from '../dto/user.dto';
-import { SystemRoles } from '../models/roles';
-import InterviewAssignment from '../models/InterviewAssignment';
+import { emailService } from './email.service';
 
 export class AuthService {
   async register(data: any) {
@@ -72,24 +71,67 @@ export class AuthService {
     if (!isMatch) throw new Error('Incorrect old password');
 
     const hashedPassword = await hashPassword(data.newPassword);
-    await userRepository.updateById(userId, { passwordHash: hashedPassword } as any);
+    await userRepository.updateById(userId, { passwordHash: hashedPassword, mustChangePassword: false } as any);
   }
 
   async forgotPassword(email: string) {
     const user = await userRepository.findByEmail(email);
     if (!user) {
-      return { success: true };
+      // Generic response to prevent enumeration
+      return { success: true, message: 'If an account exists, an OTP has been sent.' };
     }
 
-    const resetToken = generateResetToken(user);
-    const resetLink = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/reset-password?token=${resetToken}`;
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const hashedOtp = await hashPassword(otp);
     
-    console.log('------------------------------------');
-    console.log(`Password reset requested for: ${email}`);
-    console.log(`Reset Link: ${resetLink}`);
-    console.log('------------------------------------');
+    // Set expiry to 10 mins from now
+    const expires = new Date();
+    expires.setMinutes(expires.getMinutes() + 10);
+
+    await userRepository.updateById(user.id as string, {
+      passwordResetOtp: hashedOtp,
+      passwordResetOtpExpires: expires,
+      passwordResetAttempts: 0
+    } as any);
+
+    await emailService.sendPasswordResetOTP(email, otp);
     
-    return { success: true, resetToken, resetLink };
+    return { success: true, message: 'If an account exists, an OTP has been sent.' };
+  }
+
+  async verifyResetOtp(email: string, otp: string) {
+    const user = await userRepository.findByEmail(email);
+    if (!user || !user.passwordResetOtp || !user.passwordResetOtpExpires) {
+      throw new Error('Invalid or expired OTP');
+    }
+
+    if (user.passwordResetAttempts && user.passwordResetAttempts >= 5) {
+      throw new Error('Too many verification attempts. Please request a new OTP.');
+    }
+
+    if (new Date() > user.passwordResetOtpExpires) {
+      throw new Error('OTP has expired');
+    }
+
+    const isMatch = await comparePassword(otp, user.passwordResetOtp);
+    if (!isMatch) {
+      await userRepository.updateById(user.id as string, {
+        passwordResetAttempts: (user.passwordResetAttempts || 0) + 1
+      } as any);
+      throw new Error('Invalid OTP');
+    }
+
+    // OTP verified successfully. Generate temporary reset token.
+    const tempResetToken = generateResetToken(user);
+    
+    // Clear OTP data
+    await userRepository.updateById(user.id as string, {
+      passwordResetOtp: null,
+      passwordResetOtpExpires: null,
+      passwordResetAttempts: 0
+    } as any);
+
+    return { tempResetToken };
   }
 
   async resetPassword(data: any) {
@@ -104,68 +146,6 @@ export class AuthService {
     } catch (error: any) {
       throw new Error(error.message || 'Invalid or expired reset token');
     }
-  }
-
-  async verifyMagicToken(token: string) {
-    const assignment = await InterviewAssignment.findOne({
-      magicToken: token,
-      isTokenUsed: false,
-      magicTokenExpiresAt: { $gt: new Date() }
-    }).populate({
-      path: 'candidateId',
-      match: { isDeleted: false }
-    }).populate({
-      path: 'jobId',
-      match: { isDeleted: false }
-    });
-
-    if (!assignment) {
-      throw new Error('Invalid or expired activation token');
-    }
-
-    return assignment;
-  }
-
-  async activateCandidate(token: string, password: any) {
-    const assignment = await this.verifyMagicToken(token);
-    const candidate: any = assignment.candidateId;
-
-    if (!candidate) {
-      throw new Error('Candidate associated with this token not found');
-    }
-
-    let user = await userRepository.findByEmail(candidate.email);
-    const hashedPassword = await hashPassword(password);
-
-    if (!user) {
-      // Create new candidate User account
-      user = await userRepository.create({
-        firstName: candidate.firstName,
-        lastName: candidate.lastName,
-        email: candidate.email,
-        phone: candidate.phone,
-        employeeId: `CAND-${candidate.candidateCode}`,
-        role: SystemRoles.CANDIDATE as any,
-        passwordHash: hashedPassword,
-        isActive: true
-      } as any);
-    } else {
-      // Update existing user with candidate credentials/role
-      user = await userRepository.updateById(user._id.toString(), {
-        role: SystemRoles.CANDIDATE as any,
-        passwordHash: hashedPassword,
-        isActive: true
-      } as any) as any;
-    }
-
-    // Invalidate the single-use token
-    assignment.isTokenUsed = true;
-    await assignment.save();
-
-    const { accessToken, refreshToken } = generateTokens(user as any);
-    await userRepository.updateRefreshToken(user!.id as string, refreshToken);
-
-    return { user, accessToken, refreshToken };
   }
 }
 

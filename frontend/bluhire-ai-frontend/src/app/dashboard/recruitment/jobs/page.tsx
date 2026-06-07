@@ -13,6 +13,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 
 export default function JobsManagement() {
@@ -202,9 +203,9 @@ export default function JobsManagement() {
               Candidates
             </span>
           </Link>
-          <Link href="/dashboard/recruitment/interviews">
+          <Link href="/dashboard/recruitment/ai-interviews">
             <span className="text-xs font-semibold px-4 py-2 rounded-lg text-zinc-400 hover:text-white cursor-pointer block transition-colors border border-transparent">
-              AI Voice Interviews
+              AI Interviews
             </span>
           </Link>
         </div>
@@ -226,17 +227,18 @@ export default function JobsManagement() {
           />
         </div>
         <div className="flex gap-2 w-full sm:w-auto justify-end">
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="bg-white/5 hover:bg-white/10 text-xs font-semibold px-3 py-2 rounded-xl border border-white/5 text-zinc-300 focus:outline-none cursor-pointer"
-          >
-            <option value="ALL">All Statuses</option>
-            <option value="DRAFT">Draft</option>
-            <option value="OPEN">Open/Published</option>
-            <option value="CLOSED">Closed</option>
-            <option value="ON_HOLD">On Hold</option>
-          </select>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-40 h-9 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 text-xs font-semibold text-zinc-300">
+              <SelectValue placeholder="All Statuses" />
+            </SelectTrigger>
+            <SelectContent className="bg-zinc-950 border border-white/10">
+              <SelectItem value="ALL">All Statuses</SelectItem>
+              <SelectItem value="DRAFT">Draft</SelectItem>
+              <SelectItem value="OPEN">Open/Published</SelectItem>
+              <SelectItem value="CLOSED">Closed</SelectItem>
+              <SelectItem value="ON_HOLD">On Hold</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
@@ -329,29 +331,29 @@ export default function JobsManagement() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1">
                 <Label htmlFor="dept" className="text-xs font-semibold text-zinc-300">Department *</Label>
-                <select
-                  id="dept"
-                  value={deptId}
-                  onChange={(e) => setDeptId(e.target.value)}
-                  className="w-full bg-zinc-900 text-xs font-semibold px-3 py-2 rounded-xl border border-white/5 text-zinc-300 focus:outline-none h-10 cursor-pointer"
-                >
-                  {departments.map((d) => (
-                    <option key={d._id} value={d._id}>{d.name}</option>
-                  ))}
-                </select>
+                <Select value={deptId} onValueChange={setDeptId} searchable={true}>
+                  <SelectTrigger id="dept" className="w-full bg-white/5 border border-white/5 text-xs text-white h-10 rounded-xl">
+                    <SelectValue placeholder="Select Department..." />
+                  </SelectTrigger>
+                  <SelectContent className="bg-zinc-950 border border-white/10">
+                    {departments.map((d) => (
+                      <SelectItem key={d._id} value={d._id}>{d.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-1">
                 <Label htmlFor="desig" className="text-xs font-semibold text-zinc-300">Designation *</Label>
-                <select
-                  id="desig"
-                  value={desigId}
-                  onChange={(e) => setDesigId(e.target.value)}
-                  className="w-full bg-zinc-900 text-xs font-semibold px-3 py-2 rounded-xl border border-white/5 text-zinc-300 focus:outline-none h-10 cursor-pointer"
-                >
-                  {designations.map((d) => (
-                    <option key={d._id} value={d._id}>{d.title}</option>
-                  ))}
-                </select>
+                <Select value={desigId} onValueChange={setDesigId} searchable={true}>
+                  <SelectTrigger id="desig" className="w-full bg-white/5 border border-white/5 text-xs text-white h-10 rounded-xl">
+                    <SelectValue placeholder="Select Designation..." />
+                  </SelectTrigger>
+                  <SelectContent className="bg-zinc-950 border border-white/10">
+                    {designations.map((d) => (
+                      <SelectItem key={d._id} value={d._id}>{d.title}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
@@ -390,17 +392,17 @@ export default function JobsManagement() {
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-1">
                 <Label htmlFor="type" className="text-xs font-semibold text-zinc-300">Employment Type *</Label>
-                <select
-                  id="type"
-                  value={empType}
-                  onChange={(e) => setEmpType(e.target.value)}
-                  className="w-full bg-zinc-900 text-xs font-semibold px-3 py-2 rounded-xl border border-white/5 text-zinc-300 focus:outline-none h-10 cursor-pointer"
-                >
-                  <option value="FULL_TIME">Full Time</option>
-                  <option value="PART_TIME">Part Time</option>
-                  <option value="CONTRACT">Contract</option>
-                  <option value="INTERN">Internship</option>
-                </select>
+                <Select value={empType} onValueChange={setEmpType}>
+                  <SelectTrigger id="type" className="w-full bg-white/5 border border-white/5 text-xs text-white h-10 rounded-xl">
+                    <SelectValue placeholder="Select Type..." />
+                  </SelectTrigger>
+                  <SelectContent className="bg-zinc-950 border border-white/10">
+                    <SelectItem value="FULL_TIME">Full Time</SelectItem>
+                    <SelectItem value="PART_TIME">Part Time</SelectItem>
+                    <SelectItem value="CONTRACT">Contract</SelectItem>
+                    <SelectItem value="INTERN">Internship</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-1">
                 <Label htmlFor="loc" className="text-xs font-semibold text-zinc-300">Location *</Label>
@@ -423,17 +425,17 @@ export default function JobsManagement() {
               </div>
               <div className="space-y-1">
                 <Label htmlFor="status" className="text-xs font-semibold text-zinc-300">Status *</Label>
-                <select
-                  id="status"
-                  value={status}
-                  onChange={(e) => setStatus(e.target.value)}
-                  className="w-full bg-zinc-900 text-xs font-semibold px-3 py-2 rounded-xl border border-white/5 text-zinc-300 focus:outline-none h-10 cursor-pointer"
-                >
-                  <option value="DRAFT">Draft</option>
-                  <option value="OPEN">Open (Publish)</option>
-                  <option value="CLOSED">Closed</option>
-                  <option value="ON_HOLD">On Hold</option>
-                </select>
+                <Select value={status} onValueChange={setStatus}>
+                  <SelectTrigger id="status" className="w-full bg-white/5 border border-white/5 text-xs text-white h-10 rounded-xl">
+                    <SelectValue placeholder="Select Status..." />
+                  </SelectTrigger>
+                  <SelectContent className="bg-zinc-950 border border-white/10">
+                    <SelectItem value="DRAFT">Draft</SelectItem>
+                    <SelectItem value="OPEN">Open (Publish)</SelectItem>
+                    <SelectItem value="CLOSED">Closed</SelectItem>
+                    <SelectItem value="ON_HOLD">On Hold</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 

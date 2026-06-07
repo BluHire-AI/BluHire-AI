@@ -1,27 +1,23 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import { Difficulty, QuestionCategory } from '../types/interview.types';
 
 export interface IInterviewQuestion extends Document {
-  sessionId: mongoose.Types.ObjectId;
+  _id: any;
+  templateId: string; // Reference to InterviewTemplate _id
   questionText: string;
-  category: 'Technical' | 'Behavioral' | 'Situational' | 'Problem Solving' | 'Project-Based' | 'Resume-Based';
-  difficulty: string;
-  isFollowUp: boolean;
-  parentQuestionId?: mongoose.Types.ObjectId;
-  order: number;
-  questionVersion: number;
-  generatedBy: string;
-  generatedAt: Date;
-  sourceType: 'Resume' | 'JobDescription' | 'FollowUp' | 'Behavioral' | 'Technical';
+  category: QuestionCategory;
+  difficulty: Difficulty;
+  expectedTopics: string[];
+  generatedByAI: boolean;
   createdAt: Date;
-  updatedAt: Date;
 }
 
-const InterviewQuestionSchema = new Schema<IInterviewQuestion>(
+const InterviewQuestionSchema = new Schema<any>(
   {
-    sessionId: {
+    templateId: {
       type: Schema.Types.ObjectId,
-      ref: 'InterviewSession',
-      required: [true, 'Interview Session ID is required'],
+      ref: 'InterviewTemplate',
+      required: [true, 'Template ID is required'],
       index: true,
     },
     questionText: {
@@ -31,50 +27,31 @@ const InterviewQuestionSchema = new Schema<IInterviewQuestion>(
     },
     category: {
       type: String,
-      enum: ['Technical', 'Behavioral', 'Situational', 'Problem Solving', 'Project-Based', 'Resume-Based'],
-      required: [true, 'Question category is required'],
+      enum: Object.values(QuestionCategory),
+      required: true,
     },
     difficulty: {
       type: String,
+      enum: Object.values(Difficulty),
       required: true,
     },
-    isFollowUp: {
+    expectedTopics: {
+      type: [String],
+      default: [],
+    },
+    generatedByAI: {
       type: Boolean,
-      default: false,
-    },
-    parentQuestionId: {
-      type: Schema.Types.ObjectId,
-      ref: 'InterviewQuestion',
-      default: null,
-    },
-    order: {
-      type: Number,
-      required: true,
-    },
-    questionVersion: {
-      type: Number,
-      default: 1,
-    },
-    generatedBy: {
-      type: String,
-      default: 'AI_ENGINE',
-    },
-    generatedAt: {
-      type: Date,
-      default: Date.now,
-    },
-    sourceType: {
-      type: String,
-      enum: ['Resume', 'JobDescription', 'FollowUp', 'Behavioral', 'Technical'],
-      required: true,
+      default: true,
     },
   },
   {
-    timestamps: true,
+    timestamps: { createdAt: true, updatedAt: false }, // Only createdAt specified in requirements, but we can leave timestamps: true or just createdAt
   }
 );
 
 // Indexes
-InterviewQuestionSchema.index({ sessionId: 1, order: 1 });
+InterviewQuestionSchema.index({ templateId: 1 });
+InterviewQuestionSchema.index({ category: 1 });
+InterviewQuestionSchema.index({ difficulty: 1 });
 
 export default mongoose.model<IInterviewQuestion>('InterviewQuestion', InterviewQuestionSchema);

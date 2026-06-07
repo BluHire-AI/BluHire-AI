@@ -1,84 +1,79 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import { Difficulty, TemplateStatus, QuestionCategory } from '../types/interview.types';
+
 
 export interface IInterviewTemplate extends Document {
-  name: string;
+  _id: any;
+  title: string;
   jobRole: string;
-  department: string;
-  experienceLevel: string;
-  difficultyLevel: string;
-  skillsRequired: string[];
-  numQuestions: number;
-  timeLimit: number; // in minutes
-  interviewType: 'Technical' | 'HR' | 'Behavioral' | 'Mixed';
-  maxAttempts: number;
-  showResultsToCandidate?: boolean;
-  isArchived: boolean;
-  createdBy: mongoose.Types.ObjectId;
-  updatedBy: mongoose.Types.ObjectId;
+  departmentId: string; // Reference to Department _id
+  experienceLevel: string; // e.g., "0-2", "3-5", "5+"
+  skills: string[];
+  difficulty: Difficulty;
+  questionCount: number;
+  durationMinutes: number;
+  categories: QuestionCategory[];
+  status: TemplateStatus;
+  createdBy: string; // User _id
+  updatedBy?: string; // User _id
   createdAt: Date;
   updatedAt: Date;
 }
 
-const InterviewTemplateSchema = new Schema<IInterviewTemplate>(
+const InterviewTemplateSchema = new Schema<any>(
   {
-    name: {
+    title: {
       type: String,
-      required: [true, 'Interview template name is required'],
+      required: [true, 'Title is required'],
       trim: true,
-      unique: true,
     },
     jobRole: {
       type: String,
       required: [true, 'Job role is required'],
       trim: true,
     },
-    department: {
-      type: String,
-      required: [true, 'Department is required'],
-      trim: true,
+    departmentId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Department',
+      required: [true, 'Department ID is required'],
+      index: true,
     },
     experienceLevel: {
       type: String,
       required: [true, 'Experience level is required'],
       trim: true,
     },
-    difficultyLevel: {
-      type: String,
-      required: [true, 'Difficulty level is required'],
-      trim: true,
-    },
-    skillsRequired: {
+    skills: {
       type: [String],
-      required: [true, 'Skills required lists are required'],
+      required: true,
       default: [],
     },
-    numQuestions: {
-      type: Number,
-      required: [true, 'Number of questions is required'],
-      min: [1, 'Must have at least 1 question'],
-    },
-    timeLimit: {
-      type: Number,
-      required: [true, 'Time limit is required'],
-      min: [1, 'Time limit must be at least 1 minute'],
-    },
-    interviewType: {
+    difficulty: {
       type: String,
-      enum: ['Technical', 'HR', 'Behavioral', 'Mixed'],
-      default: 'Mixed',
+      enum: Object.values(Difficulty),
+      required: true,
     },
-    maxAttempts: {
+    questionCount: {
       type: Number,
-      default: 1,
-      min: [1, 'Max attempts must be at least 1'],
+      required: true,
+      min: 1,
     },
-    showResultsToCandidate: {
-      type: Boolean,
-      default: false,
+    durationMinutes: {
+      type: Number,
+      required: true,
+      min: 1,
     },
-    isArchived: {
-      type: Boolean,
-      default: false,
+    categories: {
+      type: [String],
+      enum: Object.values(QuestionCategory),
+      required: true,
+      default: [],
+    },
+    status: {
+      type: String,
+      enum: Object.values(TemplateStatus),
+      default: TemplateStatus.DRAFT,
+      index: true,
     },
     createdBy: {
       type: Schema.Types.ObjectId,
@@ -88,7 +83,7 @@ const InterviewTemplateSchema = new Schema<IInterviewTemplate>(
     updatedBy: {
       type: Schema.Types.ObjectId,
       ref: 'User',
-      required: true,
+      default: null,
     },
   },
   {
@@ -97,6 +92,7 @@ const InterviewTemplateSchema = new Schema<IInterviewTemplate>(
 );
 
 // Indexes
-InterviewTemplateSchema.index({ jobRole: 1, isArchived: 1 });
+InterviewTemplateSchema.index({ departmentId: 1, status: 1 });
+InterviewTemplateSchema.index({ createdAt: -1 });
 
 export default mongoose.model<IInterviewTemplate>('InterviewTemplate', InterviewTemplateSchema);

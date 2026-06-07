@@ -1,18 +1,18 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, Suspense } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/lib/store/auth';
 import { api } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { 
   Users, Building, Calendar, Sparkles, UserCheck, Clock, FileText,
-  UserPlus, ShieldAlert, Award, Compass, RefreshCw, Briefcase, Plus, Brain
+  Award, Compass, RefreshCw, Briefcase, Plus, Brain
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import CandidateDashboard from '@/components/CandidateDashboard';
-import { Suspense } from 'react';
 
 interface Activity {
   _id: string;
@@ -43,7 +43,18 @@ interface RecentEmployee {
 }
 
 export default function DashboardPage() {
+  const router = useRouter();
   const { user } = useAuthStore();
+
+  // Redirect employee to their role-specific dashboard
+  const userRole = user?.role;
+  useEffect(() => {
+    if (userRole === 'EMPLOYEE') {
+      router.push('/employee/dashboard');
+    }
+  }, [userRole, router]);
+
+  // If candidate, show CandidateDashboard
   if (user?.role === 'CANDIDATE') {
     return (
       <Suspense fallback={
@@ -56,6 +67,7 @@ export default function DashboardPage() {
       </Suspense>
     );
   }
+
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
     totalEmployees: 0,
@@ -70,6 +82,7 @@ export default function DashboardPage() {
   const [activities, setActivities] = useState<Activity[]>([]);
 
   const fetchDashboardData = async () => {
+    if (!user) return;
     setLoading(true);
     try {
       const [empStatsRes, deptRes, desgRes, recentEmpRes, recentActRes] = await Promise.all([
@@ -102,9 +115,12 @@ export default function DashboardPage() {
     }
   };
 
+  const userId = user?.id || user?._id;
   useEffect(() => {
-    fetchDashboardData();
-  }, [user]);
+    if (userId && userRole !== 'EMPLOYEE') {
+      fetchDashboardData();
+    }
+  }, [userId, userRole]);
 
   const aiModules = [
     { 
@@ -290,7 +306,7 @@ export default function DashboardPage() {
                 {recentEmployees.map((emp) => (
                   <div key={emp._id} className="flex items-center justify-between p-3.5 rounded-xl border border-white/10 bg-white/[0.02] hover:bg-white/[0.05] hover:border-white/20 transition-all">
                     <div className="flex items-center space-x-3">
-                      <div className="w-8 h-8 rounded-lg bg-[#8B5CF6]/10 text-[#8B5CF6] font-bold flex items-center justify-center text-[10px] border border-[#8B5CF6]/25 shrink-0 shadow-[0_0_10px_rgba(139,92,246,0.1)]">
+                      <div className="w-8 h-8 rounded-lg bg-[#8B5CF6]/10 text-[#8B5CF6] font-bold flex items-center justify-center text-[10px] border border-[#8B5CF6]/25 shrink-0 shadow-[0_0_10px_rgba(139,92,246,0.15)]">
                         {emp.firstName.charAt(0)}{emp.lastName.charAt(0)}
                       </div>
                       <div>

@@ -76,13 +76,23 @@ export class AuthController {
   async forgotPassword(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const result = await authService.forgotPassword(req.body.email);
+      res.status(200).json(result);
+    } catch (error: any) {
+      next(error);
+    }
+  }
+
+  async verifyResetOtp(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { email, otp } = req.body;
+      const result = await authService.verifyResetOtp(email, otp);
       res.status(200).json({
         success: true,
-        message: 'Password reset link generated',
+        message: 'OTP verified successfully',
         data: result,
       });
     } catch (error: any) {
-      next(error);
+      res.status(400).json({ success: false, message: error.message });
     }
   }
 
@@ -98,48 +108,6 @@ export class AuthController {
         success: false,
         message: error.message || 'Failed to reset password',
       });
-    }
-  }
-
-  async verifyMagicToken(req: Request, res: Response, next: NextFunction): Promise<void> {
-    try {
-      const { token } = req.query;
-      if (!token) {
-        res.status(400).json({ success: false, message: 'Token is required' });
-        return;
-      }
-      const assignment = await authService.verifyMagicToken(token as string);
-      res.status(200).json({
-        success: true,
-        data: {
-          assignmentId: assignment._id,
-          candidate: assignment.candidateId,
-          job: assignment.jobId
-        }
-      });
-    } catch (error: any) {
-      res.status(400).json({ success: false, message: error.message || 'Token verification failed' });
-    }
-  }
-
-  async activateCandidate(req: Request, res: Response, next: NextFunction): Promise<void> {
-    try {
-      const { token, password } = req.body;
-      if (!token || !password) {
-        res.status(400).json({ success: false, message: 'Token and password are required' });
-        return;
-      }
-      const result = await authService.activateCandidate(token, password);
-      res.status(200).json({
-        success: true,
-        data: {
-          user: result.user,
-          accessToken: result.accessToken,
-          refreshToken: result.refreshToken
-        }
-      });
-    } catch (error: any) {
-      res.status(400).json({ success: false, message: error.message || 'Activation failed' });
     }
   }
 }

@@ -15,6 +15,10 @@ export interface IUser extends Document {
   passwordHash: string;
   isActive: boolean;
   refreshToken?: string;
+  passwordResetOtp?: string;
+  passwordResetOtpExpires?: Date;
+  passwordResetAttempts?: number;
+  mustChangePassword?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -49,7 +53,11 @@ const userSchema = new Schema<IUser>(
     profileImage: { type: String },
     passwordHash: { type: String, required: true },
     isActive: { type: Boolean, default: true },
-    refreshToken: { type: String } // Storing refresh token
+    refreshToken: { type: String }, // Storing refresh token
+    passwordResetOtp: { type: String },
+    passwordResetOtpExpires: { type: Date },
+    passwordResetAttempts: { type: Number, default: 0 },
+    mustChangePassword: { type: Boolean, default: false }
   },
   { 
     timestamps: true // Adds createdAt and updatedAt

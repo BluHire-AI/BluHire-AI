@@ -21,6 +21,9 @@ class OpenRouterClient:
             "openrouter/auto"
         ).strip()
 
+        print(f"[OpenRouter] API Key initialized: {'exists' if self.api_key else 'missing'}")
+        print(f"[OpenRouter] Default model: {self.default_model}")
+
         self.api_url = "https://openrouter.ai/api/v1/chat/completions"
 
     async def get_completion(
@@ -37,9 +40,15 @@ class OpenRouterClient:
             "Content-Type": "application/json"
         }
 
-        models_to_try = [
-            self.default_model
+        fallbacks = [
+            "google/gemma-2-9b-it:free",
+            "meta-llama/llama-3-8b-instruct:free",
+            "openchat/openchat-7b:free"
         ]
+        models_to_try = [self.default_model]
+        for fb in fallbacks:
+            if fb != self.default_model:
+                models_to_try.append(fb)
 
         last_error = None
 
@@ -76,6 +85,7 @@ class OpenRouterClient:
 
                     if response.status_code == 200:
                         data = response.json()
+                        print(f"[OpenRouter] Raw Response:\n{json.dumps(data, indent=2)}")
 
                         if (
                             "choices" in data

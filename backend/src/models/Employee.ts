@@ -58,6 +58,7 @@ export interface IEmployee extends Document {
   education?: IEducation[];
   salaryGrade?: string;
   workLocation: string;
+  shiftId?: string; // Reference to Shift _id
   employmentStatus: EmploymentStatus;
   profileImage?: string;
   emergencyContact?: {
@@ -74,6 +75,7 @@ export interface IEmployee extends Document {
   };
   documents?: IDocument[];
   notes?: string;
+  allowSelfCheckIn?: boolean;
   createdBy: string; // User _id who created this record
   updatedBy?: string; // User _id who last updated this record
   isDeleted: boolean; // Soft delete flag
@@ -268,11 +270,21 @@ const EmployeeSchema = new Schema<any>(
       required: [true, 'Work location is required'],
       trim: true,
     },
+    shiftId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Shift',
+      default: null,
+      index: true,
+    },
     employmentStatus: {
       type: String,
       enum: Object.values(EmploymentStatus),
       default: EmploymentStatus.PROBATION,
       index: true,
+    },
+    allowSelfCheckIn: {
+      type: Boolean,
+      default: true,
     },
     profileImage: {
       type: String,

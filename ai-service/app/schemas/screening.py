@@ -9,6 +9,8 @@ class ScreeningResult(BaseModel):
     educationMatch: str = Field(..., description="Explanation of education alignment")
     screeningSummary: str = Field(..., description="Recruiter-facing candidate summary insights")
     aiRecommendation: str = Field(..., description="Must be one of: Strong Hire, Hire, Needs Review, Reject")
+    resumeLength: Optional[int] = Field(None, description="Extracted resume text character length")
+    modelUsed: Optional[str] = Field(None, description="Model used for OpenRouter completions")
 
 class ErrorResponse(BaseModel):
     success: bool = False

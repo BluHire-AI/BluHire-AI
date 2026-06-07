@@ -71,6 +71,8 @@ export interface Application {
   hiredAt?: string;
   aiScore?: number;
   aiRecommendation?: string;
+  screeningScore?: number;
+  finalScore?: number;
   matchingSkills?: string[];
   missingSkills?: string[];
   screeningSummary?: string;
@@ -234,6 +236,11 @@ export const recruitmentService = {
     const response = await api.get(`/recruitment/resumes/download/${filename}`, {
       responseType: 'blob',
     });
+    return response.data;
+  },
+
+  recalculateScores: async (): Promise<any> => {
+    const response = await api.post('/recruitment/recalculate-scores');
     return response.data;
   },
 };

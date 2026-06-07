@@ -79,8 +79,20 @@ adminRecruitmentRouter.patch(
   '/applications/:id/stage',
   applicationsController.moveStage.bind(applicationsController)
 );
+adminRecruitmentRouter.post(
+  '/applications/:id/invite',
+  applicationsController.inviteToInterview.bind(applicationsController)
+);
+adminRecruitmentRouter.post(
+  '/applications/:id/hire',
+  applicationsController.hireCandidate.bind(applicationsController)
+);
 
 // Pipeline, Analytics & Activities
+adminRecruitmentRouter.post(
+  '/recalculate-scores',
+  applicationsController.recalculateScores.bind(applicationsController)
+);
 adminRecruitmentRouter.get(
   '/pipeline',
   applicationsController.getPipeline.bind(applicationsController)

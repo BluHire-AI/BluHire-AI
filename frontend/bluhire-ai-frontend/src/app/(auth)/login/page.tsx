@@ -48,7 +48,18 @@ export default function LoginPage() {
         const { user, accessToken, refreshToken } = response.data.data;
         login(user, accessToken, refreshToken);
         toast.success('Login successful');
-        router.push('/dashboard');
+        
+        // First-login: employee must change temporary password
+        if (user.mustChangePassword) {
+          router.push('/change-password/first-login');
+          return;
+        }
+
+        let targetRoute = '/dashboard';
+        if (user.role === 'EMPLOYEE') {
+          targetRoute = '/employee/dashboard';
+        }
+        router.push(targetRoute);
       }
     } catch (error: unknown) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any

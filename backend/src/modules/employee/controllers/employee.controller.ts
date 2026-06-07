@@ -42,6 +42,39 @@ export class EmployeeController {
   }
 
   /**
+   * Get logged-in user's employee record
+   * GET /api/v1/employees/me
+   */
+  async getMyEmployeeRecord(req: any, res: Response): Promise<void> {
+    const userId = req.user?.id;
+    const role = req.user?.role;
+    console.log(`[EMPLOYEE_ME] User ID: ${userId}`);
+    try {
+      const employee = await EmployeeService.getEmployeeByUserId(userId);
+      console.log(`[EMPLOYEE_AUDIT]
+User ID: ${userId}
+Role: ${role}
+Employee Record Found: true
+Employee ID: ${employee._id}
+Expected Behaviour: Administrative users may exist without physical Employee records.`);
+      console.log(`[EMPLOYEE_ME] Employee Found: true, Employee ID: ${employee._id}`);
+      res.json(createSuccessResponse(employee, 'Employee profile retrieved successfully'));
+    } catch (error: any) {
+      console.log(`[EMPLOYEE_AUDIT]
+User ID: ${userId}
+Role: ${role}
+Employee Record Found: false
+Employee ID: null
+Expected Behaviour: Administrative users may exist without physical Employee records.`);
+      console.log(`[EMPLOYEE_ME] Employee Found: false`);
+      res.status(404).json(
+        createErrorResponse(error.message || 'Employee record not found for this user', undefined, 404)
+      );
+    }
+  }
+
+
+  /**
    * List employees
    * GET /api/v1/employees
    */

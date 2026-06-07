@@ -34,6 +34,7 @@ export interface Employee {
   employmentStatus: 'ACTIVE' | 'ON_LEAVE' | 'TERMINATED' | 'SUSPENDED';
   employmentType: 'FULL_TIME' | 'PART_TIME' | 'CONTRACT' | 'INTERN';
   workLocation: 'OFFICE' | 'REMOTE' | 'HYBRID';
+  allowSelfCheckIn?: boolean;
   dateOfBirth?: string;
   gender?: 'MALE' | 'FEMALE' | 'OTHER';
   skills?: string[];
@@ -92,7 +93,17 @@ export interface EmployeeQuery {
   sortOrder?: 'asc' | 'desc';
 }
 
+let getMePromise: Promise<Employee> | null = null;
+let cachedMe: Employee | null = null;
+let cachedError: any = null;
+
 export const employeeService = {
+  clearCache: () => {
+    getMePromise = null;
+    cachedMe = null;
+    cachedError = null;
+  },
+
   list: async (query?: EmployeeQuery): Promise<EmployeeListResponse> => {
     const response = await api.get('/employees', { params: query });
     return {
@@ -104,6 +115,25 @@ export const employeeService = {
   get: async (id: string): Promise<Employee> => {
     const response = await api.get(`/employees/${id}`);
     return response.data.data;
+  },
+  
+  getMe: async (): Promise<Employee> => {
+    if (cachedMe) return cachedMe;
+    if (cachedError) throw cachedError;
+    if (!getMePromise) {
+      getMePromise = api.get('/employees/me')
+        .then(response => {
+          cachedMe = response.data.data;
+          getMePromise = null;
+          return response.data.data;
+        })
+        .catch(err => {
+          cachedError = err;
+          getMePromise = null;
+          throw err;
+        });
+    }
+    return getMePromise;
   },
 
   create: async (data: any): Promise<Employee> => {

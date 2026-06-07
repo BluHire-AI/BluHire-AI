@@ -30,6 +30,8 @@ export interface IApplication extends Document {
   offeredAt?: Date;
   hiredAt?: Date;
   aiScore?: number;
+  screeningScore?: number;
+  finalScore?: number;
   aiRecommendation?: string;
   matchingSkills?: string[];
   missingSkills?: string[];
@@ -124,6 +126,14 @@ const ApplicationSchema = new Schema<any>(
       default: null,
     },
     aiScore: {
+      type: Number,
+      default: null,
+    },
+    screeningScore: {
+      type: Number,
+      default: null,
+    },
+    finalScore: {
       type: Number,
       default: null,
     },

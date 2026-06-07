@@ -1,59 +1,48 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import { SessionStatus } from '../types/interview.types';
 
 export interface IInterviewSession extends Document {
-  assignmentId: mongoose.Types.ObjectId;
-  candidateId: mongoose.Types.ObjectId;
-  jobId: mongoose.Types.ObjectId;
-  status: 'Pending' | 'Started' | 'In Progress' | 'Completed' | 'Failed';
-  startedAt?: Date;
-  completedAt?: Date;
-  duration?: number; // duration in seconds
+  _id: any;
+  candidateId: string; // Reference to Candidate _id
+  templateId: string; // Reference to InterviewTemplate _id
+  recruiterId: string; // Reference to User _id
+  status: SessionStatus;
   currentQuestionIndex: number;
   totalQuestions: number;
-  skillsExtracted: string[];
-  tabSwitchCount: number;
-  fullscreenExitCount: number;
-  networkDisconnectCount: number;
-  suspiciousActivityFlag: boolean;
+  startedAt?: Date;
+  completedAt?: Date;
+  duration?: number; // In minutes or seconds
+  publicToken?: string;
+  tokenExpiresAt?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
 
-const InterviewSessionSchema = new Schema<IInterviewSession>(
+const InterviewSessionSchema = new Schema<any>(
   {
-    assignmentId: {
-      type: Schema.Types.ObjectId,
-      ref: 'InterviewAssignment',
-      required: [true, 'Interview assignment ID is required'],
-      index: true,
-    },
     candidateId: {
       type: Schema.Types.ObjectId,
       ref: 'Candidate',
       required: [true, 'Candidate ID is required'],
       index: true,
     },
-    jobId: {
+    templateId: {
       type: Schema.Types.ObjectId,
-      ref: 'Job',
-      required: [true, 'Job ID is required'],
+      ref: 'InterviewTemplate',
+      required: [true, 'Template ID is required'],
+      index: true,
+    },
+    recruiterId: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+      required: [true, 'Recruiter ID is required'],
       index: true,
     },
     status: {
       type: String,
-      enum: ['Pending', 'Started', 'In Progress', 'Completed', 'Failed'],
-      default: 'Pending',
+      enum: Object.values(SessionStatus),
+      default: SessionStatus.CREATED,
       index: true,
-    },
-    startedAt: {
-      type: Date,
-    },
-    completedAt: {
-      type: Date,
-    },
-    duration: {
-      type: Number,
-      default: 0,
     },
     currentQuestionIndex: {
       type: Number,
@@ -61,32 +50,38 @@ const InterviewSessionSchema = new Schema<IInterviewSession>(
     },
     totalQuestions: {
       type: Number,
+      required: [true, 'Total questions count is required'],
       default: 0,
     },
-    skillsExtracted: {
-      type: [String],
-      default: [],
+    startedAt: {
+      type: Date,
+      default: null,
     },
-    tabSwitchCount: {
+    completedAt: {
+      type: Date,
+      default: null,
+    },
+    duration: {
       type: Number,
-      default: 0,
+      default: null,
     },
-    fullscreenExitCount: {
-      type: Number,
-      default: 0,
+    publicToken: {
+      type: String,
+      unique: true,
+      sparse: true, // Sparse allows nulls if we have legacy records
+      index: true,
     },
-    networkDisconnectCount: {
-      type: Number,
-      default: 0,
-    },
-    suspiciousActivityFlag: {
-      type: Boolean,
-      default: false,
+    tokenExpiresAt: {
+      type: Date,
     },
   },
   {
     timestamps: true,
   }
 );
+
+// Indexes
+InterviewSessionSchema.index({ candidateId: 1, status: 1 });
+InterviewSessionSchema.index({ createdAt: -1 });
 
 export default mongoose.model<IInterviewSession>('InterviewSession', InterviewSessionSchema);

@@ -7,8 +7,7 @@ from app.screeners.screener import AIScreener
 from app.schemas.screening import ScreeningResult
 from app.services.openrouter import open_router_client
 from app.services.performance_coach import performance_coach_service
-from app.services.interview_engine import InterviewEngine
-from app.services.transcriber import SpeechTranscriber
+from app.services.transcription_service import transcription_service
 
 router = APIRouter(prefix="/api/v1/ai")
 
@@ -52,6 +51,8 @@ async def screen_resume(
             job_experience_required=job_experience_required,
             job_education_required=job_education_required
         )
+        result["resumeLength"] = len(resume_text)
+        result["modelUsed"] = open_router_client.default_model
         return result
     except HTTPException as he:
         raise he
@@ -126,13 +127,25 @@ async def get_promotion_recommendation(payload: dict):
         skill_gaps = payload.get("skillGaps", [])
         tenure_months = int(payload.get("tenureMonths", 0))
         leadership_score = float(payload.get("leadershipScore", 5.0))
+        attendance_rate = float(payload.get("attendanceRate", 95.0))
+        tenure_score = float(payload.get("tenureScore", 100.0))
+        skill_score = float(payload.get("skillScore", 85.0))
+        avg_performance = float(payload.get("avgPerformance", 75.0))
+        readiness_score = payload.get("readinessScore")
+        if readiness_score is not None:
+            readiness_score = int(readiness_score)
         
         result = await performance_coach_service.generate_promotion_recommendation(
             scores=scores,
             goal_completion_rate=goal_completion_rate,
             skill_gaps=skill_gaps,
             tenure_months=tenure_months,
-            leadership_score=leadership_score
+            leadership_score=leadership_score,
+            attendance_rate=attendance_rate,
+            tenure_score=tenure_score,
+            skill_score=skill_score,
+            avg_performance=avg_performance,
+            readiness_score=readiness_score
         )
         return result
     except Exception as e:
@@ -143,12 +156,16 @@ async def get_skill_gap_insights(payload: dict):
     try:
         current_skills = payload.get("currentSkills", [])
         desired_skills = payload.get("desiredSkills", [])
+        role = payload.get("role", "Staff")
+        department = payload.get("department", "Engineering")
         
         result = await performance_coach_service.generate_skill_gap_insights(
             current_skills=current_skills,
-            desired_skills=desired_skills
+            desired_skills=desired_skills,
+            role=role,
+            department=department
         )
-        return {"insights": result}
+        return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -229,90 +246,37 @@ async def generate_rag_answer(payload: dict):
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"RAG completion failed: {str(e)}")
-
-@router.post("/generate-questions")
-async def generate_questions(payload: dict):
-    try:
-        job_title = payload.get("job_title", "")
-        job_description = payload.get("job_description", "")
-        job_required_skills = payload.get("job_required_skills", [])
-        experience_level = payload.get("experience_level", "Mid")
-        difficulty_level = payload.get("difficulty_level", "Medium")
-        resume_snapshot = payload.get("resume_snapshot", {})
-        num_questions = int(payload.get("num_questions", 5))
-
-        questions = await InterviewEngine.generate_questions(
-            job_title=job_title,
-            job_description=job_description,
-            job_required_skills=job_required_skills,
-            experience_level=experience_level,
-            difficulty_level=difficulty_level,
-            resume_snapshot=resume_snapshot,
-            num_questions=num_questions
-        )
-        return questions
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@router.post("/generate-followup")
-async def generate_followup(payload: dict):
-    try:
-        previous_question = payload.get("previous_question", "")
-        previous_answer = payload.get("previous_answer", "")
-        resume_snapshot = payload.get("resume_snapshot", {})
-        experience_level = payload.get("experience_level", "Mid")
-        question_order = int(payload.get("question_order", 1))
-
-        followup = await InterviewEngine.generate_followup(
-            previous_question=previous_question,
-            previous_answer=previous_answer,
-            resume_snapshot=resume_snapshot,
-            experience_level=experience_level,
-            question_order=question_order
-        )
-        return followup
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
 @router.post("/transcribe")
-async def transcribe_audio(file: UploadFile = File(...)):
+async def transcribe_audio(payload: dict):
     try:
-        file_bytes = await file.read()
-        result = await SpeechTranscriber.transcribe(file_bytes, file.filename)
+        recording_id = payload.get("recordingId")
+        file_path = payload.get("filePath")
+        
+        if not file_path:
+            raise HTTPException(status_code=400, detail="filePath is required")
+        
+        transcript_text = await transcription_service.transcribe(file_path)
+        
+        return {
+            "recordingId": recording_id,
+            "transcript": transcript_text
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Transcription failed: {str(e)}")
+
+from app.services.interview_evaluation import evaluation_service
+
+@router.post("/evaluate")
+async def evaluate_transcript_endpoint(payload: dict):
+    try:
+        transcript_text = payload.get("transcript")
+        job_role = payload.get("jobRole", "Software Engineer")
+        experience_level = payload.get("experienceLevel", "Mid-level")
+        
+        if not transcript_text:
+            raise HTTPException(status_code=400, detail="transcript is required")
+            
+        result = await evaluation_service.evaluate_transcript(transcript_text, job_role, experience_level)
         return result
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@router.post("/evaluate-answer")
-async def evaluate_answer(payload: dict):
-    try:
-        question = payload.get("question", "")
-        answer = payload.get("answer", "")
-        resume_snapshot = payload.get("resume_snapshot", {})
-        experience_level = payload.get("experience_level", "Mid")
-
-        evaluation = await InterviewEngine.evaluate_answer(
-            question=question,
-            answer=answer,
-            resume_snapshot=resume_snapshot,
-            experience_level=experience_level
-        )
-        return evaluation
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@router.post("/generate-report")
-async def generate_report(payload: dict):
-    try:
-        qa_history = payload.get("qa_history", [])
-        resume_snapshot = payload.get("resume_snapshot", {})
-
-        report = await InterviewEngine.generate_report(
-            qa_history=qa_history,
-            resume_snapshot=resume_snapshot
-        )
-        return report
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-
+        raise HTTPException(status_code=500, detail=f"Evaluation failed: {str(e)}")

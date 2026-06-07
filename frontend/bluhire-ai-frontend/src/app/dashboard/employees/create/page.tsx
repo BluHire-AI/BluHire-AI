@@ -257,7 +257,7 @@ export default function CreateEmployeePage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5.5">
               <div className="space-y-2">
                 <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">Link User Account (Optional)</label>
-                <Select value={selectedUserId} onValueChange={handleUserSelect}>
+                <Select value={selectedUserId} onValueChange={handleUserSelect} searchable={true}>
                   <SelectTrigger className="w-full h-10 rounded-xl border border-border/60 bg-muted/20">
                     <SelectValue placeholder="Select a user account..." />
                   </SelectTrigger>
@@ -366,7 +366,7 @@ export default function CreateEmployeePage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5.5">
               <div className="space-y-2">
                 <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">Department <span className="text-destructive">*</span></label>
-                <Select value={departmentId} onValueChange={setDepartmentId}>
+                <Select value={departmentId} onValueChange={setDepartmentId} searchable={true}>
                   <SelectTrigger className="w-full h-10 rounded-xl border border-border/60 bg-muted/20">
                     <SelectValue placeholder="Select Department..." />
                   </SelectTrigger>
@@ -380,7 +380,7 @@ export default function CreateEmployeePage() {
 
               <div className="space-y-2">
                 <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">Designation <span className="text-destructive">*</span></label>
-                <Select value={designationId} onValueChange={setDesignationId}>
+                <Select value={designationId} onValueChange={setDesignationId} searchable={true}>
                   <SelectTrigger className="w-full h-10 rounded-xl border border-border/60 bg-muted/20">
                     <SelectValue placeholder="Select Designation..." />
                   </SelectTrigger>
@@ -394,7 +394,7 @@ export default function CreateEmployeePage() {
 
               <div className="space-y-2">
                 <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">Reporting Manager</label>
-                <Select value={managerId} onValueChange={setManagerId}>
+                <Select value={managerId} onValueChange={setManagerId} searchable={true}>
                   <SelectTrigger className="w-full h-10 rounded-xl border border-border/60 bg-muted/20">
                     <SelectValue placeholder="No Manager (e.g. CEO)" />
                   </SelectTrigger>

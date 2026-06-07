@@ -4,6 +4,7 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { GlobalBackground } from "@/components/ui/global-background";
+import { QueryProvider } from "@/components/providers/query-provider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,7 +32,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning data-scroll-behavior="smooth">
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${inter.variable} antialiased min-h-screen bg-background relative`}
       >
@@ -42,9 +43,11 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <GlobalBackground />
-          <div className="relative z-10 w-full min-h-screen">
-            {children}
-          </div>
+          <QueryProvider>
+            <div className="relative z-10 w-full min-h-screen">
+              {children}
+            </div>
+          </QueryProvider>
           <Toaster position="top-right" />
         </ThemeProvider>
       </body>

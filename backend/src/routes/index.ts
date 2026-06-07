@@ -9,6 +9,7 @@ import analyticsRoutes from '../modules/analytics/analytics.routes';
 import copilotRoutes from '../modules/copilot/copilot.routes';
 import { performanceRoutes } from '../modules/performance';
 import knowledgeRoutes from '../modules/knowledge/routes/knowledge.routes';
+import attendanceRoutes from '../modules/attendance/routes';
 
 import dashboardRoutes from './dashboard.routes';
 import candidateRoutes from './candidate.routes';
@@ -31,11 +32,12 @@ apiRouter.use('/recruitment', authenticate, adminRecruitmentRouter);
 apiRouter.use('/dashboard', authenticate, authorize(RECRUITMENT_ROLES), dashboardRoutes);
 apiRouter.use('/candidates', authenticate, authorize(RECRUITMENT_ROLES), candidateRoutes);
 apiRouter.use('/system', systemRoutes);
-apiRouter.use('/ai', authenticate, aiRouter);
+apiRouter.use('/ai', authenticate, authorize(RECRUITMENT_ROLES), aiRouter);
 apiRouter.use('/analytics', authenticate, analyticsRoutes);
 apiRouter.use('/copilot', authenticate, copilotRoutes);
 apiRouter.use('/performance', authenticate, performanceRoutes);
 apiRouter.use('/knowledge', authenticate, knowledgeRoutes);
+apiRouter.use('/', authenticate, attendanceRoutes);
 apiRouter.use('/', authenticate, employeeRoutes);
 
 export default apiRouter;

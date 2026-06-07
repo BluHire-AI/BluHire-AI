@@ -33,9 +33,17 @@ const InterviewRecordingSchema = new Schema<any>(
       required: [true, 'Question ID is required'],
       index: true,
     },
+    questionIndex: {
+      type: Number,
+      default: 0,
+    },
     videoUrl: {
       type: String,
       required: [true, 'Video URL is required'],
+    },
+    audioUrl: {
+      type: String,
+      default: '',
     },
     duration: {
       type: Number,
@@ -44,6 +52,11 @@ const InterviewRecordingSchema = new Schema<any>(
     fileSize: {
       type: Number,
       default: null,
+    },
+    status: {
+      type: String,
+      enum: ['UPLOADED', 'TRANSCRIBED', 'FAILED'],
+      default: 'UPLOADED',
     },
     uploadedAt: {
       type: Date,
@@ -57,6 +70,5 @@ const InterviewRecordingSchema = new Schema<any>(
 
 // Indexes
 InterviewRecordingSchema.index({ sessionId: 1, questionId: 1 });
-InterviewRecordingSchema.index({ candidateId: 1 });
 
 export default mongoose.model<IInterviewRecording>('InterviewRecording', InterviewRecordingSchema);

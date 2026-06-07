@@ -5,12 +5,17 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion } from 'framer-motion';
 
+import { useAuthStore } from '@/lib/store/auth';
+
 export default function AttendanceLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const { user } = useAuthStore();
+
+  const isHR = user?.role === 'HR_RECRUITER' || user?.role === 'MANAGEMENT_ADMIN';
 
   const tabs = [
     { name: 'Overview', href: '/dashboard/attendance' },
@@ -20,6 +25,7 @@ export default function AttendanceLayout({
     { name: 'Shifts', href: '/dashboard/attendance/shifts' },
     { name: 'Holidays', href: '/dashboard/attendance/holidays' },
     { name: 'Analytics', href: '/dashboard/attendance/analytics' },
+    ...(isHR ? [{ name: 'Management', href: '/dashboard/attendance/management' }] : []),
   ];
 
   return (

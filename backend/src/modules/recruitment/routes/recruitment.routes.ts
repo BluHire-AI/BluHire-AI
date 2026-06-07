@@ -79,6 +79,14 @@ adminRecruitmentRouter.patch(
   '/applications/:id/stage',
   applicationsController.moveStage.bind(applicationsController)
 );
+adminRecruitmentRouter.post(
+  '/applications/:id/invite',
+  applicationsController.inviteToInterview.bind(applicationsController)
+);
+adminRecruitmentRouter.post(
+  '/applications/:id/hire',
+  applicationsController.hireCandidate.bind(applicationsController)
+);
 
 // Pipeline, Analytics & Activities
 adminRecruitmentRouter.get(

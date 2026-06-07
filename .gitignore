@@ -15,3 +15,15 @@ yarn-error.log*
 # Build outputs
 /dist
 /build
+
+# Python Virtual Environment
+**/venv/
+venv/
+
+# User Uploads
+backend/uploads/
+uploads/
+
+# Python cache
+**/__pycache__/
+*.pyc

@@ -3,14 +3,14 @@ import { LeaveType, LeaveStatus } from '../../../models/Leave';
 
 export const applyLeaveSchema = z.object({
   employeeId: z.string().optional(),
-  leaveType: z.nativeEnum(LeaveType, { required_error: 'Leave type is required' }),
+  leaveType: z.nativeEnum(LeaveType, { error: 'Leave type is required' }),
   startDate: z.string().datetime().or(z.date()),
   endDate: z.string().datetime().or(z.date()),
   reason: z.string().min(1, 'Reason is required'),
 });
 
 export const updateLeaveStatusSchema = z.object({
-  status: z.nativeEnum(LeaveStatus, { required_error: 'Status is required' }),
+  status: z.nativeEnum(LeaveStatus, { error: 'Status is required' }),
 });
 
 export const leaveQuerySchema = z.object({

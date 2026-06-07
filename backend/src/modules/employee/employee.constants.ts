@@ -97,6 +97,7 @@ export const ROLE_PERMISSIONS = {
     'read:department',
     'read:designation',
     'view:directory',
+    'view:hierarchy',
   ],
   EMPLOYEE: [
     'read:own_profile',

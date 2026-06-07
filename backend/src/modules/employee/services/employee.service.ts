@@ -3,6 +3,18 @@ import EmployeeRepository from '../repositories/employee.repository';
 import EmployeeActivityRepository from '../repositories/employee-activity.repository';
 import DepartmentRepository from '../repositories/department.repository';
 import DesignationRepository from '../repositories/designation.repository';
+import { User } from '../../../models/User';
+import { SystemRoles } from '../../../models/roles';
+import AttendanceModel from '../../../models/Attendance';
+import AttendanceSummaryModel from '../../../models/AttendanceSummary';
+import LeaveModel from '../../../models/Leave';
+import { EmployeeGoal as EmployeeGoalModel } from '../../../models/EmployeeGoal';
+import { PerformanceReview as PerformanceReviewModel } from '../../../models/PerformanceReview';
+import EmployeeActivityModel from '../../../models/EmployeeActivity';
+import { SkillAssessment as SkillAssessmentModel } from '../../../models/SkillAssessment';
+import { PromotionAssessment as PromotionAssessmentModel } from '../../../models/PromotionAssessment';
+import { SuccessionPlan as SuccessionPlanModel } from '../../../models/SuccessionPlan';
+import { PerformanceRiskAssessment as PerformanceRiskAssessmentModel } from '../../../models/PerformanceRiskAssessment';
 import {
   CreateEmployeeDTO,
   UpdateEmployeeDTO,
@@ -402,24 +414,85 @@ export class EmployeeService {
   }
 
   /**
-   * Delete employee (soft delete)
+   * Delete employee with FULL CASCADE:
+   * - Soft-deletes the Employee record
+   * - Hard-deletes all related HR data (attendance, leaves, goals, reviews, etc.)
+   * - Deactivates and demotes the linked User account back to CANDIDATE role
+   *   so the same email can be re-hired in the future without conflicts
    */
-  async deleteEmployee(employeeId: string, userId: string): Promise<void> {
+  async deleteEmployee(employeeId: string, userId: string): Promise<{ summary: Record<string, number> }> {
     const employee = await EmployeeRepository.findById(employeeId);
     if (!employee) {
       throw new Error('Employee not found');
     }
 
-    await EmployeeRepository.softDelete(employeeId);
+    const summary: Record<string, number> = {};
 
-    // Log activity
-    await EmployeeActivityRepository.create({
-      employeeId,
-      activityType: ActivityType.TERMINATED,
-      title: 'Record Deleted',
-      description: `${employee.firstName} ${employee.lastName}'s employee record was deleted`,
-      createdBy: userId,
+    // 1. Soft-delete the Employee record
+    await EmployeeRepository.softDelete(employeeId);
+    summary.employee = 1;
+
+    // 2. Hard-delete all HR related records tied to this employee
+    const employeeObjectId = employee._id;
+
+    const attendanceResult = await AttendanceModel.deleteMany({ employeeId: employeeObjectId });
+    summary.attendance = attendanceResult.deletedCount;
+
+    const attendanceSummaryResult = await AttendanceSummaryModel.deleteMany({ employeeId: employeeObjectId });
+    summary.attendanceSummary = attendanceSummaryResult.deletedCount;
+
+    const leaveResult = await LeaveModel.deleteMany({ employeeId: employeeObjectId });
+    summary.leaves = leaveResult.deletedCount;
+
+    const goalResult = await EmployeeGoalModel.deleteMany({ employeeId: employeeObjectId });
+    summary.goals = goalResult.deletedCount;
+
+    const reviewResult = await PerformanceReviewModel.deleteMany({ employeeId: employeeObjectId });
+    summary.performanceReviews = reviewResult.deletedCount;
+
+    const activityResult = await EmployeeActivityModel.deleteMany({ employeeId: employeeObjectId });
+    summary.activities = activityResult.deletedCount;
+
+    const skillAssessmentResult = await SkillAssessmentModel.deleteMany({ employeeId: employeeObjectId });
+    summary.skillAssessments = skillAssessmentResult.deletedCount;
+
+    const promotionResult = await PromotionAssessmentModel.deleteMany({ employeeId: employeeObjectId });
+    summary.promotionAssessments = promotionResult.deletedCount;
+
+    const riskResult = await PerformanceRiskAssessmentModel.deleteMany({ employeeId: employeeObjectId });
+    summary.riskAssessments = riskResult.deletedCount;
+
+    // Succession plans can reference this employee as either subject or successor
+    const successionResult = await SuccessionPlanModel.deleteMany({
+      $or: [{ employeeId: employeeObjectId }, { potentialSuccessors: employeeObjectId }]
     });
+    summary.successionPlans = successionResult.deletedCount;
+
+    // 3. Deactivate & demote the linked User account back to CANDIDATE
+    //    This is crucial — it allows the same email to be re-hired later
+    if (employee.userId) {
+      await User.findByIdAndUpdate(employee.userId, {
+        isActive: false,
+        role: SystemRoles.CANDIDATE,
+        refreshToken: null,   // invalidate any active sessions
+      });
+      summary.userAccountDeactivated = 1;
+    } else {
+      // Try to find by email if userId not linked
+      const linkedUser = await User.findOne({ email: employee.email });
+      if (linkedUser) {
+        await User.findByIdAndUpdate(linkedUser._id, {
+          isActive: false,
+          role: SystemRoles.CANDIDATE,
+          refreshToken: null,
+        });
+        summary.userAccountDeactivated = 1;
+      }
+    }
+
+    console.log(`[CascadeDelete] Employee ${employee.firstName} ${employee.lastName} deleted. Summary:`, summary);
+
+    return { summary };
   }
 
   /**

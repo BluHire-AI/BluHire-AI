@@ -75,6 +75,7 @@ export interface IEmployee extends Document {
   };
   documents?: IDocument[];
   notes?: string;
+  allowSelfCheckIn?: boolean;
   createdBy: string; // User _id who created this record
   updatedBy?: string; // User _id who last updated this record
   isDeleted: boolean; // Soft delete flag
@@ -280,6 +281,10 @@ const EmployeeSchema = new Schema<any>(
       enum: Object.values(EmploymentStatus),
       default: EmploymentStatus.PROBATION,
       index: true,
+    },
+    allowSelfCheckIn: {
+      type: Boolean,
+      default: true,
     },
     profileImage: {
       type: String,

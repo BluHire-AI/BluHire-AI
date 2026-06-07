@@ -1,4 +1,4 @@
-import api from '../lib/api';
+import { api } from '../lib/api';
 
 export interface DashboardOverview {
   totalCandidates: number;
@@ -20,6 +20,16 @@ export const getCandidatesPipeline = async () => {
   return response.data.data;
 };
 
+export const getInterviewSessions = async () => {
+  const response = await api.get('/interviews/sessions');
+  return response.data.data;
+};
+
+export const deleteInterviewSession = async (id: string) => {
+  const response = await api.delete(`/interviews/${id}`);
+  return response.data;
+};
+
 export const getCandidateById = async (id: string) => {
   const response = await api.get(`/candidates/${id}`);
   return response.data.data;
@@ -32,6 +42,11 @@ export const getCandidateReport = async (id: string) => {
 
 export const getCandidateScorecard = async (id: string) => {
   const response = await api.get(`/candidates/${id}/scorecard`);
+  return response.data.data;
+};
+
+export const getCandidateMedia = async (id: string) => {
+  const response = await api.get(`/candidates/${id}/media`);
   return response.data.data;
 };
 

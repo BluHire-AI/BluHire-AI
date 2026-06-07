@@ -12,6 +12,7 @@ interface User {
   designation?: string;
   profileImage?: string;
   isActive: boolean;
+  mustChangePassword?: boolean;
 }
 
 interface AuthState {

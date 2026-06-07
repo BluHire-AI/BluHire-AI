@@ -17,7 +17,7 @@ export enum LeaveStatus {
 }
 
 export interface ILeave extends Document {
-  employeeId: string; // Reference to Employee _id
+  employeeId: mongoose.Types.ObjectId; // Reference to Employee _id
   
   leaveType: LeaveType;
   
@@ -27,7 +27,7 @@ export interface ILeave extends Document {
   reason: string;
   status: LeaveStatus;
   
-  approvedBy?: string; // Reference to User _id
+  approvedBy?: mongoose.Types.ObjectId; // Reference to User _id
   approvedAt?: Date;
 
   createdAt: Date;

@@ -62,6 +62,7 @@ export interface UpdateEmployeeDTO {
     postalCode: string;
     country: string;
   };
+  allowSelfCheckIn?: boolean;
   notes?: string;
 }
 

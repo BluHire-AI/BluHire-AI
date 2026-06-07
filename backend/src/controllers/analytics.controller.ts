@@ -1,93 +1,116 @@
 import { Request, Response } from 'express';
 import Candidate from '../models/Candidate';
 import InterviewSession from '../models/InterviewSession';
-import InterviewScore from '../models/InterviewScore';
 import InterviewRecommendation from '../models/InterviewRecommendation';
+import TechnicalEvaluation from '../models/TechnicalEvaluation';
+import CommunicationAnalysis from '../models/CommunicationAnalysis';
+import ProblemSolvingEvaluation from '../models/ProblemSolvingEvaluation';
+import InterviewTranscript from '../models/InterviewTranscript';
+import Application from '../models/Application';
 import { SessionStatus } from '../types/interview.types';
 
 export const getExecutiveAnalytics = async (req: Request, res: Response) => {
   try {
-    // KPI Overview
+    // ── KPI Overview ──────────────────────────────────────────────────────────
     const candidatesCount = await Candidate.countDocuments({ isDeleted: false });
-    
-    // Aggregate candidate statuses
+
     const candidateStatusAggregation = await Candidate.aggregate([
       { $match: { isDeleted: false } },
-      { $group: { _id: "$status", count: { $sum: 1 } } }
+      { $group: { _id: '$status', count: { $sum: 1 } } }
     ]);
-    
+
     const candidateStatuses = candidateStatusAggregation.reduce((acc, curr) => {
       acc[curr._id] = curr.count;
       return acc;
     }, {} as Record<string, number>);
 
-    const applied = candidateStatuses['APPLIED'] || 0;
+    const applied     = candidateStatuses['APPLIED'] || 0;
     const underReview = candidateStatuses['UNDER_REVIEW'] || 0;
     const shortlisted = candidateStatuses['SHORTLISTED'] || 0;
-    const selected = candidateStatuses['SELECTED'] || 0;
-    const rejected = candidateStatuses['REJECTED'] || 0;
+    const selected    = candidateStatuses['SELECTED'] || 0;
+    const rejected    = candidateStatuses['REJECTED'] || 0;
 
-    // Interview Sessions
-    const sessionsCount = await InterviewSession.countDocuments();
+    // ── Interview Sessions ────────────────────────────────────────────────────
+    const sessionsCount       = await InterviewSession.countDocuments();
     const completedInterviews = await InterviewSession.countDocuments({ status: SessionStatus.COMPLETED });
     const interviewCompletionRate = sessionsCount > 0 ? (completedInterviews / sessionsCount) * 100 : 0;
-    const dropOffRate = sessionsCount > 0 ? ((sessionsCount - completedInterviews) / sessionsCount) * 100 : 0;
-    const selectionRate = candidatesCount > 0 ? (selected / candidatesCount) * 100 : 0;
+    const dropOffRate         = sessionsCount > 0 ? ((sessionsCount - completedInterviews) / sessionsCount) * 100 : 0;
+    const selectionRate       = candidatesCount > 0 ? (selected / candidatesCount) * 100 : 0;
 
-    // Averages from InterviewScore
-    const scoreAverages = await InterviewScore.aggregate([
-      {
-        $group: {
-          _id: null,
-          avgTechnical: { $avg: "$technicalScore" },
-          avgCommunication: { $avg: "$communicationScore" },
-          avgProblemSolving: { $avg: "$problemSolvingScore" },
-          avgOverall: { $avg: "$overallScore" }
-        }
-      }
+    // ── Average Scores from real evaluation collections ───────────────────────
+    const [techAvg, commAvg, probAvg] = await Promise.all([
+      TechnicalEvaluation.aggregate([
+        { $group: { _id: null, avg: { $avg: '$overallTechnicalScore' } } }
+      ]),
+      CommunicationAnalysis.aggregate([
+        { $group: { _id: null, avg: { $avg: '$communicationScore' } } }
+      ]),
+      ProblemSolvingEvaluation.aggregate([
+        { $group: { _id: null, avg: { $avg: '$overallProblemSolvingScore' } } }
+      ]),
     ]);
 
-    const avgScores = scoreAverages[0] || { avgTechnical: 0, avgCommunication: 0, avgProblemSolving: 0, avgOverall: 0 };
+    // Scores are stored 0–10 (divided by 10 on write); scale back to 0–100 for display
+    const avgTechnical     = Math.round((techAvg[0]?.avg || 0) * 10);
+    const avgCommunication = Math.round((commAvg[0]?.avg || 0) * 10);
+    const avgProblemSolving = Math.round((probAvg[0]?.avg || 0) * 10);
+    const avgOverall = Math.round(avgTechnical * 0.4 + avgCommunication * 0.3 + avgProblemSolving * 0.3);
 
-    // Recommendation Analytics
+    // ── Recommendation Analytics ──────────────────────────────────────────────
     const recAggregation = await InterviewRecommendation.aggregate([
-      { $group: { _id: "$recommendation", count: { $sum: 1 } } }
+      { $group: { _id: '$recommendation', count: { $sum: 1 } } }
     ]);
-    
     const recommendations = recAggregation.reduce((acc, curr) => {
       acc[curr._id] = curr.count;
       return acc;
     }, {} as Record<string, number>);
 
-    // Hiring Funnel Data
+    // ── Hiring Funnel ─────────────────────────────────────────────────────────
     const hiringFunnel = [
-      { name: 'Applied', value: applied + underReview + shortlisted + selected + rejected },
+      { name: 'Applied',             value: applied + underReview + shortlisted + selected + rejected },
       { name: 'Interview Scheduled', value: sessionsCount },
       { name: 'Interview Completed', value: completedInterviews },
-      { name: 'Under Review', value: underReview + shortlisted + selected },
-      { name: 'Shortlisted', value: shortlisted + selected },
-      { name: 'Selected', value: selected },
-      { name: 'Rejected', value: rejected }
+      { name: 'Under Review',        value: underReview + shortlisted + selected },
+      { name: 'Shortlisted',         value: shortlisted + selected },
+      { name: 'Selected',            value: selected },
+      { name: 'Rejected',            value: rejected }
     ];
 
-    // Candidate Performance Analytics (Radar)
+    // ── Candidate Performance Analytics ───────────────────────────────────────
     const performanceAnalytics = [
-      { subject: 'Technical', A: Math.round(avgScores.avgTechnical || 0), fullMark: 100 },
-      { subject: 'Communication', A: Math.round(avgScores.avgCommunication || 0), fullMark: 100 },
-      { subject: 'Problem Solving', A: Math.round(avgScores.avgProblemSolving || 0), fullMark: 100 },
+      { subject: 'Technical',       A: avgTechnical,     fullMark: 100 },
+      { subject: 'Communication',   A: avgCommunication, fullMark: 100 },
+      { subject: 'Problem Solving', A: avgProblemSolving, fullMark: 100 },
     ];
 
-    // Mock Skill Gap Analysis (since we don't have deep semantic skill gap models populated yet)
+    // ── Real Skill Gap from Application AI screening results ──────────────────
+    const [matchingSkillsAgg, missingSkillsAgg] = await Promise.all([
+      Application.aggregate([
+        { $match: { isDeleted: false, screeningStatus: 'COMPLETED', matchingSkills: { $exists: true, $ne: [] } } },
+        { $unwind: '$matchingSkills' },
+        { $group: { _id: '$matchingSkills', count: { $sum: 1 } } },
+        { $sort: { count: -1 } },
+        { $limit: 5 }
+      ]),
+      Application.aggregate([
+        { $match: { isDeleted: false, screeningStatus: 'COMPLETED', missingSkills: { $exists: true, $ne: [] } } },
+        { $unwind: '$missingSkills' },
+        { $group: { _id: '$missingSkills', count: { $sum: 1 } } },
+        { $sort: { count: -1 } },
+        { $limit: 5 }
+      ]),
+    ]);
+
     const skillGapAnalysis = {
-      topStrengths: ['React', 'Node.js', 'System Design'],
-      topWeaknesses: ['Kubernetes', 'Advanced CSS', 'GraphQL'],
-      mostMissedTopics: ['Microservices Architecture', 'Docker Orchestration'],
-      mostCommonSkills: ['JavaScript', 'TypeScript', 'Git']
+      topStrengths:      matchingSkillsAgg.map((s: any) => s._id),
+      topWeaknesses:     missingSkillsAgg.map((s: any) => s._id),
+      mostMissedTopics:  missingSkillsAgg.slice(0, 2).map((s: any) => s._id),
+      mostCommonSkills:  matchingSkillsAgg.map((s: any) => s._id),
     };
 
-    // Top Candidates
-    const topCandidates = await InterviewScore.aggregate([
-      { $sort: { overallScore: -1 } },
+    // ── Top Candidates from real evaluation data ──────────────────────────────
+    const topCandidates = await InterviewRecommendation.aggregate([
+      { $sort: { confidence: -1 } },
       { $limit: 10 },
       {
         $lookup: {
@@ -97,7 +120,7 @@ export const getExecutiveAnalytics = async (req: Request, res: Response) => {
           as: 'session'
         }
       },
-      { $unwind: "$session" },
+      { $unwind: { path: '$session', preserveNullAndEmptyArrays: true } },
       {
         $lookup: {
           from: 'candidates',
@@ -106,40 +129,69 @@ export const getExecutiveAnalytics = async (req: Request, res: Response) => {
           as: 'candidate'
         }
       },
-      { $unwind: "$candidate" },
-      {
-        $lookup: {
-          from: 'interviewrecommendations',
-          localField: 'sessionId',
-          foreignField: 'sessionId',
-          as: 'recommendationData'
-        }
-      },
+      { $unwind: { path: '$candidate', preserveNullAndEmptyArrays: true } },
       {
         $project: {
-          _id: "$candidate._id",
-          firstName: "$candidate.firstName",
-          lastName: "$candidate.lastName",
-          email: "$candidate.email",
-          overallScore: { $round: ["$overallScore", 0] },
-          recommendation: { $arrayElemAt: ["$recommendationData.recommendation", 0] },
-          status: "$candidate.status"
+          _id: '$candidate._id',
+          firstName: '$candidate.firstName',
+          lastName: '$candidate.lastName',
+          email: '$candidate.email',
+          recommendation: '$recommendation',
+          confidence: { $round: [{ $multiply: ['$confidence', 100] }, 0] },
+          status: '$candidate.status'
         }
       }
     ]);
 
-    // AI Insights (Mocked generation logic based on aggregates)
-    const insights = [
-      "Most common weakness identified across candidates is System Architecture.",
-      "Communication skills have an upward trend this quarter.",
-      `Selection rate is currently at ${selectionRate.toFixed(1)}%, indicating a tight funnel.`,
-      "Candidates excel in frontend technologies but show gaps in devops."
-    ];
+    // ── Real insights derived from aggregates ─────────────────────────────────
+    const insights: string[] = [];
+    if (selectionRate > 0) {
+      insights.push(`Selection rate is ${selectionRate.toFixed(1)}% — ${selected} out of ${candidatesCount} candidates advanced to hire.`);
+    }
+    if (avgTechnical > 0) {
+      const weakest = avgTechnical < avgCommunication && avgTechnical < avgProblemSolving
+        ? 'Technical'
+        : avgCommunication < avgProblemSolving
+          ? 'Communication'
+          : 'Problem Solving';
+      insights.push(`Lowest average score is in ${weakest} (avg: ${Math.min(avgTechnical, avgCommunication, avgProblemSolving)}%).`);
+    }
+    if (interviewCompletionRate > 0) {
+      insights.push(`Interview completion rate is ${interviewCompletionRate.toFixed(1)}% — ${completedInterviews} of ${sessionsCount} sessions completed.`);
+    }
+    if (skillGapAnalysis.topWeaknesses.length > 0) {
+      insights.push(`Most common skill gaps across candidates: ${skillGapAnalysis.topWeaknesses.slice(0, 2).join(', ')}.`);
+    }
 
-    // Recruitment Efficiency
+    // ── Real Recruitment Efficiency ───────────────────────────────────────────
+    // Calculate average interview duration from real session timestamps
+    const durationAgg = await InterviewSession.aggregate([
+      {
+        $match: {
+          status: SessionStatus.COMPLETED,
+          startedAt: { $exists: true },
+          completedAt: { $exists: true }
+        }
+      },
+      {
+        $project: {
+          durationMinutes: {
+            $divide: [
+              { $subtract: ['$completedAt', '$startedAt'] },
+              60000
+            ]
+          }
+        }
+      },
+      { $group: { _id: null, avgDuration: { $avg: '$durationMinutes' } } }
+    ]);
+
+    const averageInterviewDuration = durationAgg.length > 0
+      ? Math.round(durationAgg[0].avgDuration)
+      : null;
+
     const efficiency = {
-      averageInterviewDuration: 45, // mock in minutes, could be calculated from session.startedAt to completedAt
-      averageEvaluationTime: 12, // mock in minutes
+      averageInterviewDuration, // null if no data, real value otherwise
       completionRate: Math.round(interviewCompletionRate),
       dropOffRate: Math.round(dropOffRate)
     };
@@ -157,10 +209,10 @@ export const getExecutiveAnalytics = async (req: Request, res: Response) => {
           rejected,
           interviewCompletionRate: Math.round(interviewCompletionRate),
           selectionRate: Math.round(selectionRate),
-          averageTechnicalScore: Math.round(avgScores.avgTechnical || 0),
-          averageCommunicationScore: Math.round(avgScores.avgCommunication || 0),
-          averageProblemSolvingScore: Math.round(avgScores.avgProblemSolving || 0),
-          averageOverallScore: Math.round(avgScores.avgOverall || 0)
+          averageTechnicalScore: avgTechnical,
+          averageCommunicationScore: avgCommunication,
+          averageProblemSolvingScore: avgProblemSolving,
+          averageOverallScore: avgOverall
         },
         funnel: hiringFunnel,
         recommendations: {

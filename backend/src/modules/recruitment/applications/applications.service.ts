@@ -10,7 +10,17 @@ import { PaginationDTO } from '../../employee/dtos/common.dto';
 import { employeeService } from '../../employee';
 import EmployeeModel from '../../../models/Employee';
 import EmployeeRepository from '../../employee/repositories/employee.repository';
+import CandidateModel from '../../../models/Candidate';
 import path from 'path';
+import crypto from 'crypto';
+import InterviewSession from '../../../models/InterviewSession';
+import InterviewTemplate from '../../../models/InterviewTemplate';
+import { emailService } from '../../../services/email.service';
+import { SessionStatus, TemplateStatus } from '../../../types/interview.types';
+import { User } from '../../../models/User';
+import { hashPassword } from '../../../utils/password.util';
+import { SystemRoles } from '../../../models/roles';
+import { EmploymentStatus, EmploymentType } from '../../../models/Employee';
 
 export class ApplicationsService {
   /**
@@ -132,6 +142,24 @@ export class ApplicationsService {
       return app;
     }
 
+    // STRICT SEQUENCE ENFORCEMENT
+    const stageOrder = [
+      ApplicationStage.APPLIED,
+      ApplicationStage.SCREENING,
+      ApplicationStage.SHORTLISTED,
+      ApplicationStage.INTERVIEW,
+      ApplicationStage.HIRED
+    ];
+
+    if (stage !== ApplicationStage.REJECTED) {
+      const currentIndex = stageOrder.indexOf(app.currentStage);
+      const targetIndex = stageOrder.indexOf(stage);
+
+      if (targetIndex !== currentIndex + 1) {
+        throw new Error(`Invalid stage transition. Candidates must move sequentially. Cannot move from ${app.currentStage} to ${stage}.`);
+      }
+    }
+
     // Handle Hired Event (Promote Candidate -> Employee)
     let employeeId: string | undefined;
     if (stage === ApplicationStage.HIRED && app.currentStage !== ApplicationStage.HIRED) {
@@ -175,6 +203,12 @@ export class ApplicationsService {
 
       employeeId = employee._id.toString();
 
+      // ✅ FIX 5: Update Candidate status to SELECTED and record hiredAt
+      await CandidateModel.findByIdAndUpdate(candidate._id, {
+        status: 'SELECTED',
+      });
+      await applicationRepository.update(applicationId, { hiredAt: new Date() });
+
       // Log Recruitment activity for hire
       await recruitmentActivityRepository.create({
         applicationId: app._id,
@@ -184,6 +218,14 @@ export class ApplicationsService {
         description: `Candidate ${candidate.firstName} ${candidate.lastName} was hired as employee ${empCode}.`,
         createdBy: userId,
       });
+    }
+
+    // ✅ FIX 5: Sync Candidate.status for REJECTED stage
+    if (stage === ApplicationStage.REJECTED && app.currentStage !== ApplicationStage.REJECTED) {
+      const candidateForRejection = await candidateRepository.findById(app.candidateId as any);
+      if (candidateForRejection) {
+        await CandidateModel.findByIdAndUpdate(candidateForRejection._id, { status: 'REJECTED' });
+      }
     }
 
     // Update application stage
@@ -202,14 +244,14 @@ export class ApplicationsService {
     let actType = RecruitmentActivityType.STAGE_CHANGED;
     if (stage === ApplicationStage.SHORTLISTED) actType = RecruitmentActivityType.CANDIDATE_SHORTLISTED;
     else if (stage === ApplicationStage.INTERVIEW) actType = RecruitmentActivityType.INTERVIEW_SCHEDULED;
-    else if (stage === ApplicationStage.OFFER) actType = RecruitmentActivityType.OFFER_RELEASED;
+    else if (stage === ApplicationStage.REJECTED) actType = RecruitmentActivityType.STAGE_CHANGED;
 
     await recruitmentActivityRepository.create({
       applicationId: updatedApp._id,
       candidateId: updatedApp.candidateId as any,
       jobId: updatedApp.jobId as any,
       title: actType,
-      description: `Application stage changed to ${stage} for ${
+      description: `Application moved to ${stage} for ${
         (updatedApp.candidateId as any)?.firstName || 'Candidate'
       }.`,
       createdBy: userId,
@@ -237,7 +279,6 @@ export class ApplicationsService {
       [ApplicationStage.SCREENING]: [],
       [ApplicationStage.SHORTLISTED]: [],
       [ApplicationStage.INTERVIEW]: [],
-      [ApplicationStage.OFFER]: [],
       [ApplicationStage.HIRED]: [],
       [ApplicationStage.REJECTED]: [],
     };
@@ -280,6 +321,231 @@ export class ApplicationsService {
    */
   async getActivities() {
     return await recruitmentActivityRepository.findRecent(20);
+  }
+
+  /**
+   * Invite candidate to Interview
+   */
+  async inviteToInterview(applicationId: string, userId: string) {
+    const app = await applicationRepository.findById(applicationId);
+    if (!app) throw new Error('Application record not found.');
+
+    if (app.currentStage === ApplicationStage.REJECTED) {
+      throw new Error('Cannot invite a rejected candidate.');
+    }
+
+    const candidate = await candidateRepository.findById(app.candidateId as any);
+    const job = await jobRepository.findById(app.jobId as any);
+
+    if (!candidate || !job) {
+      throw new Error('Candidate or Job record missing.');
+    }
+
+    // Check duplicate session
+    const existingSession = await InterviewSession.findOne({
+      candidateId: candidate._id,
+      status: { $in: [SessionStatus.CREATED, SessionStatus.READY, SessionStatus.STARTED, SessionStatus.QUESTION_ACTIVE, SessionStatus.ANSWER_PROCESSING, SessionStatus.NEXT_QUESTION] }
+    });
+
+    if (existingSession) {
+      existingSession.status = SessionStatus.CANCELLED;
+      await existingSession.save();
+    }
+
+    // Get an active template
+    const template = await InterviewTemplate.findOne({ status: TemplateStatus.ACTIVE });
+    if (!template) {
+      throw new Error('No active Interview Template found. Please create one first.');
+    }
+
+    // Generate Token
+    const publicToken = crypto.randomBytes(32).toString('hex');
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 7); // 7 days expiration
+
+    // Create Interview Session
+    const session = new InterviewSession({
+      candidateId: candidate._id,
+      templateId: template._id,
+      recruiterId: userId,
+      status: SessionStatus.CREATED,
+      totalQuestions: template.questionCount || 5,
+      publicToken,
+      tokenExpiresAt: expiresAt,
+    });
+    await session.save();
+
+    // Update Application Stage
+    await applicationRepository.updateStage(app._id, ApplicationStage.INTERVIEW, userId, 'Candidate invited to AI Interview.');
+    await applicationRepository.update(app._id, { interviewStatus: 'INTERVIEW_INVITED' });
+
+    // Log Activity
+    await recruitmentActivityRepository.create({
+      applicationId: app._id,
+      candidateId: candidate._id,
+      jobId: job._id,
+      title: RecruitmentActivityType.INTERVIEW_SCHEDULED,
+      description: `Interview invitation sent to ${candidate.firstName} ${candidate.lastName}.`,
+      createdBy: userId,
+    });
+
+    // Send Email
+    const interviewUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/interview/${publicToken}`;
+    await emailService.sendInterviewInvitation(
+      candidate.email,
+      candidate.firstName,
+      job.title,
+      interviewUrl,
+      expiresAt.toLocaleDateString()
+    );
+
+    return session;
+  }
+
+  /**
+   * Hire Candidate — Creates User account + Employee record + Sends Onboarding Email
+   */
+  async hireCandidate(applicationId: string, recruiterId: string): Promise<any> {
+    // 1. Fetch the application with candidate + job info
+    const app = await applicationRepository.findById(applicationId);
+    if (!app) throw new Error('Application not found.');
+
+    const candidate = await CandidateModel.findById(app.candidateId);
+    if (!candidate) throw new Error('Candidate record not found.');
+
+    const job = await jobRepository.findById(app.jobId);
+    if (!job) throw new Error('Job record not found.');
+
+    // 2. Check if an ACTIVE employee record already exists for this email
+    //    Allow re-hire: if the record is soft-deleted or set to RESIGNED/TERMINATED, we reactivate it
+    const activeEmployee = await EmployeeModel.findOne({
+      email: candidate.email,
+      isDeleted: false,
+      employmentStatus: EmploymentStatus.ACTIVE,
+    });
+    if (activeEmployee) {
+      throw new Error('An active employee record already exists for this email address. Please delete the existing record first.');
+    }
+
+    // Look up any existing User account (may have been deactivated from a previous hire+delete)
+    const existingUser = await User.findOne({ email: candidate.email });
+
+    // 3. Generate a secure temporary password
+    const temporaryPassword = `Blu@${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
+    const passwordHash = await hashPassword(temporaryPassword);
+
+    // 4. Generate unique Employee ID
+    const year = new Date().getFullYear();
+    const count = await User.countDocuments({ role: SystemRoles.EMPLOYEE });
+    const employeeId = `EMP-${year}-${(count + 1).toString().padStart(4, '0')}`;
+
+    // 5. Create or re-activate User account with EMPLOYEE role
+    let userAccount = existingUser;
+    if (!existingUser) {
+      userAccount = await User.create({
+        firstName: candidate.firstName,
+        lastName: candidate.lastName,
+        email: candidate.email,
+        phone: candidate.phone || '0000000000',
+        employeeId,
+        role: SystemRoles.EMPLOYEE,
+        passwordHash,
+        mustChangePassword: true,
+        isActive: true,
+      });
+    } else {
+      // Re-activate and upgrade (covers re-hire after cascade deletion)
+      await User.findByIdAndUpdate(existingUser._id, {
+        role: SystemRoles.EMPLOYEE,
+        employeeId,
+        passwordHash,
+        mustChangePassword: true,
+        isActive: true,              // Re-activate if previously deactivated
+        refreshToken: null,          // Clear old sessions
+      });
+    }
+
+    // 5b. Create or reactivate the Employee record (required for attendance/leaves/reviews)
+    const newUserId = (userAccount?._id || existingUser?._id)?.toString();
+    let employeeRecord = await EmployeeModel.findOne({ email: candidate.email });
+
+    if (!employeeRecord) {
+      // Generate a unique employee code
+      const empCount = await EmployeeModel.countDocuments();
+      const empCode = `EMP${new Date().getFullYear()}${(empCount + 1).toString().padStart(4, '0')}`;
+
+      employeeRecord = await EmployeeModel.create({
+        employeeCode: empCode,
+        userId: newUserId,
+        firstName: candidate.firstName,
+        lastName: candidate.lastName,
+        email: candidate.email,
+        phone: candidate.phone || '0000000000',
+        departmentId: job.departmentId,
+        designationId: job.designationId,
+        employmentType: (job.employmentType as EmploymentType) || EmploymentType.FULL_TIME,
+        joiningDate: new Date(),
+        workLocation: job.location || 'Head Office',
+        employmentStatus: EmploymentStatus.ACTIVE,
+        skills: candidate.skills || [],
+        isDeleted: false,
+        createdBy: recruiterId.toString(),
+      });
+    } else {
+      // Re-activate a previously soft-deleted employee record
+      await EmployeeModel.findByIdAndUpdate(employeeRecord._id, {
+        userId: newUserId,
+        departmentId: job.departmentId,
+        designationId: job.designationId,
+        joiningDate: new Date(),
+        workLocation: job.location || 'Head Office',
+        employmentStatus: 'ACTIVE',
+        isDeleted: false,
+        updatedBy: recruiterId,
+      });
+    }
+
+    // 6. Move Application to HIRED stage
+    await applicationRepository.updateStage(app._id, ApplicationStage.HIRED, recruiterId, 'Candidate hired and onboarded.');
+    await applicationRepository.update(app._id, {
+      hiredAt: new Date(),
+      status: 'HIRED',
+      employeeId: employeeRecord._id.toString()
+    });
+
+    // 7. Update candidate status
+    await CandidateModel.findByIdAndUpdate(candidate._id, { status: 'HIRED' });
+
+    // 8. Log Activity
+    await recruitmentActivityRepository.create({
+      applicationId: app._id,
+      candidateId: candidate._id,
+      jobId: job._id,
+      title: RecruitmentActivityType.CANDIDATE_HIRED,
+      description: `${candidate.firstName} ${candidate.lastName} was hired for ${job.title}.`,
+      createdBy: recruiterId,
+    });
+
+    // 9. Send congratulations onboarding email
+    const loginUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/auth/login`;
+    await emailService.sendOnboardingEmail(
+      candidate.email,
+      `${candidate.firstName} ${candidate.lastName}`,
+      job.title,
+      candidate.email,
+      temporaryPassword,
+      loginUrl
+    );
+
+    console.log(`[Hire] Candidate ${candidate.email} hired. Temp password: ${temporaryPassword}`);
+
+    return {
+      candidateName: `${candidate.firstName} ${candidate.lastName}`,
+      email: candidate.email,
+      employeeId,
+      jobTitle: job.title,
+      userId: userAccount?._id,
+    };
   }
 }
 

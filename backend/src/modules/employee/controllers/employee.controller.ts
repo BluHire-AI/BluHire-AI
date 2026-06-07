@@ -89,9 +89,9 @@ export class EmployeeController {
       const { id } = req.params;
       const { user } = req;
 
-      await EmployeeService.deleteEmployee(id, user._id);
+      const result = await EmployeeService.deleteEmployee(id, user._id);
 
-      res.json(createSuccessResponse(null, 'Employee deleted successfully'));
+      res.json(createSuccessResponse(result, 'Employee and all related data deleted successfully'));
     } catch (error: any) {
       res.status(400).json(
         createErrorResponse(error.message || 'Failed to delete employee', undefined, 400)

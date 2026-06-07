@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends
 from typing import Dict, Any
 
-from app.schemas import (
+from app.schemas.evaluation import (
     TechnicalEvaluationRequest,
     ProblemSolvingRequest,
     RecommendationRequest,

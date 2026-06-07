@@ -57,6 +57,5 @@ const InterviewTranscriptSchema = new Schema<any>(
 
 // Indexes
 InterviewTranscriptSchema.index({ sessionId: 1, questionId: 1 });
-InterviewTranscriptSchema.index({ candidateId: 1 });
 
 export default mongoose.model<IInterviewTranscript>('InterviewTranscript', InterviewTranscriptSchema);

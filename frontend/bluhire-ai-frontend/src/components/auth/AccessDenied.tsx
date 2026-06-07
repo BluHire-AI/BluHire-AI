@@ -11,7 +11,6 @@ export const AccessDenied = () => {
   let fallbackRoute = '/dashboard';
   if (user) {
     switch (user.role) {
-      case 'CANDIDATE': fallbackRoute = '/candidate/dashboard'; break;
       case 'EMPLOYEE': fallbackRoute = '/employee/dashboard'; break;
       case 'HR_RECRUITER': fallbackRoute = '/recruitment/dashboard'; break;
       case 'SENIOR_MANAGER': fallbackRoute = '/executive/dashboard'; break;

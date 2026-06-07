@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation';
 import { 
   LayoutDashboard, Users, UserCircle, LogOut, Building, Briefcase, 
   Network, Contact, Sun, Moon, ChevronDown, ChevronRight,
-  Compass, Award, BarChart3, Bot, ClipboardList, TrendingUp, CheckSquare, CalendarDays
+  Compass, Award, BarChart3, Bot, ClipboardList, TrendingUp, CheckSquare, CalendarDays, Sparkles
 } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { useAuthStore } from '@/lib/store/auth';
@@ -20,7 +20,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { AICopilot } from '@/components/ui/ai-copilot';
+import { FloatingCopilot } from '@/components/copilot/FloatingCopilot';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export const AppLayout = ({ children }: { children: React.ReactNode }) => {
@@ -83,7 +83,7 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
     switch (user.role) {
       case 'CANDIDATE': return '/candidate/dashboard';
       case 'EMPLOYEE': return '/employee/dashboard';
-      case 'HR_RECRUITER': return '/recruitment/dashboard';
+      case 'HR_RECRUITER': return '/dashboard/recruitment';
       case 'SENIOR_MANAGER': return '/executive/dashboard';
       case 'MANAGEMENT_ADMIN': return '/admin/dashboard';
       default: return '/dashboard';
@@ -178,7 +178,7 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
                         { name: 'Employee Directory', href: '/dashboard/directory', icon: Contact, roles: ['MANAGEMENT_ADMIN', 'HR_RECRUITER', 'SENIOR_MANAGER', 'EMPLOYEE'] },
                         { name: 'Organization Chart', href: '/dashboard/org-chart', icon: Network, roles: ['MANAGEMENT_ADMIN', 'HR_RECRUITER', 'SENIOR_MANAGER', 'EMPLOYEE'] },
                         { name: 'Attendance & Leaves', href: '/dashboard/attendance', icon: CalendarDays },
-                        { name: 'Recruitment Hub', href: '/dashboard/recruitment', icon: Compass, roles: ['MANAGEMENT_ADMIN', 'HR_RECRUITER'] },
+                        { name: 'Recruitment Hub', href: '/dashboard/recruitment', icon: Compass, roles: ['MANAGEMENT_ADMIN', 'SENIOR_MANAGER'] },
                         { name: 'Executive Analytics', href: '/dashboard/analytics', icon: TrendingUp, roles: ['MANAGEMENT_ADMIN', 'SENIOR_MANAGER'] },
                       ].map((item) => {
                         if (item.roles && user && !item.roles.includes(user.role)) return null;
@@ -311,7 +311,7 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
         </main>
       </div>
       
-      <AICopilot />
+      <FloatingCopilot />
     </div>
   );
 };

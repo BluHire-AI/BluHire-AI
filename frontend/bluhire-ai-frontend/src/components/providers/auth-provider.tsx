@@ -37,7 +37,16 @@ export function AuthProvider({
 
       // If user is authenticated but trying to access auth pages (login/register)
       if (isAuthenticated && (pathname === '/login' || pathname === '/register')) {
-        router.push('/dashboard');
+        let targetRoute = '/dashboard';
+        if (user) {
+          switch (user.role) {
+            case 'EMPLOYEE': targetRoute = '/employee/dashboard'; break;
+            case 'HR_RECRUITER': targetRoute = '/dashboard/recruitment'; break;
+            case 'SENIOR_MANAGER': targetRoute = '/executive/dashboard'; break;
+            case 'MANAGEMENT_ADMIN': targetRoute = '/admin/dashboard'; break;
+          }
+        }
+        router.push(targetRoute);
         return;
       }
 

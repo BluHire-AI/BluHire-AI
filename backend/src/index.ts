@@ -21,9 +21,17 @@ app.use(cors({
   credentials: true,
 }));
 
+import path from 'path';
+
 // Route Definitions
-app.use('/api/v1', apiRouter);
+import interviewRoutes from './routes/interview.routes';
+
+// Serve static uploads
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
 app.use('/api/v1/analytics', analyticsRoutes);
+app.use('/api/v1/interviews', interviewRoutes);
+app.use('/api/v1', apiRouter);
 
 // Base route
 app.get('/', (req, res) => {

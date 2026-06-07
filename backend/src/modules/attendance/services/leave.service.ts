@@ -1,7 +1,8 @@
 import { leaveRepository } from '../repositories';
 import { ApplyLeaveDto, UpdateLeaveStatusDto, LeaveQueryDto } from '../dtos/leave.dto';
-import { ILeave, LeaveStatus } from '../../../models/Leave';
+import { ILeave, LeaveStatus, LeaveType } from '../../../models/Leave';
 import ApiError from '../../../utils/ApiError';
+import mongoose from 'mongoose';
 // Note: Employee model check usually happens via employee service but we'll assume valid employeeId for now
 
 export class LeaveService {
@@ -20,8 +21,9 @@ export class LeaveService {
     }
 
     return await leaveRepository.create({
-      employeeId,
+      employeeId: new mongoose.Types.ObjectId(employeeId),
       ...data,
+      leaveType: data.leaveType as LeaveType,
       startDate,
       endDate,
       status: LeaveStatus.PENDING
@@ -48,7 +50,7 @@ export class LeaveService {
 
     return await leaveRepository.update(id, {
       status: data.status as LeaveStatus,
-      approvedBy: data.status === LeaveStatus.APPROVED ? approverId : undefined,
+      approvedBy: data.status === LeaveStatus.APPROVED ? new mongoose.Types.ObjectId(approverId) : undefined,
       approvedAt: data.status === LeaveStatus.APPROVED ? new Date() : undefined,
     }) as ILeave;
   }

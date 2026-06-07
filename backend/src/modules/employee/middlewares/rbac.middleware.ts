@@ -47,6 +47,7 @@ const rolePermissions: Record<EmployeeModuleRoles, string[]> = {
     'read:designation',
     'read:directory',
     'view:directory',
+    'view:hierarchy',
   ],
   [EmployeeModuleRoles.EMPLOYEE]: [
     'read:own_profile',

@@ -9,6 +9,13 @@ const router = Router();
 
 // /api/v1/attendance
 
+// Get today's attendance for logged-in employee (must be before /:id)
+router.get(
+  '/today',
+  requireRole(EmployeeModuleRoles.EMPLOYEE, EmployeeModuleRoles.SENIOR_MANAGER, EmployeeModuleRoles.HR_RECRUITER, EmployeeModuleRoles.MANAGEMENT_ADMIN),
+  attendanceController.getToday.bind(attendanceController)
+);
+
 // Get summary (must be before /:id)
 router.get(
   '/summary',

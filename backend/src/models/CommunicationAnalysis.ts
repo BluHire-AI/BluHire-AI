@@ -2,12 +2,13 @@ import mongoose, { Schema, Document } from 'mongoose';
 
 export interface ICommunicationAnalysis extends Document {
   _id: any;
-  transcriptId: string; // Reference to InterviewTranscript _id
+  transcriptId: string;
   communicationScore: number;
   clarityScore: number;
   fillerWordCount: number;
   grammarScore: number;
   vocabularyScore: number;
+  feedback: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -45,6 +46,10 @@ const CommunicationAnalysisSchema = new Schema<any>(
       type: Number,
       required: true,
       default: 0,
+    },
+    feedback: {
+      type: String,
+      default: '',
     },
   },
   {

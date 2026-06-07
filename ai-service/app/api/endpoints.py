@@ -7,6 +7,7 @@ from app.screeners.screener import AIScreener
 from app.schemas.screening import ScreeningResult
 from app.services.openrouter import open_router_client
 from app.services.performance_coach import performance_coach_service
+from app.services.transcription_service import transcription_service
 
 router = APIRouter(prefix="/api/v1/ai")
 
@@ -227,5 +228,37 @@ async def generate_rag_answer(payload: dict):
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"RAG completion failed: {str(e)}")
+@router.post("/transcribe")
+async def transcribe_audio(payload: dict):
+    try:
+        recording_id = payload.get("recordingId")
+        file_path = payload.get("filePath")
+        
+        if not file_path:
+            raise HTTPException(status_code=400, detail="filePath is required")
+        
+        transcript_text = await transcription_service.transcribe(file_path)
+        
+        return {
+            "recordingId": recording_id,
+            "transcript": transcript_text
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Transcription failed: {str(e)}")
 
+from app.services.interview_evaluation import evaluation_service
 
+@router.post("/evaluate")
+async def evaluate_transcript_endpoint(payload: dict):
+    try:
+        transcript_text = payload.get("transcript")
+        job_role = payload.get("jobRole", "Software Engineer")
+        experience_level = payload.get("experienceLevel", "Mid-level")
+        
+        if not transcript_text:
+            raise HTTPException(status_code=400, detail="transcript is required")
+            
+        result = await evaluation_service.evaluate_transcript(transcript_text, job_role, experience_level)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Evaluation failed: {str(e)}")

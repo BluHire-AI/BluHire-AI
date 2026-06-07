@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { recruitmentService, Candidate } from '@/services/recruitment.service';
-import { Search, Mail, Phone, Eye, Download } from 'lucide-react';
+import { Search, Mail, Phone, Eye, Download, Trash2 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -48,6 +48,20 @@ export default function CandidatesDirectory() {
       link.parentNode?.removeChild(link);
     } catch (error: any) {
       toast.error('Could not download resume file.');
+    }
+  };
+
+  const handleDeleteCandidate = async (id: string) => {
+    if (!window.confirm('Are you sure you want to delete this candidate? This action cannot be undone.')) {
+      return;
+    }
+    
+    try {
+      await recruitmentService.deleteCandidate(id);
+      toast.success('Candidate deleted successfully');
+      loadCandidates();
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to delete candidate');
     }
   };
 
@@ -149,6 +163,15 @@ export default function CandidatesDirectory() {
                         <Download className="w-4 h-4 text-zinc-400" />
                       </Button>
                     )}
+                    <Button 
+                      onClick={() => handleDeleteCandidate(cand._id)} 
+                      size="icon" 
+                      variant="ghost" 
+                      className="w-8 h-8 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/30 text-zinc-400 hover:text-red-500"
+                      title="Delete Candidate"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))}

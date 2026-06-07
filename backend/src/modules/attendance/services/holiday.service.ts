@@ -11,7 +11,7 @@ export class HolidayService {
     if (exists) {
       throw new ApiError(400, 'A holiday already exists on this date');
     }
-    return await holidayRepository.create(data);
+    return await holidayRepository.create({ ...data, date: dateObj });
   }
 
   async getHolidayById(id: string): Promise<IHoliday> {
@@ -27,9 +27,11 @@ export class HolidayService {
     if (!holiday) {
       throw new ApiError(404, 'Holiday not found');
     }
+    const updatePayload: any = { ...data };
     
     if (data.date) {
       const dateObj = new Date(data.date);
+      updatePayload.date = dateObj;
       // Ensure we don't conflict with another holiday
       if (dateObj.getTime() !== holiday.date.getTime()) {
         const exists = await holidayRepository.isHoliday(dateObj);
@@ -39,7 +41,7 @@ export class HolidayService {
       }
     }
 
-    return await holidayRepository.update(id, data) as IHoliday;
+    return await holidayRepository.update(id, updatePayload) as IHoliday;
   }
 
   async deleteHoliday(id: string): Promise<void> {

@@ -2,7 +2,7 @@ import InterviewQuestion, { IInterviewQuestion } from '../models/InterviewQuesti
 
 export class InterviewQuestionRepository {
   async createMany(questionsData: any[]): Promise<IInterviewQuestion[]> {
-    return await InterviewQuestion.insertMany(questionsData);
+    return await InterviewQuestion.insertMany(questionsData) as unknown as IInterviewQuestion[];
   }
 
   async findByTemplateId(templateId: string): Promise<IInterviewQuestion[]> {

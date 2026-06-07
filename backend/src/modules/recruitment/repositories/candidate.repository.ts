@@ -61,9 +61,15 @@ export class CandidateRepository {
    * Soft delete candidate
    */
   async softDelete(candidateId: string): Promise<ICandidate | null> {
+    const candidate = await CandidateModel.findById(candidateId);
+    if (!candidate) return null;
+
+    // Mutate email to free up the unique constraint for future registrations
+    const mutatedEmail = `deleted_${Date.now()}_${candidate.email}`;
+    
     return await CandidateModel.findByIdAndUpdate(
       candidateId,
-      { isDeleted: true, updatedAt: new Date() },
+      { isDeleted: true, email: mutatedEmail, updatedAt: new Date() },
       { returnDocument: 'after' }
     );
   }

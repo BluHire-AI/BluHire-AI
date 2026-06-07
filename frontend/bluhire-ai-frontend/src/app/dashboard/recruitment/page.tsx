@@ -47,7 +47,6 @@ export default function RecruitmentDashboard() {
   const totalCandidates = stats?.totalCandidates || 0;
   const totalApplications = stats?.totalApplications || 0;
   const hiredCount = stats?.pipelineStats?.HIRED || 0;
-  const offerCount = stats?.pipelineStats?.OFFER || 0;
   const interviewCount = stats?.pipelineStats?.INTERVIEW || 0;
   const screeningCount = stats?.pipelineStats?.SCREENING || 0;
 
@@ -169,7 +168,6 @@ export default function RecruitmentDashboard() {
               {[
                 { stage: 'Screening', count: screeningCount, color: 'bg-indigo-500' },
                 { stage: 'Interviews Scheduled', count: interviewCount, color: 'bg-amber-500' },
-                { stage: 'Offers Extended', count: offerCount, color: 'bg-blue-500' },
                 { stage: 'Hired (Employee List)', count: hiredCount, color: 'bg-emerald-500' },
               ].map((item) => {
                 const percentage = totalApplications > 0 ? Math.round((item.count / totalApplications) * 100) : 0;

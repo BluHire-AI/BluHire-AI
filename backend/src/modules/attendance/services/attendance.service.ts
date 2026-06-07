@@ -2,6 +2,7 @@ import { attendanceRepository, shiftRepository, holidayRepository } from '../rep
 import { CheckInDto, CheckOutDto, UpdateAttendanceDto, AttendanceQueryDto } from '../dtos/attendance.dto';
 import { IAttendance, AttendanceStatus } from '../../../models/Attendance';
 import ApiError from '../../../utils/ApiError';
+import mongoose from 'mongoose';
 // Import Employee model to check for assigned shift
 import EmployeeModel from '../../../models/Employee';
 
@@ -22,13 +23,22 @@ export class AttendanceService {
   async checkIn(employeeId: string, userId: string, data: CheckInDto): Promise<IAttendance> {
     const today = new Date();
     
+    const employee = await EmployeeModel.findById(employeeId);
+    if (!employee) throw new ApiError(404, 'Employee not found');
+
+    // Enforce self-checkin permissions
+    if (employee.userId === userId && employee.allowSelfCheckIn === false) {
+      throw new ApiError(403, 'Self check-in is disabled. Please contact HR to check you in.');
+    }
+    
     // Check if already checked in today
     const existingAttendance = await attendanceRepository.findByEmployeeAndDate(employeeId, today);
     if (existingAttendance && existingAttendance.checkInTime) {
       throw new ApiError(400, 'Already checked in for today');
     }
 
-    const shift = await this.getEmployeeShift(employeeId);
+    // Reuse employee fetch for shift query to avoid redundant DB call
+    const shift = employee.shiftId ? await shiftRepository.findById(employee.shiftId.toString()) : null;
     let status = AttendanceStatus.PRESENT;
 
     // Check if late based on shift
@@ -55,26 +65,34 @@ export class AttendanceService {
     }
 
     if (existingAttendance) {
-      return await attendanceRepository.update(existingAttendance._id as string, {
+      return await attendanceRepository.update(existingAttendance._id.toString(), {
         checkInTime: today,
         attendanceStatus: status,
         ...data,
-        updatedBy: userId
+        updatedBy: new mongoose.Types.ObjectId(userId)
       }) as IAttendance;
     }
 
     return await attendanceRepository.create({
-      employeeId,
+      employeeId: new mongoose.Types.ObjectId(employeeId),
       date: today,
       checkInTime: today,
       attendanceStatus: status,
       ...data,
-      createdBy: userId,
+      createdBy: new mongoose.Types.ObjectId(userId),
     });
   }
 
   async checkOut(employeeId: string, userId: string, data: CheckOutDto): Promise<IAttendance> {
     const today = new Date();
+    
+    const employee = await EmployeeModel.findById(employeeId);
+    if (!employee) throw new ApiError(404, 'Employee not found');
+
+    // Enforce self-checkout permissions
+    if (employee.userId === userId && employee.allowSelfCheckIn === false) {
+      throw new ApiError(403, 'Self check-out is disabled. Please contact HR to check you out.');
+    }
     
     const attendance = await attendanceRepository.findByEmployeeAndDate(employeeId, today);
     if (!attendance || !attendance.checkInTime) {
@@ -96,7 +114,7 @@ export class AttendanceService {
     const breakDuration = totalHours > 5 ? 1 : 0;
     const workingHours = Math.max(0, totalHours - breakDuration);
 
-    const shift = await this.getEmployeeShift(employeeId);
+    const shift = employee.shiftId ? await shiftRepository.findById(employee.shiftId.toString()) : null;
     let overtimeHours = 0;
 
     if (shift && workingHours > shift.workingHoursPerDay) {
@@ -106,14 +124,14 @@ export class AttendanceService {
       overtimeHours = Number((workingHours - 8).toFixed(2));
     }
 
-    return await attendanceRepository.update(attendance._id as string, {
+    return await attendanceRepository.update(attendance._id.toString(), {
       checkOutTime,
       totalHours,
       workingHours,
       overtimeHours,
       breakDuration,
       ...data,
-      updatedBy: userId
+      updatedBy: new mongoose.Types.ObjectId(userId)
     }) as IAttendance;
   }
 
@@ -128,7 +146,7 @@ export class AttendanceService {
     }
 
     // Need to recalculate hours if times are manually updated
-    const updatePayload: any = { ...data, updatedBy: userId };
+    const updatePayload: any = { ...data, updatedBy: new mongoose.Types.ObjectId(userId) };
     
     const checkInTime = data.checkInTime ? new Date(data.checkInTime) : attendance.checkInTime;
     const checkOutTime = data.checkOutTime ? new Date(data.checkOutTime) : attendance.checkOutTime;
@@ -162,6 +180,11 @@ export class AttendanceService {
       throw new ApiError(404, 'Attendance record not found');
     }
     return attendance;
+  }
+
+  async getTodayForEmployee(employeeId: string): Promise<IAttendance | null> {
+    const today = new Date();
+    return await attendanceRepository.findByEmployeeAndDate(employeeId, today);
   }
 
   async getCompanyAnalytics(startDateStr?: string, endDateStr?: string): Promise<any> {

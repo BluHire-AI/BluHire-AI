@@ -155,18 +155,6 @@ export class AnalyticsRepository {
               0,
             ],
           },
-          hasOffer: {
-            $cond: [
-              {
-                $or: [
-                  { $ne: ['$offeredAt', null] },
-                  { $in: [ApplicationStage.OFFER, '$stageHistory.stage'] },
-                ],
-              },
-              1,
-              0,
-            ],
-          },
           hasHired: {
             $cond: [
               {
@@ -202,7 +190,6 @@ export class AnalyticsRepository {
           Screening: { $sum: '$hasScreening' },
           Shortlisted: { $sum: '$hasShortlisted' },
           Interview: { $sum: '$hasInterview' },
-          Offer: { $sum: '$hasOffer' },
           Hired: { $sum: '$hasHired' },
           Rejected: { $sum: '$hasRejected' },
         },
@@ -215,7 +202,6 @@ export class AnalyticsRepository {
       Screening: result[0]?.Screening || 0,
       Shortlisted: result[0]?.Shortlisted || 0,
       Interview: result[0]?.Interview || 0,
-      Offer: result[0]?.Offer || 0,
       Hired: result[0]?.Hired || 0,
       Rejected: result[0]?.Rejected || 0,
     };
@@ -224,8 +210,7 @@ export class AnalyticsRepository {
       'Applied to Screening': this.calculateRate(counts.Screening, counts.Applied),
       'Screening to Shortlisted': this.calculateRate(counts.Shortlisted, counts.Screening),
       'Shortlisted to Interview': this.calculateRate(counts.Interview, counts.Shortlisted),
-      'Interview to Offer': this.calculateRate(counts.Offer, counts.Interview),
-      'Offer to Hired': this.calculateRate(counts.Hired, counts.Offer),
+      'Interview to Hired': this.calculateRate(counts.Hired, counts.Interview),
     };
 
     // Dropoffs
@@ -233,8 +218,7 @@ export class AnalyticsRepository {
       'Applied to Screening': Math.max(0, counts.Applied - counts.Screening),
       'Screening to Shortlisted': Math.max(0, counts.Screening - counts.Shortlisted),
       'Shortlisted to Interview': Math.max(0, counts.Shortlisted - counts.Interview),
-      'Interview to Offer': Math.max(0, counts.Interview - counts.Offer),
-      'Offer to Hired': Math.max(0, counts.Offer - counts.Hired),
+      'Interview to Hired': Math.max(0, counts.Interview - counts.Hired),
     };
 
     const efficiency = this.calculateRate(counts.Hired, counts.Applied);
@@ -504,28 +488,11 @@ export class AnalyticsRepository {
               ],
             },
           },
-          offersReleased: {
-            $sum: {
-              $cond: [
-                {
-                  $or: [
-                    { $eq: ['$currentStage', ApplicationStage.OFFER] },
-                    { $ne: ['$offeredAt', null] },
-                  ],
-                },
-                1,
-                0,
-              ],
-            },
-          },
           hiresCompleted: {
             $sum: {
               $cond: [
                 {
-                  $or: [
-                    { $eq: ['$currentStage', ApplicationStage.HIRED] },
-                    { $ne: ['$hiredAt', null] },
-                  ],
+                  $eq: ['$currentStage', ApplicationStage.HIRED] 
                 },
                 1,
                 0,
@@ -561,7 +528,6 @@ export class AnalyticsRepository {
           recruiterEmail: '$recruiter.email',
           candidatesProcessed: 1,
           interviewsConducted: 1,
-          offersReleased: 1,
           hiresCompleted: 1,
           conversionRate: {
             $cond: [
@@ -588,7 +554,6 @@ export class AnalyticsRepository {
             recruiterEmail: user.email,
             candidatesProcessed: 0,
             interviewsConducted: 0,
-            offersReleased: 0,
             hiresCompleted: 0,
             conversionRate: 0,
             averageTimeToHire: 0,
@@ -731,11 +696,6 @@ export class AnalyticsRepository {
           interviews: {
             $sum: {
               $cond: [{ $in: [ApplicationStage.INTERVIEW, '$stageHistory.stage'] }, 1, 0],
-            },
-          },
-          offers: {
-            $sum: {
-              $cond: [{ $in: [ApplicationStage.OFFER, '$stageHistory.stage'] }, 1, 0],
             },
           },
           hires: {

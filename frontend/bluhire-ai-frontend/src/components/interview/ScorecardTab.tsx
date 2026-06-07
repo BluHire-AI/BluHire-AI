@@ -93,12 +93,18 @@ export const ScorecardTab: React.FC<ScorecardTabProps> = ({ candidateId }) => {
         <div className="mt-6 md:mt-0 flex flex-col items-center md:items-end">
           <span className="text-xs uppercase tracking-wider font-semibold text-slate-400 mb-2">Final Recommendation</span>
           <div className={`px-6 py-3 rounded-xl border text-lg font-bold shadow-sm ${
+            scorecard.recommendation === 'HIRE' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+            scorecard.recommendation === 'MAYBE_HIRE' ? 'bg-amber-50 text-amber-700 border-amber-200' :
+            scorecard.recommendation === 'REJECT' ? 'bg-red-50 text-red-700 border-red-200' :
             overallScore >= 80 ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
             overallScore >= 60 ? 'bg-amber-50 text-amber-700 border-amber-200' :
-            'bg-red-50 text-red-700 border-red-200'
+            'bg-slate-50 text-slate-500 border-slate-200'
           }`}>
-            {overallScore >= 80 ? 'HIRE' : overallScore >= 60 ? 'MAYBE HIRE' : 'REJECT'}
+            {scorecard.recommendation || (overallScore >= 80 ? 'HIRE' : overallScore >= 60 ? 'MAYBE HIRE' : 'PENDING')}
           </div>
+          {scorecard.confidence != null && (
+            <p className="text-xs text-slate-400 mt-1">Confidence: {Math.round(scorecard.confidence * 100)}%</p>
+          )}
         </div>
       </div>
 
@@ -146,6 +152,18 @@ export const ScorecardTab: React.FC<ScorecardTabProps> = ({ candidateId }) => {
           ))}
         </div>
       </div>
+
+      {/* AI Reasoning */}
+      {scorecard.reasoning && (
+        <div className="bg-slate-50 border border-slate-200 rounded-xl p-6">
+          <h3 className="text-sm font-bold text-slate-700 uppercase tracking-wider mb-3">AI Evaluator Feedback</h3>
+          <div className="space-y-2">
+            {scorecard.reasoning.split(' | ').map((line: string, i: number) => (
+              <p key={i} className="text-sm text-slate-600 leading-relaxed">{line}</p>
+            ))}
+          </div>
+        </div>
+      )}
       
     </div>
   );

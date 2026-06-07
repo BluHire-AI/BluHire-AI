@@ -112,6 +112,7 @@ export const updateEmployeeSchema = z.object({
       country: z.string(),
     })
     .optional(),
+  allowSelfCheckIn: z.boolean().optional(),
   notes: z.string().optional(),
 });
 

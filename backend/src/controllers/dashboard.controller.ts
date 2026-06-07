@@ -1,12 +1,13 @@
 import { Request, Response } from 'express';
-import CandidateApplicationStatus from '../models/CandidateApplicationStatus';
+import Application from '../models/Application';
 
 export const getDashboardOverview = async (req: Request, res: Response) => {
   try {
-    const statuses = await CandidateApplicationStatus.aggregate([
+    const statuses = await Application.aggregate([
+      { $match: { isDeleted: false } },
       {
         $group: {
-          _id: '$status',
+          _id: '$status', // HIRED, REJECTED, etc
           count: { $sum: 1 },
         },
       },
@@ -24,19 +25,19 @@ export const getDashboardOverview = async (req: Request, res: Response) => {
     statuses.forEach((status) => {
       overview.totalCandidates += status.count;
       switch (status._id) {
-        case 'INTERVIEW_COMPLETED': // In case there's an intermediate state
         case 'UNDER_REVIEW':
+        case 'SCREENING':
           overview.underReview += status.count;
-          overview.completedInterviews += status.count;
           break;
         case 'SHORTLISTED':
+        case 'INTERVIEW':
           overview.shortlisted += status.count;
-          overview.completedInterviews += status.count;
+          overview.completedInterviews += status.count; // assuming they finished interview if shortlisted
           break;
         case 'REJECTED':
           overview.rejected += status.count;
-          overview.completedInterviews += status.count;
           break;
+        case 'HIRED':
         case 'SELECTED':
           overview.selected += status.count;
           overview.completedInterviews += status.count;

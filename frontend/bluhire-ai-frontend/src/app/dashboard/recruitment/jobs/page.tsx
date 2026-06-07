@@ -202,6 +202,11 @@ export default function JobsManagement() {
               Candidates
             </span>
           </Link>
+          <Link href="/dashboard/recruitment/ai-interviews">
+            <span className="text-xs font-bold px-4 py-2 rounded-lg text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 cursor-pointer block transition-colors">
+              AI Interviews
+            </span>
+          </Link>
         </div>
         <Button onClick={openCreateModal} size="sm" className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center gap-1.5 rounded-lg h-9">
           <Plus className="w-4 h-4" />

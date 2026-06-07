@@ -168,6 +168,43 @@ export class ApplicationsController {
       );
     }
   }
+  /**
+   * Invite candidate to AI Interview
+   * POST /api/v1/recruitment/applications/:id/invite
+   */
+  async inviteToInterview(req: any, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const { user } = req;
+
+      const session = await applicationsService.inviteToInterview(id, user._id);
+
+      res.status(201).json(createSuccessResponse(session, 'Interview invitation sent successfully', 201));
+    } catch (error: any) {
+      res.status(400).json(
+        createErrorResponse(error.message || 'Failed to send interview invitation', undefined, 400)
+      );
+    }
+  }
+
+  /**
+   * Hire Candidate — Create Employee + User account + Send Onboarding Email
+   * POST /api/v1/recruitment/applications/:id/hire
+   */
+  async hireCandidate(req: any, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const { user } = req;
+
+      const result = await applicationsService.hireCandidate(id, user._id);
+
+      res.status(201).json(createSuccessResponse(result, 'Candidate hired successfully. Onboarding email sent!', 201));
+    } catch (error: any) {
+      res.status(400).json(
+        createErrorResponse(error.message || 'Failed to hire candidate', undefined, 400)
+      );
+    }
+  }
 }
 
 export default new ApplicationsController();

@@ -1,7 +1,7 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IAttendanceSummary extends Document {
-  employeeId: string; // Reference to Employee _id
+  employeeId: mongoose.Types.ObjectId; // Reference to Employee _id
   
   month: number; // 1-12
   year: number;

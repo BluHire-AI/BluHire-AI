@@ -18,6 +18,7 @@ export interface IUser extends Document {
   passwordResetOtp?: string;
   passwordResetOtpExpires?: Date;
   passwordResetAttempts?: number;
+  mustChangePassword?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -55,7 +56,8 @@ const userSchema = new Schema<IUser>(
     refreshToken: { type: String }, // Storing refresh token
     passwordResetOtp: { type: String },
     passwordResetOtpExpires: { type: Date },
-    passwordResetAttempts: { type: Number, default: 0 }
+    passwordResetAttempts: { type: Number, default: 0 },
+    mustChangePassword: { type: Boolean, default: false }
   },
   { 
     timestamps: true // Adds createdAt and updatedAt

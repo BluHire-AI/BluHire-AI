@@ -71,7 +71,7 @@ export class AuthService {
     if (!isMatch) throw new Error('Incorrect old password');
 
     const hashedPassword = await hashPassword(data.newPassword);
-    await userRepository.updateById(userId, { passwordHash: hashedPassword } as any);
+    await userRepository.updateById(userId, { passwordHash: hashedPassword, mustChangePassword: false } as any);
   }
 
   async forgotPassword(email: string) {

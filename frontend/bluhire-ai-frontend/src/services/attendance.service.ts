@@ -1,71 +1,111 @@
 import { api } from '@/lib/api';
 
-export interface Attendance {
+export interface AttendanceRecord {
   _id: string;
   employeeId: string;
   date: string;
   checkInTime?: string;
   checkOutTime?: string;
-  totalHours?: number;
-  overtimeHours?: number;
-  status: 'PRESENT' | 'ABSENT' | 'HALF_DAY' | 'LATE' | 'ON_LEAVE' | 'HOLIDAY';
-  location?: string;
-  ipAddress?: string;
-  deviceInfo?: string;
+  totalHours: number;
+  workingHours: number;
+  overtimeHours: number;
+  breakDuration: number;
+  attendanceStatus: AttendanceStatus;
   remarks?: string;
+  location?: string;
   createdAt: string;
   updatedAt: string;
 }
 
+export type AttendanceStatus =
+  | 'PRESENT'
+  | 'ABSENT'
+  | 'HALF_DAY'
+  | 'LATE'
+  | 'ON_LEAVE'
+  | 'HOLIDAY'
+  | 'WEEKEND'
+  | 'WORK_FROM_HOME';
+
 export interface AttendanceSummary {
-  _id: string;
   employeeId: string;
   month: number;
   year: number;
+  totalWorkingDays: number;
+  presentDays: number;
+  absentDays: number;
+  lateDays: number;
+  halfDays: number;
+  leaveDays: number;
+  holidayDays: number;
+  weekendDays: number;
+  totalWorkingHours: number;
+  totalOvertimeHours: number;
+  attendancePercentage: number;
+}
+
+export interface AttendanceAnalytics {
+  totalRecords: number;
   totalPresent: number;
   totalAbsent: number;
   totalLate: number;
-  totalHalfDays: number;
-  totalOvertimeHours: number;
-  totalWorkingHours: number;
+  totalOnLeave: number;
+  averageAttendance: number;
+  averageWorkingHours: number;
+  period: { start: string; end: string };
 }
 
 export const attendanceService = {
-  checkIn: async (data: { location?: string; ipAddress?: string; deviceInfo?: string; remarks?: string }): Promise<Attendance> => {
-    const response = await api.post('/attendance/check-in', data);
-    return response.data.data;
+  /** Get today's record for the logged-in employee */
+  getToday: async (): Promise<AttendanceRecord | null> => {
+    const res = await api.get('/attendance/today');
+    return res.data.data;
   },
 
-  checkOut: async (data: { location?: string; ipAddress?: string; deviceInfo?: string; remarks?: string }): Promise<Attendance> => {
-    const response = await api.post('/attendance/check-out', data);
-    return response.data.data;
+  /** Check in */
+  checkIn: async (data: { location?: string; remarks?: string } = {}): Promise<AttendanceRecord> => {
+    const res = await api.post('/attendance/check-in', data);
+    return res.data.data;
   },
 
-  list: async (query?: any): Promise<{ data: Attendance[]; total: number }> => {
-    const response = await api.get('/attendance', { params: query });
-    return {
-      data: response.data.data.data || [],
-      total: response.data.data.pagination?.total || 0,
-    };
+  /** Check out */
+  checkOut: async (data: { remarks?: string } = {}): Promise<AttendanceRecord> => {
+    const res = await api.post('/attendance/check-out', data);
+    return res.data.data;
   },
 
-  getById: async (id: string): Promise<Attendance> => {
-    const response = await api.get(`/attendance/${id}`);
-    return response.data.data;
+  /** List attendance records */
+  getHistory: async (params: {
+    employeeId?: string;
+    startDate?: string;
+    endDate?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<{ records: AttendanceRecord[]; total: number }> => {
+    const res = await api.get('/attendance', { params });
+    return res.data.data;
   },
 
-  getSummary: async (query?: { month: number; year: number }): Promise<AttendanceSummary> => {
-    const response = await api.get('/attendance/summary', { params: query });
-    return response.data.data;
+  /** Monthly summary */
+  getSummary: async (
+    employeeId: string,
+    month: number,
+    year: number
+  ): Promise<AttendanceSummary | null> => {
+    const res = await api.get('/attendance/summary', {
+      params: { employeeId, month, year, generate: 'true' },
+    });
+    return res.data.data;
   },
 
-  update: async (id: string, data: any): Promise<Attendance> => {
-    const response = await api.put(`/attendance/${id}`, data);
-    return response.data.data;
-  },
-
-  getAnalytics: async (query?: { startDate?: string; endDate?: string }): Promise<any> => {
-    const response = await api.get('/attendance/analytics', { params: query });
-    return response.data.data;
+  /** Company-wide analytics (HR/Admin only) */
+  getAnalytics: async (
+    startDate?: string,
+    endDate?: string
+  ): Promise<AttendanceAnalytics> => {
+    const res = await api.get('/attendance/analytics', {
+      params: { startDate, endDate },
+    });
+    return res.data.data;
   },
 };

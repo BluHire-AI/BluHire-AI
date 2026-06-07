@@ -111,6 +111,20 @@ export class AttendanceController {
     }
   }
 
+  async getToday(req: any, res: Response): Promise<void> {
+    try {
+      const employeeId = req.user.employeeId;
+      if (!employeeId) {
+        res.json(createSuccessResponse(null, 'No employee record linked to this account'));
+        return;
+      }
+      const record = await attendanceService.getTodayForEmployee(employeeId);
+      res.json(createSuccessResponse(record, 'Today\'s attendance retrieved'));
+    } catch (error: any) {
+      res.status(400).json(createErrorResponse(error.message || 'Failed to retrieve today\'s attendance', undefined, 400));
+    }
+  }
+
   async getAnalytics(req: any, res: Response): Promise<void> {
     try {
       const { startDate, endDate } = req.query;

@@ -92,7 +92,6 @@ const InterviewTemplateSchema = new Schema<any>(
 );
 
 // Indexes
-InterviewTemplateSchema.index({ status: 1 });
 InterviewTemplateSchema.index({ departmentId: 1, status: 1 });
 InterviewTemplateSchema.index({ createdAt: -1 });
 

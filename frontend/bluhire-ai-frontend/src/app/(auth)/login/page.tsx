@@ -49,9 +49,14 @@ export default function LoginPage() {
         login(user, accessToken, refreshToken);
         toast.success('Login successful');
         
+        // First-login: employee must change temporary password
+        if (user.mustChangePassword) {
+          router.push('/change-password/first-login');
+          return;
+        }
+
         let targetRoute = '/dashboard';
         switch (user.role) {
-          case 'CANDIDATE': targetRoute = '/candidate/dashboard'; break;
           case 'EMPLOYEE': targetRoute = '/employee/dashboard'; break;
           case 'HR_RECRUITER': targetRoute = '/recruitment/dashboard'; break;
           case 'SENIOR_MANAGER': targetRoute = '/executive/dashboard'; break;

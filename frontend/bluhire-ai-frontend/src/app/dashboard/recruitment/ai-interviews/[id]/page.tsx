@@ -10,6 +10,7 @@ import { motion } from 'framer-motion';
 
 import { ScorecardTab } from '@/components/interview/ScorecardTab';
 import { HiringDecisionCenter } from '@/components/interview/HiringDecisionCenter';
+import { MediaPlaybackTab } from '@/components/interview/MediaPlaybackTab';
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
 
 export default function CandidateDetailPage() {
@@ -92,13 +93,13 @@ export default function CandidateDetailPage() {
         <div className="bg-slate-50 border border-slate-200 px-6 py-4 rounded-xl text-center min-w-[200px]">
           <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Application Status</p>
           <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-            candidateInfo.status === 'UNDER_REVIEW' ? 'bg-amber-100 text-amber-800' :
-            candidateInfo.status === 'SHORTLISTED' ? 'bg-purple-100 text-purple-800' :
-            candidateInfo.status === 'SELECTED' ? 'bg-emerald-100 text-emerald-800' :
-            candidateInfo.status === 'REJECTED' ? 'bg-red-100 text-red-800' :
+            candidate.status === 'UNDER_REVIEW' ? 'bg-amber-100 text-amber-800' :
+            candidate.status === 'SHORTLISTED' ? 'bg-purple-100 text-purple-800' :
+            candidate.status === 'SELECTED' ? 'bg-emerald-100 text-emerald-800' :
+            candidate.status === 'REJECTED' ? 'bg-red-100 text-red-800' :
             'bg-slate-100 text-slate-800'
           }`}>
-            {statusString}
+            {candidate.status ? candidate.status.replace(/_/g, ' ') : 'PENDING'}
           </span>
         </div>
       </motion.div>
@@ -137,7 +138,7 @@ export default function CandidateDetailPage() {
           className={`min-h-[400px] ${activeTab !== 'scorecard' ? 'bg-slate-50 rounded-2xl border border-dashed border-slate-300 flex items-center justify-center text-slate-400' : ''}`}
         >
           {activeTab === 'scorecard' && <ScorecardTab candidateId={candidateId as string} />}
-          {activeTab === 'playback' && <div className="text-center p-8">Interview Playback Component will render here</div>}
+          {activeTab === 'playback' && <MediaPlaybackTab candidateId={candidateId as string} />}
           {activeTab === 'report' && <div className="text-center p-8">Report Viewer Component will render here</div>}
         </motion.div>
       </ErrorBoundary>
@@ -146,7 +147,7 @@ export default function CandidateDetailPage() {
       <ErrorBoundary>
         <HiringDecisionCenter 
           candidateId={candidateId as string} 
-          currentStatus={candidateInfo.status || 'PENDING'} 
+          currentStatus={candidate.status || 'PENDING'} 
         />
       </ErrorBoundary>
     </div>

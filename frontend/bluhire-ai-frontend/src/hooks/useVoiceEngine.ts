@@ -28,6 +28,7 @@ export function useVoiceEngine(settings?: VoiceSettings) {
 
     return () => {
       if (window.speechSynthesis) {
+        console.trace('SpeechSynthesis Cancel Triggered (Unmount)');
         window.speechSynthesis.cancel(); // Stop speaking if component unmounts
       }
     };
@@ -41,6 +42,7 @@ export function useVoiceEngine(settings?: VoiceSettings) {
     }
 
     // Cancel any ongoing speech
+    console.trace('SpeechSynthesis Cancel Triggered (New Speak)');
     window.speechSynthesis.cancel();
 
     const utterance = new SpeechSynthesisUtterance(text);
@@ -50,17 +52,21 @@ export function useVoiceEngine(settings?: VoiceSettings) {
     utterance.pitch = settings?.pitch || 1.0;
     utterance.rate = settings?.rate || 1.0;
 
-    if (settings?.voiceURI && availableVoices.length > 0) {
-      const selectedVoice = availableVoices.find(v => v.voiceURI === settings.voiceURI);
+    if (settings?.voiceURI) {
+      const voices = window.speechSynthesis.getVoices();
+      const selectedVoice = voices.find(v => v.voiceURI === settings.voiceURI);
       if (selectedVoice) {
         utterance.voice = selectedVoice;
       }
-    } else if (availableVoices.length > 0) {
-      // Default to a female English voice if possible
-      const defaultVoice = availableVoices.find(v => v.lang.includes('en') && v.name.includes('Female')) 
-        || availableVoices.find(v => v.lang.includes('en'));
-      if (defaultVoice) {
-        utterance.voice = defaultVoice;
+    } else {
+      const voices = window.speechSynthesis.getVoices();
+      if (voices.length > 0) {
+        // Default to a female English voice if possible
+        const defaultVoice = voices.find(v => v.lang.includes('en') && v.name.includes('Female')) 
+          || voices.find(v => v.lang.includes('en'));
+        if (defaultVoice) {
+          utterance.voice = defaultVoice;
+        }
       }
     }
 
@@ -72,13 +78,19 @@ export function useVoiceEngine(settings?: VoiceSettings) {
       if (onEnd) onEnd();
     };
     utterance.onerror = (e) => {
-      console.error('SpeechSynthesis error:', e);
+      // Browsers often fire 'interrupted' or 'canceled' when stopping speech manually. 
+      // We don't want to show this as a scary console error.
+      if (e.error === 'interrupted' || e.error === 'canceled') {
+        console.warn(`SpeechSynthesis ${e.error} (expected behavior on stop/unmount)`);
+      } else {
+        console.error('SpeechSynthesis error:', e);
+      }
       setStatus('ERROR');
     };
 
     utteranceRef.current = utterance;
     window.speechSynthesis.speak(utterance);
-  }, [settings, availableVoices]);
+  }, [settings]);
 
   const pause = useCallback(() => {
     if (window.speechSynthesis && status === 'SPEAKING') {
@@ -94,6 +106,7 @@ export function useVoiceEngine(settings?: VoiceSettings) {
 
   const stop = useCallback(() => {
     if (window.speechSynthesis) {
+      console.trace('SpeechSynthesis Cancel Triggered (Stop Called)');
       window.speechSynthesis.cancel();
       setStatus('IDLE');
     }

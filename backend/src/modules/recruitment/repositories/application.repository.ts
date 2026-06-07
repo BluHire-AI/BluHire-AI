@@ -95,7 +95,6 @@ export class ApplicationRepository {
     // Set lifecycle date flags
     if (stage === ApplicationStage.SCREENING) updateFields.screenedAt = new Date();
     else if (stage === ApplicationStage.INTERVIEW) updateFields.interviewedAt = new Date();
-    else if (stage === ApplicationStage.OFFER) updateFields.offeredAt = new Date();
     else if (stage === ApplicationStage.HIRED) {
       updateFields.hiredAt = new Date();
       updateFields.status = 'HIRED';
@@ -247,6 +246,32 @@ export class ApplicationRepository {
       $unwind: { path: '$employeeId', preserveNullAndEmptyArrays: true },
     });
 
+    // 5.5 Lookup Interview Session and Recommendation
+    pipeline.push({
+      $lookup: {
+        from: 'interviewsessions',
+        localField: 'candidateId._id',
+        foreignField: 'candidateId',
+        as: 'interviewSession',
+      },
+    });
+    pipeline.push({
+      $addFields: {
+        interviewSession: { $arrayElemAt: [{ $slice: ['$interviewSession', -1] }, 0] }
+      }
+    });
+    pipeline.push({
+      $lookup: {
+        from: 'interviewrecommendations',
+        localField: 'interviewSession._id',
+        foreignField: 'sessionId',
+        as: 'interviewRecommendation',
+      },
+    });
+    pipeline.push({
+      $unwind: { path: '$interviewRecommendation', preserveNullAndEmptyArrays: true },
+    });
+
     // 6. Sorting
     const sortBy = query.sortBy || 'createdAt';
     const sortOrder = query.sortOrder === 'asc' ? 1 : -1;
@@ -294,7 +319,6 @@ export class ApplicationRepository {
       [ApplicationStage.SCREENING]: 0,
       [ApplicationStage.SHORTLISTED]: 0,
       [ApplicationStage.INTERVIEW]: 0,
-      [ApplicationStage.OFFER]: 0,
       [ApplicationStage.HIRED]: 0,
       [ApplicationStage.REJECTED]: 0,
     };

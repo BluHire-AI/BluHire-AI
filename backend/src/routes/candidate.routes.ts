@@ -29,6 +29,10 @@ router.get('/:id/report', getCandidateReport);
 // GET /api/v1/candidates/:id/scorecard
 router.get('/:id/scorecard', getCandidateScorecard);
 
+// GET /api/v1/candidates/:id/media
+import { getCandidateMedia } from '../controllers/candidate.controller';
+router.get('/:id/media', getCandidateMedia);
+
 // POST /api/v1/candidates/:id/status
 router.post('/:id/status', updateCandidateStatus);
 

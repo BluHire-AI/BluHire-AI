@@ -62,7 +62,7 @@ export interface Application {
   candidateId: Candidate;
   jobId: Job;
   employeeId?: any;
-  currentStage: 'APPLIED' | 'SCREENING' | 'SHORTLISTED' | 'INTERVIEW' | 'OFFER' | 'HIRED' | 'REJECTED';
+  currentStage: 'APPLIED' | 'SCREENING' | 'SHORTLISTED' | 'INTERVIEW' | 'HIRED' | 'REJECTED';
   status: string;
   appliedAt: string;
   screenedAt?: string;
@@ -171,6 +171,10 @@ export const recruitmentService = {
     return response.data.data;
   },
 
+  deleteCandidate: async (id: string): Promise<void> => {
+    await api.delete(`/recruitment/candidates/${id}`);
+  },
+
   listApplications: async (query?: any): Promise<ApplicationListResponse> => {
     const response = await api.get('/recruitment/applications', { params: query });
     return {
@@ -181,6 +185,16 @@ export const recruitmentService = {
 
   getPipeline: async (jobId?: string): Promise<Record<string, Application[]>> => {
     const response = await api.get('/recruitment/pipeline', { params: { jobId } });
+    return response.data.data;
+  },
+
+  inviteToInterview: async (applicationId: string): Promise<any> => {
+    const response = await api.post(`/recruitment/applications/${applicationId}/invite`);
+    return response.data.data;
+  },
+
+  hireCandidate: async (applicationId: string): Promise<any> => {
+    const response = await api.post(`/recruitment/applications/${applicationId}/hire`);
     return response.data.data;
   },
 

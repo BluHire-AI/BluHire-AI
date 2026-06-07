@@ -1,20 +1,22 @@
 import { Request, Response } from 'express';
-import CandidateApplicationStatus from '../models/CandidateApplicationStatus';
 import InterviewSession from '../models/InterviewSession';
 import InterviewReport from '../models/InterviewReport';
 import InterviewScore from '../models/InterviewScore';
 import TechnicalEvaluation from '../models/TechnicalEvaluation';
 import CommunicationAnalysis from '../models/CommunicationAnalysis';
 import ProblemSolvingEvaluation from '../models/ProblemSolvingEvaluation';
+import InterviewTranscript from '../models/InterviewTranscript';
+import InterviewRecording from '../models/InterviewRecording';
+import InterviewRecommendation from '../models/InterviewRecommendation';
 
 export const getCandidates = async (req: Request, res: Response) => {
   try {
-    const candidates = await CandidateApplicationStatus.find()
-      .populate('candidateId', 'firstName lastName email')
-      .populate('sessionId', 'status startedAt completedAt')
+    const sessions = await InterviewSession.find()
+      .populate('candidateId', 'firstName lastName email status')
+      .populate('templateId', 'title')
       .sort({ updatedAt: -1 });
 
-    res.status(200).json({ success: true, data: candidates });
+    res.status(200).json({ success: true, data: sessions });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Server Error' });
   }
@@ -22,15 +24,16 @@ export const getCandidates = async (req: Request, res: Response) => {
 
 export const getCandidateById = async (req: Request, res: Response) => {
   try {
-    const candidateStatus = await CandidateApplicationStatus.findById(req.params.id)
+    const session = await InterviewSession.findById(req.params.id)
       .populate('candidateId')
-      .populate('sessionId');
+      .populate('templateId');
     
-    if (!candidateStatus) {
-      return res.status(404).json({ success: false, message: 'Candidate not found' });
+    if (!session) {
+      return res.status(404).json({ success: false, message: 'Interview session not found' });
     }
 
-    res.status(200).json({ success: true, data: candidateStatus });
+    // Wrap the response so frontend that expected candidateStatus gets equivalent structure
+    res.status(200).json({ success: true, data: { sessionId: session, candidateId: session.candidateId } });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Server Error' });
   }
@@ -38,12 +41,12 @@ export const getCandidateById = async (req: Request, res: Response) => {
 
 export const getCandidateReport = async (req: Request, res: Response) => {
   try {
-    const appStatus = await CandidateApplicationStatus.findById(req.params.id);
-    if (!appStatus || !appStatus.sessionId) {
+    const sessionId = req.params.id;
+    const report = await InterviewReport.findOne({ sessionId });
+    
+    if (!report) {
       return res.status(404).json({ success: false, message: 'Report not found' });
     }
-
-    const report = await InterviewReport.findOne({ sessionId: appStatus.sessionId });
     res.status(200).json({ success: true, data: report });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Server Error' });
@@ -52,99 +55,149 @@ export const getCandidateReport = async (req: Request, res: Response) => {
 
 export const getCandidateScorecard = async (req: Request, res: Response) => {
   try {
-    const appStatus = await CandidateApplicationStatus.findById(req.params.id);
-    if (!appStatus || !appStatus.sessionId) {
+    const sessionId = req.params.id;
+    const session = await InterviewSession.findById(sessionId);
+    
+    if (!session) {
       return res.status(404).json({ success: false, message: 'Scorecard not found' });
     }
 
-    // Since we don't have a single "InterviewScore" populated directly in this phase easily,
-    // we aggregate the underlying evaluations.
-    const sessionId = appStatus.sessionId;
-    const session = await InterviewSession.findById(sessionId);
-
-    // Compute completeness (answered questions / total questions) * 100
+    // Completeness: how many questions were answered vs total
     let completenessScore = 0;
     if (session && session.totalQuestions > 0) {
-      completenessScore = (session.currentQuestionIndex / session.totalQuestions) * 100;
+      completenessScore = Math.min(100, (session.currentQuestionIndex / session.totalQuestions) * 100);
     }
 
-    // Aggregate Technical, Communication, and Problem Solving averages from the transcripts
-    const techEvals = await TechnicalEvaluation.find().populate({
-      path: 'transcriptId',
-      match: { sessionId }
+    // Step 1: Get all transcript IDs for this specific session
+    const transcripts = await InterviewTranscript.find({ sessionId }).select('_id');
+    const transcriptIds = transcripts.map(t => t._id);
+
+    if (transcriptIds.length === 0) {
+      // No evaluations yet
+      return res.status(200).json({ success: true, data: {
+        technicalScore: 0, communicationScore: 0, problemSolvingScore: 0,
+        completenessScore, overallScore: 0, recommendation: null, reasoning: null
+      }});
+    }
+
+    // Step 2: Fetch evaluations scoped to these transcript IDs
+    const techEvals = await TechnicalEvaluation.find({ transcriptId: { $in: transcriptIds } });
+    const commEvals = await CommunicationAnalysis.find({ transcriptId: { $in: transcriptIds } });
+    const probEvals = await ProblemSolvingEvaluation.find({ transcriptId: { $in: transcriptIds } });
+
+    const avg = (arr: any[], field: string) =>
+      arr.length > 0 ? arr.reduce((s, e) => s + (e[field] || 0), 0) / arr.length : 0;
+
+    // Evaluations stored as 0–10 (score/10 from the 0–100 AI response)
+    const avgTech = avg(techEvals, 'overallTechnicalScore');
+    const avgComm = avg(commEvals, 'communicationScore');
+    const avgProb = avg(probEvals, 'overallProblemSolvingScore');
+
+    // Scale back to 0–100 for UI
+    const technicalScore = Math.round(avgTech * 10);
+    const communicationScore = Math.round(avgComm * 10);
+    const problemSolvingScore = Math.round(avgProb * 10);
+
+    // Weighted overall: Technical 40%, Communication 30%, Problem Solving 30%
+    const overallScore = Math.round(
+      (technicalScore * 0.40) +
+      (communicationScore * 0.30) +
+      (problemSolvingScore * 0.30)
+    );
+
+    // Fetch recommendation
+    const rec = await InterviewRecommendation.findOne({ sessionId });
+
+    res.status(200).json({
+      success: true,
+      data: {
+        technicalScore,
+        communicationScore,
+        problemSolvingScore,
+        completenessScore: Math.round(completenessScore),
+        overallScore,
+        recommendation: rec?.recommendation ?? null,
+        confidence: rec?.confidence ?? null,
+        reasoning: rec?.reasoning ?? null,
+      }
     });
-    
-    // In a real scenario we filter out nulls if populated failed due to match
-    const validTechEvals = techEvals.filter(e => e.transcriptId);
-    const avgTech = validTechEvals.length > 0 
-      ? validTechEvals.reduce((acc, curr) => acc + curr.overallTechnicalScore, 0) / validTechEvals.length 
-      : 0;
-
-    const commEvals = await CommunicationAnalysis.find().populate({
-      path: 'transcriptId',
-      match: { sessionId }
-    });
-    const validCommEvals = commEvals.filter(e => e.transcriptId);
-    const avgComm = validCommEvals.length > 0 
-      ? validCommEvals.reduce((acc, curr) => acc + curr.communicationScore, 0) / validCommEvals.length 
-      : 0;
-
-    const probEvals = await ProblemSolvingEvaluation.find().populate({
-      path: 'transcriptId',
-      match: { sessionId }
-    });
-    const validProbEvals = probEvals.filter(e => e.transcriptId);
-    const avgProb = validProbEvals.length > 0 
-      ? validProbEvals.reduce((acc, curr) => acc + curr.overallProblemSolvingScore, 0) / validProbEvals.length 
-      : 0;
-
-    // Formula: Technical (40%), Communication (25%), Problem Solving (25%), Completeness (10%)
-    // Assuming scores are out of 10 for AI and completeness is percentage, scale all to 100
-    const scaledTech = avgTech * 10;
-    const scaledComm = avgComm * 10;
-    const scaledProb = avgProb * 10;
-    
-    const overallScore = (scaledTech * 0.40) + (scaledComm * 0.25) + (scaledProb * 0.25) + (completenessScore * 0.10);
-
-    const scorecard = {
-      technicalScore: scaledTech,
-      communicationScore: scaledComm,
-      problemSolvingScore: scaledProb,
-      completenessScore,
-      overallScore,
-    };
-
-    res.status(200).json({ success: true, data: scorecard });
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, message: 'Server Error' });
   }
 };
 
+import applicationsService from '../modules/recruitment/applications/applications.service';
+import Application from '../models/Application';
+
 export const updateCandidateStatus = async (req: Request, res: Response) => {
   try {
     const { status } = req.body;
-    const candidateStatus = await CandidateApplicationStatus.findByIdAndUpdate(
-      req.params.id,
-      { status },
-      { new: true }
-    );
-    res.status(200).json({ success: true, data: candidateStatus });
-  } catch (error) {
-    res.status(500).json({ success: false, message: 'Server Error' });
+    const sessionId = req.params.id;
+    const userId = (req as any).user?._id;
+
+    const session = await InterviewSession.findById(sessionId);
+    if (!session) {
+      return res.status(404).json({ success: false, message: 'Session not found' });
+    }
+
+    // Find the latest active application for this candidate
+    const app = await Application.findOne({ candidateId: session.candidateId, isDeleted: false }).sort({ createdAt: -1 });
+    if (!app) {
+      return res.status(404).json({ success: false, message: 'Application not found for candidate' });
+    }
+
+    // Call applicationsService.moveStage which handles Candidate status sync, analytics, and employee creation
+    const updatedApp = await applicationsService.moveStage(app._id.toString(), status, userId, 'Status updated from AI Interview Review');
+    
+    res.status(200).json({ success: true, data: updatedApp });
+  } catch (error: any) {
+    console.error('updateCandidateStatus error:', error);
+    res.status(500).json({ success: false, message: error.message || 'Server Error' });
   }
 };
 
 export const getRankings = async (req: Request, res: Response) => {
-  // This is a simplified ranking generator. In production, this data should be cached or stored directly on the ApplicationStatus model on completion.
   try {
-    const applications = await CandidateApplicationStatus.find()
-      .populate('candidateId', 'firstName lastName email')
-      .populate('sessionId');
+    const rankings = await InterviewRecommendation.aggregate([
+      { $sort: { confidence: -1 } },
+      {
+        $lookup: {
+          from: 'interviewsessions',
+          localField: 'sessionId',
+          foreignField: '_id',
+          as: 'session'
+        }
+      },
+      { $unwind: { path: '$session', preserveNullAndEmptyArrays: false } },
+      {
+        $lookup: {
+          from: 'candidates',
+          localField: 'session.candidateId',
+          foreignField: '_id',
+          as: 'candidate'
+        }
+      },
+      { $unwind: { path: '$candidate', preserveNullAndEmptyArrays: false } },
+      {
+        $project: {
+          _id: '$candidate._id',
+          firstName: '$candidate.firstName',
+          lastName: '$candidate.lastName',
+          email: '$candidate.email',
+          candidateCode: '$candidate.candidateCode',
+          overallScore: { $round: [{ $multiply: ['$confidence', 100] }, 0] },
+          recommendation: '$recommendation',
+          status: '$candidate.status',
+          completedAt: '$session.completedAt',
+          sessionId: '$session._id'
+        }
+      }
+    ]);
 
-    // For demonstration, returning mock structure. To implement fully, we'd iterate and run the scorecard logic for each, then sort.
-    res.status(200).json({ success: true, data: [] });
+    res.status(200).json({ success: true, data: rankings });
   } catch (error) {
+    console.error('getRankings error:', error);
     res.status(500).json({ success: false, message: 'Server Error' });
   }
 };
@@ -153,15 +206,28 @@ export const compareCandidates = async (req: Request, res: Response) => {
   try {
     const ids = req.query.ids as string;
     if (!ids) {
-      return res.status(400).json({ success: false, message: 'Provide candidate ids to compare' });
+      return res.status(400).json({ success: false, message: 'Provide session ids to compare' });
     }
     const idArray = ids.split(',');
     
-    const candidates = await CandidateApplicationStatus.find({ _id: { $in: idArray } })
+    // idArray actually contains session IDs since the UI was passing CandidateApplicationStatus IDs, 
+    // now we pass session IDs to compare
+    const sessions = await InterviewSession.find({ _id: { $in: idArray } })
       .populate('candidateId', 'firstName lastName');
       
-    // Return base info for UI to render comparison
-    res.status(200).json({ success: true, data: candidates });
+    res.status(200).json({ success: true, data: sessions });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Server Error' });
+  }
+};
+
+export const getCandidateMedia = async (req: Request, res: Response) => {
+  try {
+    const sessionId = req.params.id;
+    const transcripts = await InterviewTranscript.find({ sessionId }).sort({ questionIndex: 1 });
+    const recordings = await InterviewRecording.find({ sessionId }).sort({ questionIndex: 1 });
+
+    res.status(200).json({ success: true, data: { transcripts, recordings } });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Server Error' });
   }

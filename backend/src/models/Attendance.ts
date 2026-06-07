@@ -12,7 +12,7 @@ export enum AttendanceStatus {
 }
 
 export interface IAttendance extends Document {
-  employeeId: string; // Reference to Employee _id
+  employeeId: mongoose.Types.ObjectId; // Reference to Employee _id
   date: Date;
   
   checkInTime?: Date;
@@ -35,8 +35,8 @@ export interface IAttendance extends Document {
   riskFlags?: string[];
   behaviorMetrics?: Record<string, any>;
 
-  createdBy: string; // User _id
-  updatedBy?: string; // User _id
+  createdBy: mongoose.Types.ObjectId; // User _id
+  updatedBy?: mongoose.Types.ObjectId; // User _id
   
   createdAt: Date;
   updatedAt: Date;

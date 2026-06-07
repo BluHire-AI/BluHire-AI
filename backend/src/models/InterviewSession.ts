@@ -12,6 +12,8 @@ export interface IInterviewSession extends Document {
   startedAt?: Date;
   completedAt?: Date;
   duration?: number; // In minutes or seconds
+  publicToken?: string;
+  tokenExpiresAt?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -63,6 +65,15 @@ const InterviewSessionSchema = new Schema<any>(
       type: Number,
       default: null,
     },
+    publicToken: {
+      type: String,
+      unique: true,
+      sparse: true, // Sparse allows nulls if we have legacy records
+      index: true,
+    },
+    tokenExpiresAt: {
+      type: Date,
+    },
   },
   {
     timestamps: true,
@@ -70,7 +81,6 @@ const InterviewSessionSchema = new Schema<any>(
 );
 
 // Indexes
-InterviewSessionSchema.index({ status: 1 });
 InterviewSessionSchema.index({ candidateId: 1, status: 1 });
 InterviewSessionSchema.index({ createdAt: -1 });
 

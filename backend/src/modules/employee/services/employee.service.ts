@@ -699,19 +699,6 @@ export class EmployeeService {
       statuses: [EmploymentStatus.ACTIVE],
     });
 
-    console.log("Employees Loaded:", employees.length);
-
-    // Find CEO (employee with no manager)
-    const ceoList = employees.filter((emp) => {
-      const managerId = emp.managerId && typeof emp.managerId === 'object' && '_id' in emp.managerId
-        ? (emp.managerId as any)._id.toString()
-        : emp.managerId?.toString();
-      return !managerId;
-    });
-    const ceo = ceoList.length > 0 ? ceoList[0] : null;
-
-    console.log("Roots:", ceoList.length);
-
     const nodeMap = new Map<string, IHierarchyNode>();
 
     // Build hierarchy nodes mapping
@@ -736,18 +723,28 @@ export class EmployeeService {
       });
     });
 
-    // Temp children lists to build tree
     const rawChildrenMap = new Map<string, string[]>();
+    const parentMap = new Map<string, string>();
+
     employees.forEach((emp) => {
       const managerId = emp.managerId && typeof emp.managerId === 'object' && '_id' in emp.managerId
         ? (emp.managerId as any)._id.toString()
         : emp.managerId?.toString();
       
-      if (managerId) {
+      if (managerId && nodeMap.has(managerId) && managerId !== emp._id.toString()) {
         if (!rawChildrenMap.has(managerId)) {
           rawChildrenMap.set(managerId, []);
         }
         rawChildrenMap.get(managerId)!.push(emp._id.toString());
+        parentMap.set(emp._id.toString(), managerId);
+      }
+    });
+
+    const rootEmployeeIds: string[] = [];
+    employees.forEach((emp) => {
+      const empId = emp._id.toString();
+      if (!parentMap.has(empId)) {
+        rootEmployeeIds.push(empId);
       }
     });
 
@@ -755,7 +752,7 @@ export class EmployeeService {
 
     const buildTree = (nodeId: string): IHierarchyNode | null => {
       if (visited.has(nodeId)) {
-        return null; // Cycle prevention: skip already visited node
+        return null;
       }
       visited.add(nodeId);
 
@@ -776,8 +773,6 @@ export class EmployeeService {
 
       const childrenIds = rawChildrenMap.get(nodeId) || [];
       for (const childId of childrenIds) {
-        console.log("Parent:", nodeId);
-        console.log("Child Match:", childId);
         const childNode = buildTree(childId);
         if (childNode) {
           node.children!.push(childNode);
@@ -787,7 +782,23 @@ export class EmployeeService {
       return node;
     };
 
-    const rootNode = ceo ? buildTree(ceo._id.toString()) : null;
+    const rootNodes: IHierarchyNode[] = [];
+    for (const rootId of rootEmployeeIds) {
+      const tree = buildTree(rootId);
+      if (tree) {
+        rootNodes.push(tree);
+      }
+    }
+
+    employees.forEach((emp) => {
+      const empId = emp._id.toString();
+      if (!visited.has(empId)) {
+        const orphanTree = buildTree(empId);
+        if (orphanTree) {
+          rootNodes.push(orphanTree);
+        }
+      }
+    });
 
     const totalManagers = employees.filter((emp) =>
       employees.some((other) => {
@@ -809,9 +820,13 @@ export class EmployeeService {
         .filter(Boolean)
     );
 
+    const totalEmployeesCount = await EmployeeRepository.findWithPagination({}, { page: 1, limit: 1 }).then((r) => r.total);
+
     return {
-      rootNode,
-      totalEmployees: employees.length,
+      rootNode: rootNodes.length > 0 ? rootNodes[0] : null,
+      rootNodes,
+      totalEmployees: totalEmployeesCount,
+      activeEmployees: employees.length,
       totalManagers,
       totalDepartments: uniqueDeptIds.size,
     };

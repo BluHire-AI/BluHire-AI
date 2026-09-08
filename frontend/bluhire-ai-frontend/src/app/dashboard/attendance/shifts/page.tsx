@@ -157,7 +157,7 @@ export default function ShiftsPage() {
           <Card key={label} className="border-zinc-200/60 dark:border-zinc-800 shadow-sm">
             <CardContent className="p-5 flex items-center justify-between">
               <div>
-                <p className="text-xs font-bold text-zinc-400 uppercase tracking-wider">{label}</p>
+                <p className="text-xs font-bold text-muted-foreground dark:text-zinc-400 uppercase tracking-wider">{label}</p>
                 <p className="text-2xl font-extrabold text-zinc-900 dark:text-white mt-1">{val}</p>
                 <p className="text-xs text-zinc-500 mt-0.5">{sub}</p>
               </div>
@@ -188,7 +188,7 @@ export default function ShiftsPage() {
               </div>
               <div className="space-y-1">
                 <h4 className="text-sm font-bold text-zinc-900 dark:text-white">No shifts configured</h4>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400 max-w-sm">
+                <p className="text-xs text-zinc-500 dark:text-muted-foreground dark:text-zinc-400 max-w-sm">
                   There are no shifts created in the system yet. Click below to add a new shift schedule.
                 </p>
               </div>
@@ -218,7 +218,7 @@ export default function ShiftsPage() {
                       <TableCell className="font-bold text-zinc-800 dark:text-zinc-200">{shift.name}</TableCell>
                       <TableCell className="font-semibold text-zinc-650 dark:text-zinc-350">
                         <div className="flex items-center gap-1.5 text-xs">
-                          <Clock className="w-3.5 h-3.5 text-zinc-400" />
+                          <Clock className="w-3.5 h-3.5 text-muted-foreground dark:text-zinc-400" />
                           {shift.startTime} - {shift.endTime}
                         </div>
                       </TableCell>
@@ -268,7 +268,7 @@ export default function ShiftsPage() {
 
             <div className="space-y-4 py-4">
               <div className="space-y-1.5">
-                <Label htmlFor="name" className="text-xs font-bold text-zinc-400 uppercase">Shift Name</Label>
+                <Label htmlFor="name" className="text-xs font-bold text-muted-foreground dark:text-zinc-400 uppercase">Shift Name</Label>
                 <Input
                   id="name"
                   placeholder="Morning Shift"
@@ -281,7 +281,7 @@ export default function ShiftsPage() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <Label htmlFor="startTime" className="text-xs font-bold text-zinc-400 uppercase">Start Time (HH:mm)</Label>
+                  <Label htmlFor="startTime" className="text-xs font-bold text-muted-foreground dark:text-zinc-400 uppercase">Start Time (HH:mm)</Label>
                   <Input
                     id="startTime"
                     placeholder="09:00"
@@ -292,7 +292,7 @@ export default function ShiftsPage() {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="endTime" className="text-xs font-bold text-zinc-400 uppercase">End Time (HH:mm)</Label>
+                  <Label htmlFor="endTime" className="text-xs font-bold text-muted-foreground dark:text-zinc-400 uppercase">End Time (HH:mm)</Label>
                   <Input
                     id="endTime"
                     placeholder="18:00"
@@ -306,7 +306,7 @@ export default function ShiftsPage() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <Label htmlFor="grace" className="text-xs font-bold text-zinc-400 uppercase">Grace Period (Minutes)</Label>
+                  <Label htmlFor="grace" className="text-xs font-bold text-muted-foreground dark:text-zinc-400 uppercase">Grace Period (Minutes)</Label>
                   <Input
                     id="grace"
                     type="number"
@@ -317,7 +317,7 @@ export default function ShiftsPage() {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="hours" className="text-xs font-bold text-zinc-400 uppercase">Working Hours Per Day</Label>
+                  <Label htmlFor="hours" className="text-xs font-bold text-muted-foreground dark:text-zinc-400 uppercase">Working Hours Per Day</Label>
                   <Input
                     id="hours"
                     type="number"
@@ -330,7 +330,7 @@ export default function ShiftsPage() {
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="isFlexible" className="text-xs font-bold text-zinc-400 uppercase">Shift Type</Label>
+                <Label htmlFor="isFlexible" className="text-xs font-bold text-muted-foreground dark:text-zinc-400 uppercase">Shift Type</Label>
                 <Select value={isFlexible} onValueChange={setIsFlexible}>
                   <SelectTrigger className="rounded-xl h-10 text-xs">
                     <SelectValue />
@@ -371,7 +371,7 @@ export default function ShiftsPage() {
 
             <div className="space-y-4 py-4">
               <div className="space-y-1.5">
-                <Label htmlFor="edit-name" className="text-xs font-bold text-zinc-400 uppercase">Shift Name</Label>
+                <Label htmlFor="edit-name" className="text-xs font-bold text-muted-foreground dark:text-zinc-400 uppercase">Shift Name</Label>
                 <Input
                   id="edit-name"
                   value={name}
@@ -383,7 +383,7 @@ export default function ShiftsPage() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <Label htmlFor="edit-startTime" className="text-xs font-bold text-zinc-400 uppercase">Start Time (HH:mm)</Label>
+                  <Label htmlFor="edit-startTime" className="text-xs font-bold text-muted-foreground dark:text-zinc-400 uppercase">Start Time (HH:mm)</Label>
                   <Input
                     id="edit-startTime"
                     value={startTime}
@@ -393,7 +393,7 @@ export default function ShiftsPage() {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="edit-endTime" className="text-xs font-bold text-zinc-400 uppercase">End Time (HH:mm)</Label>
+                  <Label htmlFor="edit-endTime" className="text-xs font-bold text-muted-foreground dark:text-zinc-400 uppercase">End Time (HH:mm)</Label>
                   <Input
                     id="edit-endTime"
                     value={endTime}
@@ -406,7 +406,7 @@ export default function ShiftsPage() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <Label htmlFor="edit-grace" className="text-xs font-bold text-zinc-400 uppercase">Grace Period (Minutes)</Label>
+                  <Label htmlFor="edit-grace" className="text-xs font-bold text-muted-foreground dark:text-zinc-400 uppercase">Grace Period (Minutes)</Label>
                   <Input
                     id="edit-grace"
                     type="number"
@@ -417,7 +417,7 @@ export default function ShiftsPage() {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="edit-hours" className="text-xs font-bold text-zinc-400 uppercase">Working Hours Per Day</Label>
+                  <Label htmlFor="edit-hours" className="text-xs font-bold text-muted-foreground dark:text-zinc-400 uppercase">Working Hours Per Day</Label>
                   <Input
                     id="edit-hours"
                     type="number"
@@ -430,7 +430,7 @@ export default function ShiftsPage() {
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="edit-isFlexible" className="text-xs font-bold text-zinc-400 uppercase">Shift Type</Label>
+                <Label htmlFor="edit-isFlexible" className="text-xs font-bold text-muted-foreground dark:text-zinc-400 uppercase">Shift Type</Label>
                 <Select value={isFlexible} onValueChange={setIsFlexible}>
                   <SelectTrigger className="rounded-xl h-10 text-xs">
                     <SelectValue />

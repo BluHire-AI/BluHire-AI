@@ -164,7 +164,7 @@ export default function AttendanceHistoryPage() {
   return (
     <div className="space-y-5">
       {/* Filters and Actions */}
-      <div className="flex flex-wrap items-center justify-between gap-3 bg-white dark:bg-zinc-900 p-4 rounded-xl border border-zinc-100 dark:border-zinc-800 shadow-sm">
+      <div className="flex flex-wrap items-center justify-between gap-3 bg-card dark:bg-zinc-900 p-4 rounded-xl border border-border dark:border-zinc-800 shadow-sm font-sans">
         <div className="flex flex-wrap gap-3 items-center">
           <Select value={String(month)} onValueChange={(v: string) => setMonth(Number(v))}>
             <SelectTrigger className="w-40 h-10 rounded-xl"><SelectValue /></SelectTrigger>
@@ -195,7 +195,7 @@ export default function AttendanceHistoryPage() {
           </Select>
 
           <div className="relative w-64 h-10">
-            <Search className="absolute left-3 top-3 w-4 h-4 text-zinc-400" />
+            <Search className="absolute left-3 top-3 w-4 h-4 text-muted-foreground dark:text-zinc-400" />
             <Input
               placeholder="Search location/remarks..."
               value={searchQuery}
@@ -229,10 +229,10 @@ export default function AttendanceHistoryPage() {
       </div>
 
       {/* Table */}
-      <Card className="border-zinc-200/60 dark:border-zinc-800 overflow-hidden shadow-sm">
+      <Card className="border-border dark:border-zinc-800 overflow-hidden shadow-sm bg-card">
         <Table>
-          <TableHeader className="bg-zinc-50 dark:bg-zinc-900/60">
-            <TableRow className="border-zinc-100 dark:border-zinc-800">
+          <TableHeader className="bg-muted/40 dark:bg-zinc-900/60">
+            <TableRow className="border-border dark:border-zinc-800">
               <TableHead className="font-bold">Date</TableHead>
               <TableHead className="font-bold">Check In</TableHead>
               <TableHead className="font-bold">Check Out</TableHead>
@@ -254,17 +254,17 @@ export default function AttendanceHistoryPage() {
             ) : filteredRecords.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={7} className="p-0">
-                  <div className="flex flex-col items-center justify-center py-16 text-center space-y-4 bg-zinc-50/50 dark:bg-zinc-900/10">
-                    <div className="p-3 bg-zinc-100 dark:bg-zinc-850 text-zinc-500 rounded-full border border-zinc-200 dark:border-zinc-800">
+                  <div className="flex flex-col items-center justify-center py-16 text-center space-y-4 bg-muted/20 dark:bg-zinc-900/10">
+                    <div className="p-3 bg-muted dark:bg-zinc-850 text-muted-foreground rounded-full border border-border dark:border-zinc-800">
                       <Search className="w-8 h-8" />
                     </div>
                     <div className="space-y-1">
-                      <h4 className="text-sm font-bold text-zinc-900 dark:text-white">No attendance records found</h4>
-                      <p className="text-xs text-zinc-500 dark:text-zinc-400 max-w-sm">
+                      <h4 className="text-sm font-bold text-foreground dark:text-white">No attendance records found</h4>
+                      <p className="text-xs text-muted-foreground dark:text-zinc-400 max-w-sm">
                         There are no attendance records logged matching the selected filters for {MONTHS[month - 1]} {year}.
                       </p>
                     </div>
-                    <Button onClick={load} variant="outline" className="h-9 rounded-xl text-xs px-4 border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800/40">
+                    <Button onClick={load} variant="outline" className="h-9 rounded-xl text-xs px-4 border-border dark:border-zinc-800 hover:bg-muted dark:hover:bg-zinc-800/40">
                       Refresh Records
                     </Button>
                   </div>
@@ -274,23 +274,23 @@ export default function AttendanceHistoryPage() {
               filteredRecords.map(rec => {
                 const badge = STATUS_BADGE[rec.attendanceStatus] ?? STATUS_BADGE['ABSENT'];
                 return (
-                  <TableRow key={rec._id} className="border-zinc-50 dark:border-zinc-900 hover:bg-zinc-50/50 dark:hover:bg-zinc-850/20">
-                    <TableCell className="font-bold text-zinc-700 dark:text-zinc-200">
+                  <TableRow key={rec._id} className="border-border/40 dark:border-zinc-900 hover:bg-muted/30 dark:hover:bg-zinc-850/20">
+                    <TableCell className="font-bold text-foreground dark:text-zinc-200">
                       {new Date(rec.date).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
                     </TableCell>
-                    <TableCell className="tabular-nums text-zinc-650 dark:text-zinc-300 font-semibold">{fmt12(rec.checkInTime)}</TableCell>
-                    <TableCell className="tabular-nums text-zinc-650 dark:text-zinc-300 font-semibold">{fmt12(rec.checkOutTime)}</TableCell>
-                    <TableCell className="tabular-nums font-semibold">{rec.workingHours > 0 ? fmtHours(rec.workingHours) : '—'}</TableCell>
-                    <TableCell className={`tabular-nums font-semibold ${rec.overtimeHours > 0 ? 'text-amber-600 dark:text-amber-450' : 'text-zinc-450'}`}>
+                    <TableCell className="tabular-nums text-muted-foreground dark:text-zinc-300 font-semibold">{fmt12(rec.checkInTime)}</TableCell>
+                    <TableCell className="tabular-nums text-muted-foreground dark:text-zinc-300 font-semibold">{fmt12(rec.checkOutTime)}</TableCell>
+                    <TableCell className="tabular-nums font-semibold text-foreground dark:text-zinc-100">{rec.workingHours > 0 ? fmtHours(rec.workingHours) : '—'}</TableCell>
+                    <TableCell className={`tabular-nums font-semibold ${rec.overtimeHours > 0 ? 'text-amber-600 dark:text-amber-450' : 'text-muted-foreground'}`}>
                       {rec.overtimeHours > 0 ? fmtHours(rec.overtimeHours) : '—'}
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline" className={`text-[10px] font-bold border ${badge.cls}`}>{badge.label}</Badge>
                     </TableCell>
-                    <TableCell className="text-zinc-450 text-xs">
+                    <TableCell className="text-muted-foreground text-xs">
                       <div className="flex flex-col gap-0.5">
                         {rec.location && (
-                          <span className="flex items-center gap-1 font-semibold"><MapPin className="w-3.5 h-3.5 text-zinc-400" />{rec.location}</span>
+                          <span className="flex items-center gap-1 font-semibold"><MapPin className="w-3.5 h-3.5 text-muted-foreground" />{rec.location}</span>
                         )}
                         {rec.remarks && <span className="italic">"{rec.remarks}"</span>}
                         {!rec.location && !rec.remarks && '—'}
@@ -305,8 +305,8 @@ export default function AttendanceHistoryPage() {
 
         {/* Pagination */}
         {total > LIMIT && (
-          <div className="flex items-center justify-between px-4 py-3 border-t border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/40">
-            <p className="text-xs text-zinc-400 font-bold">
+          <div className="flex items-center justify-between px-4 py-3 border-t border-border dark:border-zinc-800 bg-muted/40 dark:bg-zinc-900/40">
+            <p className="text-xs text-muted-foreground dark:text-zinc-400 font-bold">
               Showing {(page - 1) * LIMIT + 1}–{Math.min(page * LIMIT, total)} of {total} records
             </p>
             <div className="flex gap-2">

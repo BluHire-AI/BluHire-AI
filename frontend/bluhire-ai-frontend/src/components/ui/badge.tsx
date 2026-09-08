@@ -8,18 +8,18 @@ const badgeVariants = cva(
     variants: {
       variant: {
         default:
-          "border-transparent bg-zinc-900 text-zinc-50 hover:bg-zinc-900/80 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-50/80",
+          "border-transparent bg-primary text-primary-foreground hover:bg-primary/90",
         secondary:
-          "border-transparent bg-zinc-100 text-zinc-900 hover:bg-zinc-100/80 dark:bg-zinc-800 dark:text-zinc-50 dark:hover:bg-zinc-800/80",
+          "border-border bg-secondary text-secondary-foreground hover:bg-secondary/80",
         destructive:
-          "border-transparent bg-red-100 text-red-700 hover:bg-red-100/80 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/30",
-        outline: "text-zinc-950 border-zinc-200 dark:border-zinc-800 dark:text-zinc-50",
+          "border-transparent bg-destructive/10 text-destructive dark:bg-destructive/20 dark:text-rose-400",
+        outline: "text-foreground border-border dark:border-white/10 dark:text-zinc-50",
         success:
-          "border-transparent bg-emerald-50 text-emerald-700 dark:bg-emerald-950/20 dark:text-emerald-400",
+          "border-[#A7F3D0] bg-[#ECFDF5] text-[#047857] dark:bg-emerald-500/15 dark:text-emerald-400 dark:border-emerald-500/30",
         info:
-          "border-transparent bg-blue-50 text-blue-700 dark:bg-blue-950/20 dark:text-blue-400",
+          "border-[#BAE6FD] bg-[#F0F9FF] text-[#0369A1] dark:bg-blue-500/15 dark:text-blue-300 dark:border-blue-500/30",
         warning:
-          "border-transparent bg-amber-50 text-amber-700 dark:bg-amber-950/20 dark:text-amber-400",
+          "border-[#FDE68A] bg-[#FFFBEB] text-[#B45309] dark:bg-amber-500/15 dark:text-amber-300 dark:border-amber-500/30",
       },
     },
     defaultVariants: {

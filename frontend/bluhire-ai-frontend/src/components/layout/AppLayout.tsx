@@ -26,8 +26,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 export const AppLayout = ({ children }: { children: React.ReactNode }) => {
   const pathname = usePathname();
   const { user, logout } = useAuthStore();
-  const { theme, setTheme } = useTheme();
+  const { theme, resolvedTheme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const isDark = (resolvedTheme || theme) === 'dark';
 
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({
     main: true,
@@ -68,11 +69,20 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
     const isOpen = openGroups[groupKey];
     return (
       <button
+        type="button"
         onClick={() => toggleGroup(groupKey)}
-        className="w-full flex items-center justify-between px-3 py-2 text-[10px] font-extrabold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors mt-4 first:mt-0"
+        className="w-full flex items-center justify-between px-3 py-1.5 text-[10px] font-bold tracking-[0.12em] uppercase text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors mt-4 first:mt-0 cursor-pointer rounded-lg group select-none"
       >
-        <span>{title}</span>
-        {isOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+        <span className="flex-1 min-w-0 text-left truncate pr-2 font-bold tracking-[0.12em] uppercase">
+          {title}
+        </span>
+        <div className="shrink-0 flex items-center justify-center w-4 h-4">
+          {isOpen ? (
+            <ChevronDown className="w-3.5 h-3.5 text-zinc-400 dark:text-zinc-500 group-hover:text-zinc-700 dark:group-hover:text-zinc-300 transition-colors" />
+          ) : (
+            <ChevronRight className="w-3.5 h-3.5 text-zinc-400 dark:text-zinc-500 group-hover:text-zinc-700 dark:group-hover:text-zinc-300 transition-colors" />
+          )}
+        </div>
       </button>
     );
   };
@@ -178,7 +188,7 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
                         { name: 'Executive Analytics', href: '/dashboard/analytics', icon: TrendingUp, roles: ['MANAGEMENT_ADMIN', 'SENIOR_MANAGER'] },
                       ].map((item) => {
                         if (item.roles && user && !item.roles.includes(user.role)) return null;
-                        const isActive = pathname.startsWith(item.href);
+                        const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
                         const Icon = item.icon;
                         return (
                           <Link
@@ -254,10 +264,11 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
           <div className="flex items-center space-x-4">
             {mounted && (
               <button
-                onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-                className="p-2 rounded-xl text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-100 hover:bg-zinc-50 dark:hover:bg-zinc-800/30 transition-all cursor-pointer border border-zinc-100 dark:border-zinc-800/50"
+                onClick={() => setTheme(isDark ? 'light' : 'dark')}
+                className="p-2 rounded-xl text-muted-foreground hover:text-foreground dark:text-zinc-400 dark:hover:text-zinc-100 hover:bg-muted dark:hover:bg-zinc-800/30 transition-all cursor-pointer border border-border dark:border-zinc-800/50 theme-toggle"
+                aria-label="Toggle Theme"
               >
-                {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+                {isDark ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-indigo-600" />}
               </button>
             )}
 

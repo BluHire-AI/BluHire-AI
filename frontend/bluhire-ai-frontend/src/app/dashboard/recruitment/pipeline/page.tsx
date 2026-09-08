@@ -481,7 +481,7 @@ export default function PipelineBoard() {
         {[1, 2, 3, 4, 5].map(star => (
           <Star
             key={star}
-            className={`w-3 h-3 ${star <= cleanScore ? 'text-amber-500 fill-amber-500' : 'text-zinc-650'}`}
+            className={`w-3 h-3 ${star <= cleanScore ? 'text-amber-400 fill-amber-400' : 'text-zinc-600'}`}
           />
         ))}
       </div>
@@ -559,14 +559,14 @@ export default function PipelineBoard() {
   // Sourcing color tags helper
   const getStageBadgeColor = (stage: string) => {
     switch (stage) {
-      case 'APPLIED': return 'bg-blue-500/10 text-blue-400 border border-blue-500/20';
-      case 'SCREENING': return 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20';
-      case 'SHORTLISTED': return 'bg-purple-500/10 text-purple-400 border border-purple-500/20';
-      case 'INTERVIEW': return 'bg-amber-500/10 text-amber-400 border border-amber-500/20';
-      case 'OFFER': return 'bg-sky-500/10 text-sky-400 border border-sky-500/20';
-      case 'HIRED': return 'bg-emerald-500/10 text-emerald-450 border border-emerald-500/20';
-      case 'REJECTED': return 'bg-rose-500/10 text-rose-400 border border-rose-500/20';
-      default: return 'bg-zinc-800 text-zinc-400';
+      case 'APPLIED': return 'badge-applied';
+      case 'SCREENING': return 'badge-screening';
+      case 'SHORTLISTED': return 'badge-shortlisted';
+      case 'INTERVIEW': return 'badge-review';
+      case 'OFFER': return 'badge-offer';
+      case 'HIRED': return 'badge-hired';
+      case 'REJECTED': return 'badge-rejected';
+      default: return 'bg-muted text-muted-foreground border-border dark:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-700';
     }
   };
 
@@ -576,37 +576,37 @@ export default function PipelineBoard() {
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12">
       {/* Navigation Headers */}
-      <div className="flex flex-wrap items-center justify-between border-b border-white/10 pb-4 gap-4">
-        <div className="flex items-center gap-1.5 bg-white/[0.03] p-1 rounded-2xl border border-white/10">
+      <div className="flex flex-wrap items-center justify-between border-b border-border dark:border-white/10 pb-4 gap-4">
+        <div className="flex items-center gap-1.5 bg-card dark:bg-white/[0.03] p-1 rounded-2xl border border-border dark:border-white/10">
           <Link href="/dashboard/recruitment">
-            <span className="text-xs font-bold px-4 py-2 rounded-xl text-white/60 hover:text-white cursor-pointer block transition-all">
+            <span className="text-xs font-bold px-4 py-2 rounded-xl text-muted-foreground dark:text-zinc-400 hover:text-foreground dark:hover:text-white cursor-pointer block transition-all">
               Overview
             </span>
           </Link>
           <Link href="/dashboard/recruitment/jobs">
-            <span className="text-xs font-bold px-4 py-2 rounded-xl text-white/60 hover:text-white cursor-pointer block transition-all">
+            <span className="text-xs font-bold px-4 py-2 rounded-xl text-muted-foreground dark:text-zinc-400 hover:text-foreground dark:hover:text-white cursor-pointer block transition-all">
               Job Posts
             </span>
           </Link>
           <Link href="/dashboard/recruitment/pipeline">
-            <span className="text-xs font-bold px-4 py-2 rounded-xl bg-[#8B5CF6] text-white shadow-md cursor-pointer block transition-all">
+            <span className="text-xs font-bold px-4 py-2 rounded-xl bg-primary text-primary-foreground shadow-md cursor-pointer block transition-all">
               ATS Pipeline Grid
             </span>
           </Link>
           <Link href="/dashboard/recruitment/candidates">
-            <span className="text-xs font-bold px-4 py-2 rounded-xl text-white/60 hover:text-white cursor-pointer block transition-all">
+            <span className="text-xs font-bold px-4 py-2 rounded-xl text-muted-foreground dark:text-zinc-400 hover:text-foreground dark:hover:text-white cursor-pointer block transition-all">
               Candidates Catalog
             </span>
           </Link>
           <Link href="/dashboard/recruitment/ai-interviews">
-            <span className="text-xs font-bold px-4 py-2 rounded-xl text-white/60 hover:text-white cursor-pointer block transition-all">
+            <span className="text-xs font-bold px-4 py-2 rounded-xl text-muted-foreground dark:text-zinc-400 hover:text-foreground dark:hover:text-white cursor-pointer block transition-all">
               AI Interviews
             </span>
           </Link>
         </div>
         <div>
           <Link href="/careers" target="_blank">
-            <Button variant="outline" size="sm" className="text-xs flex items-center gap-1.5 rounded-xl border-white/10 hover:bg-white/[0.06] bg-transparent text-white/80 hover:text-white">
+            <Button variant="outline" size="sm" className="text-xs flex items-center gap-1.5 rounded-xl">
               Careers Portal
               <ExternalLink className="w-3.5 h-3.5" />
             </Button>
@@ -614,11 +614,11 @@ export default function PipelineBoard() {
         </div>
       </div>
 
-      <div className="pb-6 border-b border-white/10">
-        <h1 className="text-h1 text-white">
+      <div className="pb-6 border-b border-border dark:border-white/10">
+        <h1 className="text-h1 text-foreground dark:text-white">
           ATS Pipeline Grid
         </h1>
-        <p className="text-body-copy text-white/60 mt-2">
+        <p className="text-body-copy text-muted-foreground dark:text-zinc-400 mt-2">
           Screen resumes, track application steps, and manage applicant progression using our AI matching metrics.
         </p>
       </div>
@@ -627,17 +627,17 @@ export default function PipelineBoard() {
       <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
         {[
           { title: "Total Applications", value: stats?.totalApplications || 0, color: "bg-blue-500" },
-          { title: "New Today", value: stats?.newToday || 0, color: "bg-cyan-500", highlight: "text-cyan-400" },
-          { title: "Screening", value: Number(stats?.pipelineStats?.SCREENING || 0) + Number(stats?.pipelineStats?.SHORTLISTED || 0), color: "bg-indigo-500", highlight: "text-indigo-400" },
-          { title: "Interviews", value: stats?.pipelineStats?.INTERVIEW || 0, color: "bg-amber-500", highlight: "text-amber-400" },
-          { title: "Offers Sent", value: stats?.pipelineStats?.OFFER || 0, color: "bg-sky-500", highlight: "text-sky-400" },
-          { title: "Hired", value: stats?.pipelineStats?.HIRED || 0, color: "bg-emerald-500", highlight: "text-emerald-450" },
-          { title: "Rejected", value: stats?.pipelineStats?.REJECTED || 0, color: "bg-rose-500", highlight: "text-rose-450" }
+          { title: "New Today", value: stats?.newToday || 0, color: "bg-cyan-500", highlight: "text-cyan-600 dark:text-cyan-400" },
+          { title: "Screening", value: Number(stats?.pipelineStats?.SCREENING || 0) + Number(stats?.pipelineStats?.SHORTLISTED || 0), color: "bg-indigo-500", highlight: "text-indigo-600 dark:text-indigo-400" },
+          { title: "Interviews", value: stats?.pipelineStats?.INTERVIEW || 0, color: "bg-amber-500", highlight: "text-amber-600 dark:text-amber-400" },
+          { title: "Offers Sent", value: stats?.pipelineStats?.OFFER || 0, color: "bg-sky-500", highlight: "text-sky-600 dark:text-sky-400" },
+          { title: "Hired", value: stats?.pipelineStats?.HIRED || 0, color: "bg-emerald-500", highlight: "text-emerald-600 dark:text-emerald-400" },
+          { title: "Rejected", value: stats?.pipelineStats?.REJECTED || 0, color: "bg-rose-500", highlight: "text-rose-600 dark:text-rose-400" }
         ].map((item, idx) => (
-          <div key={idx} className="bg-card/60 backdrop-blur-md border border-border/70 rounded-xl p-3.5 shadow-sm text-left relative overflow-hidden group transition-all duration-300 hover:shadow-md hover:border-border">
+          <div key={idx} className="bg-card dark:bg-card/80 backdrop-blur-md border border-border dark:border-white/10 rounded-xl p-3.5 shadow-[0_4px_20px_rgba(23,32,51,0.06)] dark:shadow-sm text-left relative overflow-hidden group transition-all duration-300 hover:shadow-md hover:border-primary/30 dark:hover:border-white/20">
             <div className={`absolute top-0 left-0 w-1 h-full ${item.color}`} />
-            <p className="text-small-label text-muted-foreground">{item.title}</p>
-            <h3 className={`text-h2 mt-1.5 tracking-tight transition-transform duration-300 origin-left group-hover:translate-x-0.5 ${item.highlight || 'text-foreground'}`}>
+            <p className="text-small-label text-muted-foreground dark:text-zinc-400 font-semibold tracking-wider uppercase">{item.title}</p>
+            <h3 className={`text-h2 mt-1.5 font-bold tracking-tight transition-transform duration-300 origin-left group-hover:translate-x-0.5 ${item.highlight || 'text-foreground dark:text-white'}`}>
               {item.value}
             </h3>
           </div>
@@ -646,29 +646,29 @@ export default function PipelineBoard() {
 
       {/* Horizontal Pipeline Progression Flow Visualization */}
       {stageStats.length > 0 && (
-        <Card className="bg-card/65 backdrop-blur-md border border-border/80 p-4 rounded-xl">
-          <h4 className="text-[10px] font-bold tracking-wider uppercase text-muted-foreground mb-3.5">Conversion & Stage Progression Funnel</h4>
+        <Card className="bg-card dark:bg-card/80 backdrop-blur-md border border-border dark:border-white/10 p-4 rounded-xl shadow-[0_4px_20px_rgba(23,32,51,0.06)] dark:shadow-md">
+          <h4 className="text-[10px] font-bold tracking-wider uppercase text-muted-foreground dark:text-zinc-300 mb-3.5">Conversion & Stage Progression Funnel</h4>
           <div className="flex flex-col md:flex-row items-stretch justify-between gap-3 text-xs">
             {stageStats.map((item, idx) => (
               <React.Fragment key={item.name}>
-                <div className="flex-1 bg-muted/15 p-3 rounded-xl border border-border/50 flex flex-col justify-between hover:bg-muted/20 transition-all duration-300">
+                <div className="flex-1 bg-muted/30 dark:bg-white/[0.03] p-3 rounded-xl border border-border dark:border-white/10 flex flex-col justify-between hover:bg-muted/50 dark:hover:bg-white/[0.06] transition-all duration-300">
                   <div className="flex items-center justify-between">
-                    <span className="text-small-label text-muted-foreground">{item.name}</span>
-                    <span className="text-small-label text-primary bg-primary/10 border border-primary/20 px-2 py-0.5 rounded-full">{item.count}</span>
+                    <span className="text-small-label text-foreground dark:text-zinc-200 font-bold uppercase tracking-wider">{item.name}</span>
+                    <span className="text-small-label font-bold text-primary dark:text-purple-300 bg-primary/10 dark:bg-primary/20 border border-primary/20 dark:border-primary/30 px-2 py-0.5 rounded-full">{item.count}</span>
                   </div>
                   <div className="mt-4 flex items-end justify-between">
                     <div>
-                      <span className="text-small-label text-muted-foreground block normal-case">Conv. Rate</span>
-                      <span className="text-grid text-foreground mt-0.5 block">{item.conversionRate}%</span>
+                      <span className="text-small-label text-muted-foreground dark:text-zinc-400 block normal-case font-medium">Conv. Rate</span>
+                      <span className="text-grid text-foreground dark:text-white font-bold mt-0.5 block">{item.conversionRate}%</span>
                     </div>
                     <div>
-                      <span className="text-small-label text-muted-foreground block normal-case">Total Share</span>
-                      <span className="text-grid text-muted-foreground mt-0.5 block">{item.percentage}%</span>
+                      <span className="text-small-label text-muted-foreground dark:text-zinc-400 block normal-case font-medium">Total Share</span>
+                      <span className="text-grid text-muted-foreground dark:text-zinc-300 font-semibold mt-0.5 block">{item.percentage}%</span>
                     </div>
                   </div>
                 </div>
                 {idx < stageStats.length - 1 && (
-                  <div className="hidden md:flex items-center justify-center text-muted-foreground/45">
+                  <div className="hidden md:flex items-center justify-center text-muted-foreground/60 dark:text-zinc-500">
                     <ChevronRight className="w-4 h-4" />
                   </div>
                 )}
@@ -679,9 +679,9 @@ export default function PipelineBoard() {
       )}
 
       {/* Filters Toolbar Row */}
-      <div className="bg-card/65 backdrop-blur-md p-4.5 rounded-xl border border-border/80 space-y-4 shadow-md">
+      <div className="bg-card dark:bg-card/80 backdrop-blur-md p-4.5 rounded-xl border border-border dark:border-white/10 space-y-4 shadow-[0_4px_20px_rgba(23,32,51,0.06)] dark:shadow-md">
         <div className="flex items-center justify-between">
-          <h4 className="text-[10px] font-bold tracking-wider uppercase text-muted-foreground">Recruiter Filters Panel</h4>
+          <h4 className="text-[10px] font-bold tracking-wider uppercase text-muted-foreground dark:text-zinc-300">Recruiter Filters Panel</h4>
           <div className="flex items-center gap-2">
             <Button
               onClick={async () => {
@@ -696,12 +696,12 @@ export default function PipelineBoard() {
               }}
               variant="outline"
               size="sm"
-              className="text-xs h-7 border-white/10 hover:bg-white/[0.06] bg-transparent text-white/80 hover:text-white font-bold flex items-center gap-1 rounded-lg"
+              className="text-xs h-7 font-bold flex items-center gap-1 rounded-lg"
             >
-              <Sparkles className="w-3.5 h-3.5" />
+              <Sparkles className="w-3.5 h-3.5 text-primary dark:text-purple-400" />
               Recalculate Scores
             </Button>
-            <Button onClick={handleResetFilters} variant="ghost" size="sm" className="text-xs h-7 text-muted-foreground hover:text-foreground font-bold flex items-center gap-1 hover:bg-muted/50 rounded-lg">
+            <Button onClick={handleResetFilters} variant="ghost" size="sm" className="text-xs h-7 font-bold flex items-center gap-1 rounded-lg">
               <RotateCcw className="w-3.5 h-3.5" />
               Reset Filters
             </Button>
@@ -710,32 +710,32 @@ export default function PipelineBoard() {
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
           {/* Candidate Search */}
           <div className="relative">
-            <Search className="absolute left-2.5 top-2.5 w-3.5 h-3.5 text-muted-foreground" />
+            <Search className="absolute left-2.5 top-2.5 w-3.5 h-3.5 text-muted-foreground dark:text-zinc-400" />
             <Input
               placeholder="Search Name/Code..."
               value={searchQuery}
               onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
-              className="pl-8 text-grid bg-muted/20 border-border/60 text-foreground placeholder:text-muted-foreground/60 h-9 rounded-xl focus:bg-transparent"
+              className="pl-8 text-grid h-9 rounded-xl"
             />
           </div>
 
           {/* Skill Search */}
           <div className="relative">
-            <Award className="absolute left-2.5 top-2.5 w-3.5 h-3.5 text-muted-foreground" />
+            <Award className="absolute left-2.5 top-2.5 w-3.5 h-3.5 text-muted-foreground dark:text-zinc-400" />
             <Input
               placeholder="Filter by Skill..."
               value={searchSkill}
               onChange={(e) => { setSearchSkill(e.target.value); setCurrentPage(1); }}
-              className="pl-8 text-grid bg-muted/20 border-border/60 text-foreground placeholder:text-muted-foreground/60 h-9 rounded-xl focus:bg-transparent"
+              className="pl-8 text-grid h-9 rounded-xl"
             />
           </div>
 
           {/* Job Position Filter */}
           <Select value={selectedJobId} onValueChange={(val: string) => { setSelectedJobId(val); setCurrentPage(1); }} searchable={true}>
-            <SelectTrigger className="bg-muted/20 border border-border/60 text-xs font-bold px-2.5 h-9 w-44 rounded-xl text-foreground">
+            <SelectTrigger className="text-xs font-bold px-2.5 h-9 w-44 rounded-xl">
               <SelectValue placeholder="All Jobs" />
             </SelectTrigger>
-            <SelectContent className="bg-zinc-950 border border-white/10">
+            <SelectContent>
               <SelectItem value="ALL">All Jobs</SelectItem>
               {jobs.map((job) => (
                 <SelectItem key={job._id} value={job._id}>{job.title}</SelectItem>
@@ -745,10 +745,10 @@ export default function PipelineBoard() {
 
           {/* Stage Filter */}
           <Select value={selectedStage} onValueChange={(val: string) => { setSelectedStage(val); setCurrentPage(1); }}>
-            <SelectTrigger className="bg-muted/20 border border-border/60 text-xs font-bold px-2.5 h-9 w-36 rounded-xl text-foreground">
+            <SelectTrigger className="text-xs font-bold px-2.5 h-9 w-36 rounded-xl">
               <SelectValue placeholder="All Stages" />
             </SelectTrigger>
-            <SelectContent className="bg-zinc-950 border border-white/10">
+            <SelectContent>
               <SelectItem value="ALL">All Stages</SelectItem>
               {ACTIVE_STAGES.map((s) => (
                 <SelectItem key={s} value={s}>{s}</SelectItem>
@@ -759,10 +759,10 @@ export default function PipelineBoard() {
 
           {/* Experience Filter */}
           <Select value={selectedExperience} onValueChange={(val: string) => { setSelectedExperience(val); setCurrentPage(1); }}>
-            <SelectTrigger className="bg-muted/20 border border-border/60 text-xs font-bold px-2.5 h-9 w-40 rounded-xl text-foreground">
+            <SelectTrigger className="text-xs font-bold px-2.5 h-9 w-40 rounded-xl">
               <SelectValue placeholder="All Experience" />
             </SelectTrigger>
-            <SelectContent className="bg-zinc-950 border border-white/10">
+            <SelectContent>
               <SelectItem value="ALL">All Experience</SelectItem>
               <SelectItem value="Entry">Entry (0-2 years)</SelectItem>
               <SelectItem value="Mid">Mid (3-5 years)</SelectItem>
@@ -773,10 +773,10 @@ export default function PipelineBoard() {
 
           {/* AI Score Filter */}
           <Select value={selectedAiScoreRange} onValueChange={(val: string) => { setSelectedAiScoreRange(val); setCurrentPage(1); }}>
-            <SelectTrigger className="bg-muted/20 border border-border/60 text-xs font-bold px-2.5 h-9 w-40 rounded-xl text-foreground">
+            <SelectTrigger className="text-xs font-bold px-2.5 h-9 w-40 rounded-xl">
               <SelectValue placeholder="All AI Scores" />
             </SelectTrigger>
-            <SelectContent className="bg-zinc-950 border border-white/10">
+            <SelectContent>
               <SelectItem value="ALL">All AI Scores</SelectItem>
               <SelectItem value="90">90%+ Match</SelectItem>
               <SelectItem value="80">80%+ Match</SelectItem>
@@ -791,15 +791,15 @@ export default function PipelineBoard() {
               type="date"
               value={startDate}
               onChange={(e) => { setStartDate(e.target.value); setCurrentPage(1); }}
-              className="bg-muted/20 border border-border/60 text-[10px] font-bold p-1 rounded-xl text-foreground focus:outline-none h-9 w-full cursor-pointer hover:bg-muted/30"
+              className="bg-card dark:bg-white/[0.04] border border-border dark:border-white/10 text-[10px] font-bold p-1 rounded-xl text-foreground dark:text-zinc-200 focus:outline-none focus:border-primary h-9 w-full cursor-pointer hover:bg-muted/50 dark:hover:bg-white/[0.08]"
               title="Applied From"
             />
-            <span className="text-[10px] text-muted-foreground font-bold">to</span>
+            <span className="text-[10px] text-muted-foreground dark:text-zinc-400 font-bold">to</span>
             <input
               type="date"
               value={endDate}
               onChange={(e) => { setEndDate(e.target.value); setCurrentPage(1); }}
-              className="bg-muted/20 border border-border/60 text-[10px] font-bold p-1 rounded-xl text-foreground focus:outline-none h-9 w-full cursor-pointer hover:bg-muted/30"
+              className="bg-card dark:bg-white/[0.04] border border-border dark:border-white/10 text-[10px] font-bold p-1 rounded-xl text-foreground dark:text-zinc-200 focus:outline-none focus:border-primary h-9 w-full cursor-pointer hover:bg-muted/50 dark:hover:bg-white/[0.08]"
               title="Applied To"
             />
           </div>
@@ -807,17 +807,17 @@ export default function PipelineBoard() {
       </div>
 
       {/* Main Grid Table Container */}
-      <Card className="bg-card/65 backdrop-blur-md border border-border/80 rounded-2xl overflow-hidden shadow-lg">
-        <div className="p-4 border-b border-border/60 flex items-center justify-between bg-muted/15">
+      <Card className="bg-card dark:bg-card/80 backdrop-blur-md border border-border dark:border-white/10 rounded-2xl overflow-hidden shadow-[0_4px_20px_rgba(23,32,51,0.06)] dark:shadow-lg">
+        <div className="p-4 border-b border-border dark:border-white/10 flex items-center justify-between bg-muted/20 dark:bg-white/[0.02]">
           <div className="flex items-center gap-2">
-            <span className="text-grid font-bold text-foreground">Candidates Database</span>
-            <span className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full border border-primary/20">
+            <span className="text-grid font-bold text-foreground dark:text-white">Candidates Database</span>
+            <span className="text-[10px] font-bold text-primary dark:text-purple-300 bg-primary/10 dark:bg-primary/20 px-2 py-0.5 rounded-full border border-primary/20 dark:border-primary/30">
               {totalItems} total record{totalItems !== 1 && 's'}
             </span>
           </div>
           {loading && (
-            <div className="flex items-center gap-1.5 text-xs text-primary font-semibold">
-              <span className="w-1.5 h-1.5 rounded-full bg-primary animate-ping" />
+            <div className="flex items-center gap-1.5 text-xs text-primary dark:text-purple-300 font-semibold">
+              <span className="w-1.5 h-1.5 rounded-full bg-primary dark:bg-purple-400 animate-ping" />
               Loading database...
             </div>
           )}
@@ -825,83 +825,83 @@ export default function PipelineBoard() {
 
         <div className="overflow-x-auto">
           <Table>
-            <TableHeader className="bg-muted/10">
-              <TableRow className="hover:bg-transparent border-border/60">
+            <TableHeader className="bg-muted/30 dark:bg-white/[0.02]">
+              <TableRow className="hover:bg-transparent border-b border-border dark:border-white/10">
                 <TableHead className="w-10 text-center pl-4">
                   <input
                     type="checkbox"
                     checked={applications.length > 0 && selectedIds.length === applications.length}
                     onChange={(e) => handleSelectAll(e.target.checked)}
-                    className="rounded bg-muted/30 border-border/60 accent-primary w-3.5 h-3.5 cursor-pointer"
+                    className="rounded border-border dark:border-white/20 accent-primary w-3.5 h-3.5 cursor-pointer"
                   />
                 </TableHead>
-                <TableHead onClick={() => handleSort('candidate')} className="text-small-label text-muted-foreground pl-2 cursor-pointer select-none">
-                  <div className="flex items-center gap-1 hover:text-foreground transition-colors">
+                <TableHead onClick={() => handleSort('candidate')} className="text-small-label text-foreground dark:text-zinc-300 font-bold pl-2 cursor-pointer select-none">
+                  <div className="flex items-center gap-1 hover:text-primary dark:hover:text-white transition-colors">
                     Candidate
-                    <ArrowUpDown className={`w-3.5 h-3.5 ${sortBy === 'candidate' ? 'text-primary' : 'text-muted-foreground/60'}`} />
+                    <ArrowUpDown className={`w-3.5 h-3.5 ${sortBy === 'candidate' ? 'text-primary' : 'text-muted-foreground'}`} />
                   </div>
                 </TableHead>
-                <TableHead onClick={() => handleSort('job')} className="text-small-label text-muted-foreground cursor-pointer select-none">
-                  <div className="flex items-center gap-1 hover:text-foreground transition-colors">
+                <TableHead onClick={() => handleSort('job')} className="text-small-label text-foreground dark:text-zinc-300 font-bold cursor-pointer select-none">
+                  <div className="flex items-center gap-1 hover:text-primary dark:hover:text-white transition-colors">
                     Job Applied
-                    <ArrowUpDown className={`w-3.5 h-3.5 ${sortBy === 'job' ? 'text-primary' : 'text-muted-foreground/60'}`} />
+                    <ArrowUpDown className={`w-3.5 h-3.5 ${sortBy === 'job' ? 'text-primary' : 'text-muted-foreground'}`} />
                   </div>
                 </TableHead>
-                <TableHead onClick={() => handleSort('currentStage')} className="text-small-label text-muted-foreground cursor-pointer select-none">
-                  <div className="flex items-center gap-1 hover:text-foreground transition-colors">
+                <TableHead onClick={() => handleSort('currentStage')} className="text-small-label text-foreground dark:text-zinc-300 font-bold cursor-pointer select-none">
+                  <div className="flex items-center gap-1 hover:text-primary dark:hover:text-white transition-colors">
                     Stage
-                    <ArrowUpDown className={`w-3.5 h-3.5 ${sortBy === 'currentStage' ? 'text-primary' : 'text-muted-foreground/60'}`} />
+                    <ArrowUpDown className={`w-3.5 h-3.5 ${sortBy === 'currentStage' ? 'text-primary' : 'text-muted-foreground'}`} />
                   </div>
                 </TableHead>
-                <TableHead onClick={() => handleSort('screeningScore')} className="text-small-label text-muted-foreground cursor-pointer select-none">
-                  <div className="flex items-center gap-1 hover:text-foreground transition-colors">
+                <TableHead onClick={() => handleSort('screeningScore')} className="text-small-label text-foreground dark:text-zinc-300 font-bold cursor-pointer select-none">
+                  <div className="flex items-center gap-1 hover:text-primary dark:hover:text-white transition-colors">
                     Screening
-                    <ArrowUpDown className={`w-3.5 h-3.5 ${sortBy === 'screeningScore' ? 'text-primary' : 'text-muted-foreground/60'}`} />
+                    <ArrowUpDown className={`w-3.5 h-3.5 ${sortBy === 'screeningScore' ? 'text-primary' : 'text-muted-foreground'}`} />
                   </div>
                 </TableHead>
-                <TableHead onClick={() => handleSort('interviewScore')} className="text-small-label text-muted-foreground cursor-pointer select-none">
-                  <div className="flex items-center gap-1 hover:text-foreground transition-colors">
+                <TableHead onClick={() => handleSort('interviewScore')} className="text-small-label text-foreground dark:text-zinc-300 font-bold cursor-pointer select-none">
+                  <div className="flex items-center gap-1 hover:text-primary dark:hover:text-white transition-colors">
                     Interview
-                    <ArrowUpDown className={`w-3.5 h-3.5 ${sortBy === 'interviewScore' ? 'text-primary' : 'text-muted-foreground/60'}`} />
+                    <ArrowUpDown className={`w-3.5 h-3.5 ${sortBy === 'interviewScore' ? 'text-primary' : 'text-muted-foreground'}`} />
                   </div>
                 </TableHead>
-                <TableHead onClick={() => handleSort('finalScore')} className="text-small-label text-muted-foreground cursor-pointer select-none">
-                  <div className="flex items-center gap-1 hover:text-foreground transition-colors">
+                <TableHead onClick={() => handleSort('finalScore')} className="text-small-label text-foreground dark:text-zinc-300 font-bold cursor-pointer select-none">
+                  <div className="flex items-center gap-1 hover:text-primary dark:hover:text-white transition-colors">
                     Final Score
-                    <ArrowUpDown className={`w-3.5 h-3.5 ${sortBy === 'finalScore' ? 'text-primary' : 'text-muted-foreground/60'}`} />
+                    <ArrowUpDown className={`w-3.5 h-3.5 ${sortBy === 'finalScore' ? 'text-primary' : 'text-muted-foreground'}`} />
                   </div>
                 </TableHead>
-                <TableHead className="text-small-label text-muted-foreground select-none">
+                <TableHead className="text-small-label text-foreground dark:text-zinc-300 font-bold select-none">
                   AI Rec
                 </TableHead>
-                <TableHead onClick={() => handleSort('experience')} className="text-small-label text-muted-foreground cursor-pointer select-none">
-                  <div className="flex items-center gap-1 hover:text-foreground transition-colors">
+                <TableHead onClick={() => handleSort('experience')} className="text-small-label text-foreground dark:text-zinc-300 font-bold cursor-pointer select-none">
+                  <div className="flex items-center gap-1 hover:text-primary dark:hover:text-white transition-colors">
                     Experience
-                    <ArrowUpDown className={`w-3.5 h-3.5 ${sortBy === 'experience' ? 'text-primary' : 'text-muted-foreground/60'}`} />
+                    <ArrowUpDown className={`w-3.5 h-3.5 ${sortBy === 'experience' ? 'text-primary' : 'text-muted-foreground'}`} />
                   </div>
                 </TableHead>
-                <TableHead onClick={() => handleSort('appliedDate')} className="text-small-label text-muted-foreground cursor-pointer select-none">
-                  <div className="flex items-center gap-1 hover:text-foreground transition-colors">
+                <TableHead onClick={() => handleSort('appliedDate')} className="text-small-label text-foreground dark:text-zinc-300 font-bold cursor-pointer select-none">
+                  <div className="flex items-center gap-1 hover:text-primary dark:hover:text-white transition-colors">
                     Applied Date
-                    <ArrowUpDown className={`w-3.5 h-3.5 ${sortBy === 'appliedDate' ? 'text-primary' : 'text-muted-foreground/60'}`} />
+                    <ArrowUpDown className={`w-3.5 h-3.5 ${sortBy === 'appliedDate' ? 'text-primary' : 'text-muted-foreground'}`} />
                   </div>
                 </TableHead>
-                <TableHead onClick={() => handleSort('recruiterScore')} className="text-small-label text-muted-foreground cursor-pointer select-none">
-                  <div className="flex items-center gap-1 hover:text-foreground transition-colors">
+                <TableHead onClick={() => handleSort('recruiterScore')} className="text-small-label text-foreground dark:text-zinc-300 font-bold cursor-pointer select-none">
+                  <div className="flex items-center gap-1 hover:text-primary dark:hover:text-white transition-colors">
                     Recruiter Score
-                    <ArrowUpDown className={`w-3.5 h-3.5 ${sortBy === 'recruiterScore' ? 'text-primary' : 'text-muted-foreground/60'}`} />
+                    <ArrowUpDown className={`w-3.5 h-3.5 ${sortBy === 'recruiterScore' ? 'text-primary' : 'text-muted-foreground'}`} />
                   </div>
                 </TableHead>
-                <TableHead className="text-small-label text-muted-foreground text-right pr-6">Actions</TableHead>
+                <TableHead className="text-small-label text-foreground dark:text-zinc-300 font-bold text-right pr-6">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {applications.length === 0 ? (
-                <TableRow className="hover:bg-transparent border-border/60">
+                <TableRow className="hover:bg-transparent border-b border-border dark:border-white/10">
                   <TableCell colSpan={12} className="text-center py-20">
                     <div className="flex flex-col items-center justify-center space-y-2 text-muted-foreground">
-                      <HelpCircle className="w-10 h-10 text-muted-foreground/40" />
-                      <p className="text-xs font-bold uppercase tracking-wider text-foreground">No Candidates Found</p>
+                      <HelpCircle className="w-10 h-10 text-muted-foreground" />
+                      <p className="text-xs font-bold uppercase tracking-wider text-foreground dark:text-white">No Candidates Found</p>
                       <p className="text-[10px] text-muted-foreground">Try modifying filters or adding a new record</p>
                     </div>
                   </TableCell>
@@ -919,8 +919,8 @@ export default function PipelineBoard() {
                     <TableRow
                       key={app._id}
                       onClick={() => openCandidateDrawer(app)}
-                      className={`cursor-pointer hover:bg-muted/15 border-border/50 transition-colors ${
-                        isChecked ? 'bg-primary/5' : isSelected ? 'bg-muted/25' : ''
+                      className={`cursor-pointer hover:bg-muted/40 dark:hover:bg-white/[0.04] border-b border-border/60 dark:border-white/5 transition-colors ${
+                        isChecked ? 'bg-primary/10' : isSelected ? 'bg-muted/60 dark:bg-white/[0.06]' : ''
                       }`}
                     >
                       {/* Checkbox */}
@@ -929,7 +929,7 @@ export default function PipelineBoard() {
                           type="checkbox"
                           checked={isChecked}
                           onChange={(e) => handleSelectRow(e.target.checked, app._id)}
-                          className="rounded bg-muted/30 border-border/60 accent-primary w-3.5 h-3.5 cursor-pointer"
+                          className="rounded border-border dark:border-white/20 accent-primary w-3.5 h-3.5 cursor-pointer"
                         />
                       </TableCell>
 
@@ -941,10 +941,10 @@ export default function PipelineBoard() {
                             {cand.lastName[0]}
                           </div>
                           <div className="min-w-0">
-                            <h4 className="text-grid font-bold text-foreground hover:text-primary transition-colors truncate">
+                            <h4 className="text-grid font-bold text-foreground dark:text-white hover:text-primary transition-colors truncate">
                               {cand.firstName} {cand.lastName}
                             </h4>
-                            <p className="text-small-label text-muted-foreground mt-0.5">
+                            <p className="text-small-label text-muted-foreground font-medium mt-0.5">
                               {cand.candidateCode}
                             </p>
                           </div>
@@ -954,8 +954,8 @@ export default function PipelineBoard() {
                       {/* Job Applied */}
                       <TableCell>
                         <div className="min-w-[120px] max-w-[200px]">
-                          <p className="text-grid font-bold text-foreground truncate">{job.title}</p>
-                          <p className="text-small-label text-muted-foreground mt-0.5 truncate">
+                          <p className="text-grid font-bold text-foreground dark:text-zinc-100 truncate">{job.title}</p>
+                          <p className="text-small-label text-muted-foreground font-medium mt-0.5 truncate">
                             {job.departmentId?.name || 'Department'}
                           </p>
                         </div>
@@ -971,15 +971,15 @@ export default function PipelineBoard() {
                       {/* Screening Score */}
                       <TableCell>
                         {app.screeningStatus === 'PENDING' ? (
-                          <span className="text-small-label text-amber-500 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-full animate-pulse">Queued</span>
+                          <span className="text-small-label text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-500/15 border border-amber-200 dark:border-amber-500/30 px-2 py-0.5 rounded-full animate-pulse">Queued</span>
                         ) : app.screeningStatus === 'PROCESSING' ? (
-                          <span className="text-small-label text-primary bg-primary/10 border border-primary/20 px-2 py-0.5 rounded-full animate-pulse">Screening...</span>
+                          <span className="text-small-label text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-primary/20 border border-purple-200 dark:border-primary/30 px-2 py-0.5 rounded-full animate-pulse">Screening...</span>
                         ) : app.screeningStatus === 'FAILED' ? (
-                          <span className="text-small-label text-destructive bg-destructive/10 border border-destructive/20 px-2 py-0.5 rounded-full" title={app.notes || 'Screening failed'}>Failed</span>
+                          <span className="text-small-label text-rose-700 dark:text-rose-350 bg-rose-50 dark:bg-rose-500/15 border border-rose-200 dark:border-rose-500/30 px-2 py-0.5 rounded-full" title={app.notes || 'Screening failed'}>Failed</span>
                         ) : app.screeningScore !== undefined && app.screeningScore !== null ? (
                           <div className="flex items-center gap-1.5 min-w-[70px]">
-                            <span className="text-small-label text-foreground font-bold">{app.screeningScore}%</span>
-                            <div className="w-12 h-1.5 bg-muted border border-border/80 rounded-full overflow-hidden shrink-0">
+                            <span className="text-small-label text-foreground dark:text-white font-bold">{app.screeningScore}%</span>
+                            <div className="w-12 h-1.5 bg-muted dark:bg-white/10 border border-border dark:border-white/15 rounded-full overflow-hidden shrink-0">
                               <div
                                 className="h-full bg-gradient-to-r from-primary to-cyan-500"
                                 style={{ width: `${app.screeningScore}%` }}
@@ -988,8 +988,8 @@ export default function PipelineBoard() {
                           </div>
                         ) : app.aiScore !== undefined && app.aiScore !== null ? (
                           <div className="flex items-center gap-1.5 min-w-[70px]">
-                            <span className="text-small-label text-foreground font-bold">{app.aiScore}%</span>
-                            <div className="w-12 h-1.5 bg-muted border border-border/80 rounded-full overflow-hidden shrink-0">
+                            <span className="text-small-label text-foreground dark:text-white font-bold">{app.aiScore}%</span>
+                            <div className="w-12 h-1.5 bg-muted dark:bg-white/10 border border-border dark:border-white/15 rounded-full overflow-hidden shrink-0">
                               <div
                                 className="h-full bg-gradient-to-r from-primary to-cyan-500"
                                 style={{ width: `${app.aiScore}%` }}
@@ -997,7 +997,7 @@ export default function PipelineBoard() {
                             </div>
                           </div>
                         ) : (
-                          <span className="text-small-label text-muted-foreground/60 italic">-</span>
+                          <span className="text-small-label text-muted-foreground italic">-</span>
                         )}
                       </TableCell>
 
@@ -1006,8 +1006,8 @@ export default function PipelineBoard() {
                         {app.interviewStatus === 'COMPLETED' || (app.interviewScore !== undefined && app.interviewScore !== null) ? (
                           app.interviewScore !== undefined && app.interviewScore !== null ? (
                             <div className="flex items-center gap-1.5 min-w-[70px]">
-                              <span className="text-small-label text-foreground font-bold">{app.interviewScore}%</span>
-                              <div className="w-12 h-1.5 bg-muted border border-border/80 rounded-full overflow-hidden shrink-0">
+                              <span className="text-small-label text-foreground dark:text-white font-bold">{app.interviewScore}%</span>
+                              <div className="w-12 h-1.5 bg-muted dark:bg-white/10 border border-border dark:border-white/15 rounded-full overflow-hidden shrink-0">
                                 <div
                                   className="h-full bg-gradient-to-r from-violet-500 to-fuchsia-500"
                                   style={{ width: `${app.interviewScore}%` }}
@@ -1015,12 +1015,12 @@ export default function PipelineBoard() {
                               </div>
                             </div>
                           ) : (
-                            <span className="text-small-label text-muted-foreground/60 italic">-</span>
+                            <span className="text-small-label text-muted-foreground italic">-</span>
                           )
                         ) : app.interviewStatus === 'PENDING' || app.interviewStatus === 'SCHEDULED' ? (
-                          <span className="text-small-label text-amber-500 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-full">Scheduled</span>
+                          <span className="text-small-label text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-500/15 border border-amber-200 dark:border-amber-500/30 px-2 py-0.5 rounded-full">Scheduled</span>
                         ) : (
-                          <span className="text-small-label text-muted-foreground/60 italic">-</span>
+                          <span className="text-small-label text-muted-foreground italic">-</span>
                         )}
                       </TableCell>
 
@@ -1028,8 +1028,8 @@ export default function PipelineBoard() {
                       <TableCell>
                         {app.finalScore !== undefined && app.finalScore !== null ? (
                           <div className="flex items-center gap-1.5 min-w-[70px]">
-                            <span className="text-small-label text-foreground font-bold">{app.finalScore}%</span>
-                            <div className="w-12 h-1.5 bg-muted border border-border/80 rounded-full overflow-hidden shrink-0">
+                            <span className="text-small-label text-foreground dark:text-white font-bold">{app.finalScore}%</span>
+                            <div className="w-12 h-1.5 bg-muted dark:bg-white/10 border border-border dark:border-white/15 rounded-full overflow-hidden shrink-0">
                               <div
                                 className="h-full bg-gradient-to-r from-emerald-500 to-teal-500"
                                 style={{ width: `${app.finalScore}%` }}
@@ -1037,7 +1037,7 @@ export default function PipelineBoard() {
                             </div>
                           </div>
                         ) : (
-                          <span className="text-small-label text-muted-foreground/60 italic">-</span>
+                          <span className="text-small-label text-muted-foreground italic">-</span>
                         )}
                       </TableCell>
 
@@ -1046,21 +1046,21 @@ export default function PipelineBoard() {
                         {app.aiRecommendation ? (
                           <span className={`text-[8px] font-bold px-2 py-0.5 rounded-full tracking-wider uppercase inline-block ${
                             app.aiRecommendation === 'HIRE' 
-                              ? 'bg-emerald-500/10 text-emerald-450 border border-emerald-500/20' 
+                              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-500/15 dark:text-emerald-350 dark:border-emerald-500/30' 
                               : app.aiRecommendation === 'REJECT' 
-                                ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20' 
-                                : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                                ? 'bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-500/15 dark:text-rose-350 dark:border-rose-500/30' 
+                                : 'bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-500/15 dark:text-amber-300 dark:border-amber-500/30'
                           }`}>
                             {app.aiRecommendation}
                           </span>
                         ) : (
-                          <span className="text-small-label text-muted-foreground/60 italic">-</span>
+                          <span className="text-small-label text-muted-foreground italic">-</span>
                         )}
                       </TableCell>
 
                       {/* Experience */}
                       <TableCell>
-                        <div className="flex items-center gap-1 text-small-label text-foreground normal-case font-semibold">
+                        <div className="flex items-center gap-1 text-small-label text-foreground dark:text-zinc-200 normal-case font-semibold">
                           <Briefcase className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
                           <span className="truncate max-w-[80px]">{cand.experience || 'Entry'}</span>
                         </div>
@@ -1068,7 +1068,7 @@ export default function PipelineBoard() {
 
                       {/* Applied Date */}
                       <TableCell>
-                        <div className="flex items-center gap-1 text-small-label text-foreground normal-case font-semibold">
+                        <div className="flex items-center gap-1 text-small-label text-foreground dark:text-zinc-200 normal-case font-semibold">
                           <Calendar className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
                           <span>{formatDate(app.appliedAt)}</span>
                         </div>
@@ -1086,7 +1086,7 @@ export default function PipelineBoard() {
                             onClick={() => openCandidateDrawer(app)}
                             size="icon"
                             variant="ghost"
-                            className="w-7 h-7 rounded hover:bg-muted text-muted-foreground hover:text-foreground"
+                            className="w-7 h-7 rounded hover:bg-muted dark:hover:bg-white/10 text-muted-foreground hover:text-foreground dark:hover:text-white"
                             title="Quick View Details"
                           >
                             <Eye className="w-3.5 h-3.5" />
@@ -1095,7 +1095,7 @@ export default function PipelineBoard() {
                             onClick={() => handleHireCandidate(app._id)}
                             size="icon"
                             variant="ghost"
-                            className="w-7 h-7 rounded hover:bg-emerald-500/10 text-emerald-450"
+                            className="w-7 h-7 rounded hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400"
                             title="Hire Candidate"
                           >
                             <UserCheck className="w-3.5 h-3.5" />
@@ -1104,7 +1104,7 @@ export default function PipelineBoard() {
                             onClick={() => handleRejectCandidate(app._id)}
                             size="icon"
                             variant="ghost"
-                            className="w-7 h-7 rounded hover:bg-destructive/10 text-destructive"
+                            className="w-7 h-7 rounded hover:bg-rose-500/20 text-rose-600 dark:text-rose-400"
                             title="Reject Candidate"
                           >
                             <UserX className="w-3.5 h-3.5" />
@@ -1120,21 +1120,21 @@ export default function PipelineBoard() {
         </div>
 
         {/* Server-Side Pagination Bar */}
-        <div className="p-4 bg-muted/10 border-t border-border/60 flex flex-wrap items-center justify-between gap-4 text-xs font-bold text-muted-foreground">
+        <div className="p-4 bg-muted/20 dark:bg-white/[0.02] border-t border-border dark:border-white/10 flex flex-wrap items-center justify-between gap-4 text-xs font-bold text-muted-foreground">
           <div className="flex items-center gap-1.5">
             <span>View rows:</span>
             <Select value={String(itemsPerPage)} onValueChange={(val: string) => { setItemsPerPage(Number(val)); setCurrentPage(1); }}>
-              <SelectTrigger className="bg-card border border-border/80 rounded-xl px-2.5 h-8 w-20 text-foreground">
+              <SelectTrigger className="bg-card dark:bg-white/[0.04] border border-border dark:border-white/10 rounded-xl px-2.5 h-8 w-20 text-foreground dark:text-zinc-200">
                 <SelectValue placeholder="10" />
               </SelectTrigger>
-              <SelectContent className="bg-zinc-950 border border-white/10">
+              <SelectContent>
                 <SelectItem value="10">10</SelectItem>
                 <SelectItem value="15">15</SelectItem>
                 <SelectItem value="25">25</SelectItem>
                 <SelectItem value="50">50</SelectItem>
               </SelectContent>
             </Select>
-            <span className="text-muted-foreground/60 ml-2 font-medium">
+            <span className="text-muted-foreground ml-2 font-medium">
               Showing {applications.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0} - {Math.min(currentPage * itemsPerPage, totalItems)} of {totalItems} candidates
             </span>
           </div>
@@ -1145,19 +1145,19 @@ export default function PipelineBoard() {
               disabled={currentPage === 1 || loading}
               variant="outline"
               size="sm"
-              className="h-8 w-8 rounded-xl p-0 border-border/60 bg-transparent disabled:opacity-30 hover:bg-muted"
+              className="h-8 w-8 rounded-xl p-0 border-border dark:border-white/10 bg-transparent disabled:opacity-30 hover:bg-muted dark:hover:bg-white/10 text-foreground dark:text-zinc-200"
             >
-              <ChevronLeft className="w-4 h-4 text-foreground" />
+              <ChevronLeft className="w-4 h-4" />
             </Button>
-            <span className="font-semibold text-foreground">Page {currentPage} of {totalPages}</span>
+            <span className="font-semibold text-foreground dark:text-zinc-200">Page {currentPage} of {totalPages}</span>
             <Button
               onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
               disabled={currentPage === totalPages || loading}
               variant="outline"
               size="sm"
-              className="h-8 w-8 rounded-xl p-0 border-border/60 bg-transparent disabled:opacity-30 hover:bg-muted"
+              className="h-8 w-8 rounded-xl p-0 border-border dark:border-white/10 bg-transparent disabled:opacity-30 hover:bg-muted dark:hover:bg-white/10 text-foreground dark:text-zinc-200"
             >
-              <ChevronRight className="w-4 h-4 text-foreground" />
+              <ChevronRight className="w-4 h-4" />
             </Button>
           </div>
         </div>
@@ -1165,13 +1165,13 @@ export default function PipelineBoard() {
 
       {/* Hiring Onboarding Details Modal Dialog */}
       <Dialog open={hiringModalOpen} onOpenChange={setHiringModalOpen}>
-        <DialogContent className="bg-[#0b0b0c] border border-white/10 rounded-[28px] max-w-md text-white select-none">
+        <DialogContent className="bg-card dark:bg-[#0b0b0c] border border-border dark:border-white/10 rounded-[28px] max-w-md text-foreground select-none">
           <DialogHeader>
-            <DialogTitle className="text-lg font-bold flex items-center gap-2">
-              <UserCheck className="w-5 h-5 text-emerald-400" />
+            <DialogTitle className="text-lg font-bold flex items-center gap-2 text-foreground dark:text-white">
+              <UserCheck className="w-5 h-5 text-emerald-500 dark:text-emerald-400" />
               Complete Onboarding Conversion
             </DialogTitle>
-            <DialogDescription className="text-xs text-white/45">
+            <DialogDescription className="text-xs text-muted-foreground">
               Confirm onboarding parameters to promote candidate to an employee.
             </DialogDescription>
           </DialogHeader>
@@ -1179,12 +1179,12 @@ export default function PipelineBoard() {
           <form onSubmit={submitHiring} className="space-y-4 my-2 text-xs">
             {/* Assigned Role */}
             <div className="space-y-1.5">
-              <Label htmlFor="hiringRole">Assigned Employee System Role</Label>
+              <Label htmlFor="hiringRole" className="text-xs font-semibold text-foreground dark:text-zinc-300">Assigned Employee System Role</Label>
               <Select value={hiringRole} onValueChange={setHiringRole}>
-                <SelectTrigger id="hiringRole" className="w-full bg-white/[0.03] border border-white/10 rounded-xl h-9 px-3 text-xs text-white">
+                <SelectTrigger id="hiringRole" className="w-full bg-card dark:bg-white/[0.04] border border-border dark:border-white/10 rounded-xl h-9 px-3 text-xs text-foreground dark:text-zinc-200">
                   <SelectValue placeholder="Select System Role..." />
                 </SelectTrigger>
-                <SelectContent className="bg-zinc-950 border border-white/10">
+                <SelectContent>
                   <SelectItem value="EMPLOYEE">Employee (Standard HRMS Access)</SelectItem>
                   <SelectItem value="HR_RECRUITER">HR Recruiter (Recruitment & Directory)</SelectItem>
                   <SelectItem value="SENIOR_MANAGER">Senior Manager (Performance & Hierarchy)</SelectItem>
@@ -1195,12 +1195,12 @@ export default function PipelineBoard() {
 
             {/* Department Selection */}
             <div className="space-y-1.5">
-              <Label htmlFor="hiringDept">Department</Label>
+              <Label htmlFor="hiringDept" className="text-xs font-semibold text-foreground dark:text-zinc-300">Department</Label>
               <Select value={hiringDeptId} onValueChange={setHiringDeptId} searchable={true}>
-                <SelectTrigger id="hiringDept" className="w-full bg-white/[0.03] border border-white/10 rounded-xl h-9 px-3 text-xs text-white">
+                <SelectTrigger id="hiringDept" className="w-full bg-card dark:bg-white/[0.04] border border-border dark:border-white/10 rounded-xl h-9 px-3 text-xs text-foreground dark:text-zinc-200">
                   <SelectValue placeholder="Select Department..." />
                 </SelectTrigger>
-                <SelectContent className="bg-zinc-950 border border-white/10">
+                <SelectContent>
                   {departments.map((dept) => (
                     <SelectItem key={dept._id} value={dept._id}>
                       {dept.name}
@@ -1212,12 +1212,12 @@ export default function PipelineBoard() {
 
             {/* Designation / Job Title */}
             <div className="space-y-1.5">
-              <Label htmlFor="hiringDesig">Designation</Label>
+              <Label htmlFor="hiringDesig" className="text-xs font-semibold text-foreground dark:text-zinc-300">Designation</Label>
               <Select value={hiringDesigId} onValueChange={setHiringDesigId} searchable={true}>
-                <SelectTrigger id="hiringDesig" className="w-full bg-white/[0.03] border border-white/10 rounded-xl h-9 px-3 text-xs text-white">
+                <SelectTrigger id="hiringDesig" className="w-full bg-card dark:bg-white/[0.04] border border-border dark:border-white/10 rounded-xl h-9 px-3 text-xs text-foreground dark:text-zinc-200">
                   <SelectValue placeholder="Select Designation..." />
                 </SelectTrigger>
-                <SelectContent className="bg-zinc-950 border border-white/10">
+                <SelectContent>
                   {designations.map((d: any) => (
                     <SelectItem key={d._id} value={d._id}>
                       {d.title}
@@ -1229,12 +1229,12 @@ export default function PipelineBoard() {
 
             {/* Manager Assignment */}
             <div className="space-y-1.5">
-              <Label htmlFor="hiringManager">Reporting Manager</Label>
+              <Label htmlFor="hiringManager" className="text-xs font-semibold text-foreground dark:text-zinc-300">Reporting Manager</Label>
               <Select value={hiringManagerId} onValueChange={setHiringManagerId} searchable={true}>
-                <SelectTrigger id="hiringManager" className="w-full bg-white/[0.03] border border-white/10 rounded-xl h-9 px-3 text-xs text-white">
+                <SelectTrigger id="hiringManager" className="w-full bg-card dark:bg-white/[0.04] border border-border dark:border-white/10 rounded-xl h-9 px-3 text-xs text-foreground dark:text-zinc-200">
                   <SelectValue placeholder="Unassigned / No Manager" />
                 </SelectTrigger>
-                <SelectContent className="bg-zinc-950 border border-white/10">
+                <SelectContent>
                   <SelectItem value="NONE">Unassigned / No Manager</SelectItem>
                   {activeEmployees.map((emp) => (
                     <SelectItem key={emp._id} value={emp._id}>
@@ -1247,13 +1247,13 @@ export default function PipelineBoard() {
 
             {/* Joining Date */}
             <div className="space-y-1.5">
-              <Label htmlFor="hiringJoiningDate">Joining Date</Label>
+              <Label htmlFor="hiringJoiningDate" className="text-xs font-semibold text-foreground dark:text-zinc-300">Joining Date</Label>
               <Input
                 id="hiringJoiningDate"
                 type="date"
                 value={hiringJoiningDate}
                 onChange={(e) => setHiringJoiningDate(e.target.value)}
-                className="bg-white/[0.03] border-white/10 text-white rounded-xl h-9 text-xs"
+                className="bg-card dark:bg-white/[0.04] border-border dark:border-white/10 text-foreground dark:text-zinc-200 rounded-xl h-9 text-xs"
                 required
               />
             </div>
@@ -1263,14 +1263,14 @@ export default function PipelineBoard() {
                 type="button"
                 variant="ghost"
                 onClick={() => setHiringModalOpen(false)}
-                className="rounded-xl border border-white/10 text-white/70 hover:text-white"
+                className="rounded-xl border border-border dark:border-white/15 text-muted-foreground hover:text-foreground hover:bg-muted dark:hover:bg-white/10"
               >
                 Cancel
               </Button>
               <Button
                 type="submit"
                 disabled={submittingStage}
-                className="rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white border-0 cursor-pointer px-6 font-bold"
+                className="rounded-xl bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-600 text-white border-0 cursor-pointer px-6 font-bold"
               >
                 {submittingStage ? 'Onboarding...' : 'Onboard Employee'}
               </Button>
@@ -1289,9 +1289,9 @@ export default function PipelineBoard() {
           />
 
           {/* Drawer Right Body */}
-          <div className="fixed top-0 right-0 h-full w-[480px] sm:w-[560px] md:w-[680px] bg-card/95 backdrop-blur-lg border-l border-border/80 shadow-2xl z-50 transform transition-transform duration-300 ease-in-out flex flex-col">
+          <div className="fixed top-0 right-0 h-full w-[480px] sm:w-[560px] md:w-[680px] bg-card/95 dark:bg-[#0c0c12]/95 backdrop-blur-lg border-l border-border dark:border-white/10 shadow-2xl z-50 transform transition-transform duration-300 ease-in-out flex flex-col text-foreground">
             {/* Drawer Header */}
-            <div className="p-5 border-b border-border/60 bg-muted/10 flex items-start justify-between">
+            <div className="p-5 border-b border-border dark:border-white/10 bg-muted/20 dark:bg-white/[0.02] flex items-start justify-between">
               <div>
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className={`text-[8px] font-bold px-2 py-0.5 rounded-full tracking-wider uppercase ${getStageBadgeColor(selectedApp.currentStage)}`}>
@@ -1301,18 +1301,18 @@ export default function PipelineBoard() {
                     Sourcing ID: {selectedApp.candidateId?.candidateCode}
                   </span>
                 </div>
-                <h3 className="text-lg font-bold text-foreground mt-1.5">
+                <h3 className="text-lg font-bold text-foreground dark:text-white mt-1.5">
                   {selectedApp.candidateId?.firstName} {selectedApp.candidateId?.lastName}
                 </h3>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  Job Target: {selectedApp.jobId?.title} • {selectedApp.jobId?.departmentId?.name || 'Department'}
+                  Job Target: <span className="text-foreground dark:text-zinc-200 font-semibold">{selectedApp.jobId?.title}</span> • <span>{selectedApp.jobId?.departmentId?.name || 'Department'}</span>
                 </p>
               </div>
               <Button
                 onClick={() => setDrawerOpen(false)}
                 size="icon"
                 variant="ghost"
-                className="w-8 h-8 rounded-xl hover:bg-muted text-muted-foreground hover:text-foreground"
+                className="w-8 h-8 rounded-xl hover:bg-muted dark:hover:bg-white/10 text-muted-foreground hover:text-foreground"
               >
                 <X className="w-4 h-4" />
               </Button>
@@ -1320,7 +1320,7 @@ export default function PipelineBoard() {
 
             {/* Quick Progress Banner actions inside drawer */}
             {selectedApp.currentStage !== 'HIRED' && selectedApp.currentStage !== 'REJECTED' && (
-              <div className="px-5 py-3 bg-muted/15 border-b border-border/60 flex items-center justify-between gap-4 flex-wrap sm:flex-nowrap">
+              <div className="px-5 py-3 bg-muted/30 dark:bg-white/[0.03] border-b border-border dark:border-white/10 flex items-center justify-between gap-4 flex-wrap sm:flex-nowrap">
                 <div className="flex items-center gap-1.5">
                   <span className="text-[9px] font-bold uppercase text-muted-foreground">Advance Candidate:</span>
                   <Select
@@ -1334,10 +1334,10 @@ export default function PipelineBoard() {
                     }}
                     disabled={submittingStage}
                   >
-                    <SelectTrigger className="bg-muted/40 text-[10px] font-bold px-2 h-8 w-36 rounded-xl border border-border/60 text-foreground">
+                    <SelectTrigger className="bg-card dark:bg-white/[0.04] text-[10px] font-bold px-2 h-8 w-36 rounded-xl border border-border dark:border-white/10 text-foreground dark:text-zinc-200">
                       <SelectValue placeholder="Select Stage..." />
                     </SelectTrigger>
-                    <SelectContent className="bg-zinc-950 border border-white/10">
+                    <SelectContent>
                       {ACTIVE_STAGES.map((s) => (
                         <SelectItem key={s} value={s}>{s}</SelectItem>
                       ))}
@@ -1349,7 +1349,7 @@ export default function PipelineBoard() {
                     onClick={() => handleRejectCandidate(selectedApp._id)}
                     variant="outline"
                     size="sm"
-                    className="h-8 text-[10px] text-destructive border-destructive/20 hover:bg-destructive/10 rounded-xl"
+                    className="h-8 text-[10px] text-rose-600 dark:text-rose-400 border-rose-200 dark:border-rose-500/30 hover:bg-rose-50 dark:hover:bg-rose-500/15 rounded-xl font-bold"
                   >
                     <UserX className="w-3.5 h-3.5 mr-1" />
                     Reject
@@ -1357,7 +1357,7 @@ export default function PipelineBoard() {
                   <Button
                     onClick={() => handleHireCandidate(selectedApp._id)}
                     size="sm"
-                    className="h-8 bg-emerald-500 hover:bg-emerald-500/90 text-white font-bold text-[10px] flex items-center gap-1 rounded-xl"
+                    className="h-8 bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-600 text-white font-bold text-[10px] flex items-center gap-1 rounded-xl"
                   >
                     <UserCheck className="w-3.5 h-3.5 mr-0.5" />
                     Hire Candidate
@@ -1367,7 +1367,7 @@ export default function PipelineBoard() {
             )}
 
             {/* Drawer Tab Headers Selector */}
-            <div className="flex border-b border-border/60 px-4 bg-muted/5 text-xs font-bold gap-1 py-1.5 overflow-x-auto shrink-0 scrollbar-none">
+            <div className="flex border-b border-border dark:border-white/10 px-4 bg-muted/20 dark:bg-white/[0.02] text-xs font-bold gap-1 py-1.5 overflow-x-auto shrink-0 scrollbar-none">
               {[
                 { key: 'profile', name: 'Profile', icon: UserCircle2 },
                 { key: 'resume', name: 'Resume', icon: FileText },
@@ -1386,7 +1386,7 @@ export default function PipelineBoard() {
                     onClick={() => setDrawerTab(tab.key)}
                     className={`flex items-center gap-1.5 px-3 py-2 border-b-2 transition-all cursor-pointer font-bold shrink-0 text-[10px] tracking-wide uppercase ${
                       isActive
-                        ? 'border-primary text-primary'
+                        ? 'border-primary text-primary font-extrabold'
                         : 'border-transparent text-muted-foreground hover:text-foreground'
                     }`}
                   >
@@ -1404,17 +1404,17 @@ export default function PipelineBoard() {
                 <div className="space-y-5">
                   <div>
                     <h4 className="font-bold uppercase text-muted-foreground text-[9px] tracking-wider mb-2">Key Contact Bio</h4>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-muted/15 p-4 rounded-xl border border-border/60">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-muted/30 dark:bg-white/[0.03] p-4 rounded-xl border border-border dark:border-white/10">
                       <div>
                         <p className="text-[9px] text-muted-foreground font-bold uppercase">Email Address</p>
-                        <p className="font-bold text-foreground mt-1 flex items-center gap-1.5">
+                        <p className="font-bold text-foreground dark:text-white mt-1 flex items-center gap-1.5">
                           <Mail className="w-3.5 h-3.5 text-muted-foreground" />
                           {selectedApp.candidateId?.email}
                         </p>
                       </div>
                       <div>
                         <p className="text-[9px] text-muted-foreground font-bold uppercase">Phone Number</p>
-                        <p className="font-bold text-foreground mt-1 flex items-center gap-1.5">
+                        <p className="font-bold text-foreground dark:text-white mt-1 flex items-center gap-1.5">
                           <Phone className="w-3.5 h-3.5 text-muted-foreground" />
                           {selectedApp.candidateId?.phone}
                         </p>
@@ -1427,7 +1427,7 @@ export default function PipelineBoard() {
                             linkedin.com/profile
                           </a>
                         ) : (
-                          <p className="font-bold text-muted-foreground/60 mt-1">N/A</p>
+                          <p className="font-bold text-muted-foreground mt-1">N/A</p>
                         )}
                       </div>
                       <div>
@@ -1438,7 +1438,7 @@ export default function PipelineBoard() {
                             sourcing portfolio
                           </a>
                         ) : (
-                          <p className="font-bold text-muted-foreground/60 mt-1">N/A</p>
+                          <p className="font-bold text-muted-foreground mt-1">N/A</p>
                         )}
                       </div>
                     </div>
@@ -1446,28 +1446,28 @@ export default function PipelineBoard() {
 
                   <div>
                     <h4 className="font-bold uppercase text-muted-foreground text-[9px] tracking-wider mb-2">Work Status Details</h4>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-muted/15 p-4 rounded-xl border border-border/60">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-muted/30 dark:bg-white/[0.03] p-4 rounded-xl border border-border dark:border-white/10">
                       <div>
                         <p className="text-[9px] text-muted-foreground font-bold uppercase">Current Company</p>
-                        <p className="font-bold text-foreground mt-1">{selectedApp.candidateId?.currentCompany || 'N/A'}</p>
+                        <p className="font-bold text-foreground dark:text-white mt-1">{selectedApp.candidateId?.currentCompany || 'N/A'}</p>
                       </div>
                       <div>
                         <p className="text-[9px] text-muted-foreground font-bold uppercase">Current Designation</p>
-                        <p className="font-bold text-foreground mt-1">{selectedApp.candidateId?.currentDesignation || 'N/A'}</p>
+                        <p className="font-bold text-foreground dark:text-white mt-1">{selectedApp.candidateId?.currentDesignation || 'N/A'}</p>
                       </div>
                       <div>
                         <p className="text-[9px] text-muted-foreground font-bold uppercase">Expected Compensation</p>
-                        <p className="font-bold text-foreground mt-1">
+                        <p className="font-bold text-foreground dark:text-white mt-1">
                           {selectedApp.candidateId?.expectedSalary ? `$${selectedApp.candidateId.expectedSalary.toLocaleString()}` : 'N/A'}
                         </p>
                       </div>
                       <div>
                         <p className="text-[9px] text-muted-foreground font-bold uppercase">Notice Period</p>
-                        <p className="font-bold text-foreground mt-1">{selectedApp.candidateId?.noticePeriod || 'Immediate'}</p>
+                        <p className="font-bold text-foreground dark:text-white mt-1">{selectedApp.candidateId?.noticePeriod || 'Immediate'}</p>
                       </div>
                       <div>
                         <p className="text-[9px] text-muted-foreground font-bold uppercase">Sourcing Source</p>
-                        <span className="font-bold text-foreground bg-muted border border-border px-2 py-0.5 rounded mt-1 inline-block uppercase text-[10px]">
+                        <span className="font-bold text-foreground dark:text-zinc-200 bg-muted/60 dark:bg-white/10 border border-border dark:border-white/10 px-2 py-0.5 rounded mt-1 inline-block uppercase text-[10px]">
                           {selectedApp.candidateId?.source || 'DIRECT'}
                         </span>
                       </div>
@@ -1482,13 +1482,13 @@ export default function PipelineBoard() {
                   <h4 className="font-bold uppercase text-muted-foreground text-[9px] tracking-wider mb-1">Uploaded Resume Vault</h4>
                   {selectedApp.candidateId?.resume?.fileName ? (
                     <div className="flex-1 flex flex-col space-y-4">
-                      <div className="border border-border/70 rounded-xl p-4 flex items-center justify-between bg-muted/20">
+                      <div className="border border-border dark:border-white/10 rounded-xl p-4 flex items-center justify-between bg-muted/30 dark:bg-white/[0.03]">
                         <div className="flex items-center gap-2.5">
-                          <div className="w-10 h-10 bg-primary/10 text-primary border border-primary/25 rounded-xl flex items-center justify-center">
+                          <div className="w-10 h-10 bg-primary/20 text-primary border border-primary/30 rounded-xl flex items-center justify-center">
                             <FileText className="w-5 h-5" />
                           </div>
                           <div>
-                            <p className="font-bold text-foreground truncate max-w-[280px]">{selectedApp.candidateId.resume.fileName}</p>
+                            <p className="font-bold text-foreground dark:text-white truncate max-w-[280px]">{selectedApp.candidateId.resume.fileName}</p>
                             <p className="text-[9px] text-muted-foreground mt-0.5">Uploaded: {formatDate(selectedApp.candidateId.resume.uploadedAt)}</p>
                           </div>
                         </div>
@@ -1497,7 +1497,7 @@ export default function PipelineBoard() {
                             onClick={() => handleDownloadResume(selectedApp.candidateId?.resume?.fileName)}
                             size="icon"
                             variant="ghost"
-                            className="w-8 h-8 rounded-xl hover:bg-muted text-muted-foreground hover:text-foreground"
+                            className="w-8 h-8 rounded-xl hover:bg-muted dark:hover:bg-white/10 text-muted-foreground hover:text-foreground"
                             title="Download PDF"
                           >
                             <Download className="w-4 h-4" />
@@ -1510,7 +1510,7 @@ export default function PipelineBoard() {
                             <Button
                               size="icon"
                               variant="ghost"
-                              className="w-8 h-8 rounded-xl hover:bg-muted text-muted-foreground hover:text-foreground"
+                              className="w-8 h-8 rounded-xl hover:bg-muted dark:hover:bg-white/10 text-muted-foreground hover:text-foreground"
                               title="Native Preview File"
                             >
                               <ExternalLink className="w-4 h-4" />
@@ -1520,12 +1520,12 @@ export default function PipelineBoard() {
                       </div>
 
                       {/* Browser Streaming preview panel container */}
-                      <div className="flex-1 min-h-[340px] border border-border/85 rounded-xl overflow-hidden bg-muted/10 relative">
+                      <div className="flex-1 min-h-[340px] border border-border dark:border-white/10 rounded-xl overflow-hidden bg-card dark:bg-white/[0.02] relative">
                         {/* Stream preview text helper */}
                         <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6 text-muted-foreground space-y-2 pointer-events-none">
-                          <AlertCircle className="w-8 h-8 text-muted-foreground/30" />
-                          <p className="font-bold text-xs text-foreground">PDF Document Stream Preview Container</p>
-                          <p className="text-[10px] text-muted-foreground/85 max-w-[340px]">Point to the external native review trigger if your sandbox blocks direct PDF embeds.</p>
+                          <AlertCircle className="w-8 h-8 text-muted-foreground" />
+                          <p className="font-bold text-xs text-foreground dark:text-white">PDF Document Stream Preview Container</p>
+                          <p className="text-[10px] text-muted-foreground max-w-[340px]">Point to the external native review trigger if your sandbox blocks direct PDF embeds.</p>
                         </div>
                         <iframe
                           src={recruitmentService.getResumeDownloadUrl(selectedApp.candidateId.resume.fileName)}
@@ -1535,9 +1535,9 @@ export default function PipelineBoard() {
                       </div>
                     </div>
                   ) : (
-                    <div className="text-center py-16 text-muted-foreground border-2 border-dashed border-border/80 rounded-xl bg-muted/10">
-                      <FileText className="w-10 h-10 text-muted-foreground/35 mx-auto mb-2" />
-                      <p className="font-bold text-foreground">No Resume document available</p>
+                    <div className="text-center py-16 text-muted-foreground border-2 border-dashed border-border dark:border-white/10 rounded-xl bg-card dark:bg-white/[0.02]">
+                      <FileText className="w-10 h-10 text-muted-foreground mx-auto mb-2" />
+                      <p className="font-bold text-foreground dark:text-white">No Resume document available</p>
                       <p className="text-[10px] text-muted-foreground mt-0.5">This applicant was registered without a PDF attachment.</p>
                     </div>
                   )}
@@ -1551,23 +1551,23 @@ export default function PipelineBoard() {
                     <h4 className="font-bold uppercase text-muted-foreground text-[9px] tracking-wider mb-2">Candidate Skills Array</h4>
                     <div className="flex flex-wrap gap-1.5">
                       {selectedApp.candidateId?.skills?.map((s) => (
-                        <span key={s} className="text-[10px] font-bold px-2.5 py-1 rounded-xl bg-muted/70 text-foreground border border-border/40 shadow-sm">
+                        <span key={s} className="text-[10px] font-bold px-2.5 py-1 rounded-xl bg-muted/60 dark:bg-white/10 text-foreground dark:text-white border border-border dark:border-white/15 shadow-sm">
                           {s}
                         </span>
                       )) || <span className="text-muted-foreground italic">No skills listed.</span>}
                     </div>
                   </div>
 
-                  <div className="bg-muted/15 p-4 rounded-xl border border-border/60 space-y-4">
+                  <div className="bg-muted/30 dark:bg-white/[0.03] p-4 rounded-xl border border-border dark:border-white/10 space-y-4">
                     <div>
                       <div className="flex items-center gap-1.5 mb-2">
-                        <Check className="w-4 h-4 text-emerald-400" />
+                        <Check className="w-4 h-4 text-emerald-500 dark:text-emerald-400" />
                         <p className="text-[9px] text-muted-foreground font-bold uppercase tracking-wider">Matching Job Requirements</p>
                       </div>
                       <div className="flex flex-wrap gap-1.5">
                         {selectedApp.matchingSkills && selectedApp.matchingSkills.length > 0 ? (
                           selectedApp.matchingSkills.map((s) => (
-                            <span key={s} className="text-[9px] font-bold px-2 py-0.5 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">{s}</span>
+                            <span key={s} className="text-[9px] font-bold px-2 py-0.5 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-500/15 dark:text-emerald-350 dark:border-emerald-500/30">{s}</span>
                           ))
                         ) : (
                           <span className="text-muted-foreground text-[10px] italic">No match intersections</span>
@@ -1576,16 +1576,16 @@ export default function PipelineBoard() {
                     </div>
                     <div>
                       <div className="flex items-center gap-1.5 mb-2">
-                        <Info className="w-4 h-4 text-rose-400" />
+                        <Info className="w-4 h-4 text-rose-500 dark:text-rose-400" />
                         <p className="text-[9px] text-muted-foreground font-bold uppercase tracking-wider">Missing Sourcing Requirements</p>
                       </div>
                       <div className="flex flex-wrap gap-1.5">
                         {selectedApp.missingSkills && selectedApp.missingSkills.length > 0 ? (
                           selectedApp.missingSkills.map((s) => (
-                            <span key={s} className="text-[9px] font-bold px-2 py-0.5 rounded-lg bg-rose-500/10 text-rose-455 border border-rose-500/20">{s}</span>
+                            <span key={s} className="text-[9px] font-bold px-2 py-0.5 rounded-lg bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-500/15 dark:text-rose-350 dark:border-rose-500/30">{s}</span>
                           ))
                         ) : (
-                          <span className="text-emerald-400 text-[10px] font-bold italic">Perfect match! No missing skills</span>
+                          <span className="text-emerald-600 dark:text-emerald-400 text-[10px] font-bold italic">Perfect match! No missing skills</span>
                         )}
                       </div>
                     </div>
@@ -1597,9 +1597,9 @@ export default function PipelineBoard() {
               {drawerTab === 'education' && (
                 <div className="space-y-4">
                   <h4 className="font-bold uppercase text-muted-foreground text-[9px] tracking-wider mb-2">Academic Credentials</h4>
-                  <div className="bg-muted/15 p-4 rounded-xl border border-border/60">
+                  <div className="bg-muted/30 dark:bg-white/[0.03] p-4 rounded-xl border border-border dark:border-white/10">
                     <p className="text-[9px] text-muted-foreground font-bold uppercase">Education Details Summary</p>
-                    <p className="text-xs font-bold text-foreground mt-1">{selectedApp.candidateId?.education || 'No details registered'}</p>
+                    <p className="text-xs font-bold text-foreground dark:text-white mt-1">{selectedApp.candidateId?.education || 'No details registered'}</p>
                   </div>
                 </div>
               )}
@@ -1616,17 +1616,17 @@ export default function PipelineBoard() {
 
                   {/* Queued / Processing States */}
                   {selectedApp.screeningStatus === 'PENDING' && (
-                    <div className="bg-muted/15 border border-border/80 p-4 rounded-xl text-center space-y-3">
-                      <div className="w-8 h-8 rounded-full border-2 border-amber-500 border-t-transparent animate-spin mx-auto" />
-                      <p className="font-bold text-foreground">Queued for AI Screening</p>
+                    <div className="bg-muted/30 dark:bg-white/[0.03] border border-border dark:border-white/10 p-4 rounded-xl text-center space-y-3">
+                      <div className="w-8 h-8 rounded-full border-2 border-amber-400 border-t-transparent animate-spin mx-auto" />
+                      <p className="font-bold text-foreground dark:text-white">Queued for AI Screening</p>
                       <p className="text-[10px] text-muted-foreground">The background worker queue is picking up this document shortly. Please wait...</p>
                     </div>
                   )}
 
                   {selectedApp.screeningStatus === 'PROCESSING' && (
-                    <div className="bg-muted/15 border border-border/80 p-4 rounded-xl text-center space-y-3">
+                    <div className="bg-muted/30 dark:bg-white/[0.03] border border-border dark:border-white/10 p-4 rounded-xl text-center space-y-3">
                       <div className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin mx-auto" />
-                      <p className="font-bold text-foreground">AI Screening in Progress...</p>
+                      <p className="font-bold text-foreground dark:text-white">AI Screening in Progress...</p>
                       <p className="text-[10px] text-muted-foreground">FastAPI parser is reading text content and running OpenRouter analysis templates. Please wait...</p>
                     </div>
                   )}
@@ -1690,15 +1690,15 @@ export default function PipelineBoard() {
 
                     const errInfo = getActionableErrorMessage(selectedApp.notes || '');
                     return (
-                      <div className="bg-destructive/10 border border-destructive/20 p-4 rounded-xl text-center space-y-3">
-                        <AlertCircle className="w-8 h-8 text-destructive mx-auto" />
+                      <div className="bg-rose-500/10 border border-rose-500/30 p-4 rounded-xl text-center space-y-3">
+                        <AlertCircle className="w-8 h-8 text-rose-500 dark:text-rose-400 mx-auto" />
                         <div>
-                          <p className="font-bold text-sm text-destructive">{errInfo.title}</p>
+                          <p className="font-bold text-sm text-rose-600 dark:text-rose-400">{errInfo.title}</p>
                           <p className="text-[10px] text-muted-foreground mt-1 font-semibold leading-normal">{errInfo.desc}</p>
                         </div>
-                        <div className="bg-card border border-border/80 p-2.5 rounded-xl text-left text-[9px] leading-relaxed">
-                          <span className="font-bold uppercase text-destructive tracking-wide block mb-0.5">Actionable step:</span>
-                          <span className="text-muted-foreground font-semibold">{errInfo.action}</span>
+                        <div className="bg-card border border-border dark:border-white/10 p-2.5 rounded-xl text-left text-[9px] leading-relaxed">
+                          <span className="font-bold uppercase text-rose-600 dark:text-rose-400 tracking-wide block mb-0.5">Actionable step:</span>
+                          <span className="text-foreground dark:text-zinc-300 font-semibold">{errInfo.action}</span>
                         </div>
                       </div>
                     );
@@ -1707,28 +1707,28 @@ export default function PipelineBoard() {
                   {/* Score & Recommendation */}
                   {selectedApp.screeningStatus !== 'PENDING' && selectedApp.screeningStatus !== 'PROCESSING' && (
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                      <div className="bg-gradient-to-br from-primary/5 to-indigo-500/5 p-4 rounded-xl border border-primary/10">
+                      <div className="bg-gradient-to-br from-primary/10 to-indigo-500/10 p-4 rounded-xl border border-primary/20">
                         <p className="text-[9px] text-muted-foreground font-bold uppercase tracking-wider">Screening</p>
                         <div className="flex items-baseline gap-1 mt-1">
                           <span className="text-2xl font-black text-primary">{selectedApp.screeningScore !== undefined && selectedApp.screeningScore !== null ? selectedApp.screeningScore : (selectedApp.aiScore || 0)}%</span>
                         </div>
                       </div>
-                      <div className="bg-gradient-to-br from-violet-500/5 to-fuchsia-500/5 p-4 rounded-xl border border-violet-500/10">
+                      <div className="bg-gradient-to-br from-violet-500/10 to-fuchsia-500/10 p-4 rounded-xl border border-violet-500/20">
                         <p className="text-[9px] text-muted-foreground font-bold uppercase tracking-wider">Interview</p>
                         <div className="flex items-baseline gap-1 mt-1">
-                          <span className="text-2xl font-black text-violet-400">{selectedApp.interviewScore !== undefined && selectedApp.interviewScore !== null ? `${selectedApp.interviewScore}%` : 'N/A'}</span>
+                          <span className="text-2xl font-black text-violet-600 dark:text-violet-300">{selectedApp.interviewScore !== undefined && selectedApp.interviewScore !== null ? `${selectedApp.interviewScore}%` : 'N/A'}</span>
                         </div>
                       </div>
-                      <div className="bg-gradient-to-br from-emerald-500/5 to-teal-500/5 p-4 rounded-xl border border-emerald-500/10">
+                      <div className="bg-gradient-to-br from-emerald-500/10 to-teal-500/10 p-4 rounded-xl border border-emerald-500/20">
                         <p className="text-[9px] text-muted-foreground font-bold uppercase tracking-wider">Final Score</p>
                         <div className="flex items-baseline gap-1 mt-1">
-                          <span className="text-2xl font-black text-emerald-450">{selectedApp.finalScore !== undefined && selectedApp.finalScore !== null ? `${selectedApp.finalScore}%` : 'N/A'}</span>
+                          <span className="text-2xl font-black text-emerald-600 dark:text-emerald-400">{selectedApp.finalScore !== undefined && selectedApp.finalScore !== null ? `${selectedApp.finalScore}%` : 'N/A'}</span>
                         </div>
                       </div>
-                      <div className="bg-gradient-to-br from-purple-500/5 to-indigo-500/5 p-4 rounded-xl border border-purple-500/10">
+                      <div className="bg-gradient-to-br from-purple-500/10 to-indigo-500/10 p-4 rounded-xl border border-purple-500/20">
                         <p className="text-[9px] text-muted-foreground font-bold uppercase tracking-wider">AI Sourcing Grade</p>
-                        <p className="text-xs font-black text-purple-400 mt-2.5 flex items-center gap-1.5">
-                          <Sparkles className="w-4 h-4 text-purple-400" />
+                        <p className="text-xs font-black text-primary mt-2.5 flex items-center gap-1.5">
+                          <Sparkles className="w-4 h-4 text-primary" />
                           {selectedApp.aiRecommendation || 'Sourcing grade pending'}
                         </p>
                       </div>
@@ -1737,9 +1737,9 @@ export default function PipelineBoard() {
 
                   {/* Summary */}
                   {selectedApp.screeningStatus !== 'PENDING' && selectedApp.screeningStatus !== 'PROCESSING' && (
-                    <div className="bg-muted/15 p-4 rounded-xl border border-border/60">
+                    <div className="bg-muted/30 dark:bg-white/[0.03] p-4 rounded-xl border border-border dark:border-white/10">
                       <p className="text-[9px] text-muted-foreground font-bold uppercase mb-1">AI Screening Insights Summary</p>
-                      <p className="text-xs leading-relaxed text-foreground font-medium">{selectedApp.screeningSummary || 'Screening insights uncomputed.'}</p>
+                      <p className="text-xs leading-relaxed text-foreground dark:text-zinc-200 font-medium">{selectedApp.screeningSummary || 'Screening insights uncomputed.'}</p>
                     </div>
                   )}
 
@@ -1749,7 +1749,7 @@ export default function PipelineBoard() {
                       onClick={() => handleTriggerScreening(selectedApp._id)}
                       disabled={submittingStage || selectedApp.screeningStatus === 'PROCESSING'}
                       size="sm"
-                      className="bg-primary hover:bg-primary/95 text-white font-bold w-full text-xs rounded-xl flex items-center justify-center gap-1.5 h-9"
+                      className="bg-primary hover:bg-primary/90 text-white font-bold w-full text-xs rounded-xl flex items-center justify-center gap-1.5 h-9 shadow-md cursor-pointer"
                     >
                       <Sparkles className="w-4 h-4" />
                       {selectedApp.screeningStatus === 'COMPLETED' ? 'Re-run Screening Analysis' : 'Run AI Resume Screening'}
@@ -1762,16 +1762,16 @@ export default function PipelineBoard() {
               {drawerTab === 'interviews' && (
                 <div className="space-y-4">
                   <h4 className="font-bold uppercase text-muted-foreground text-[9px] tracking-wider mb-2">Interview Evaluations</h4>
-                  <div className="bg-muted/15 p-4 rounded-xl border border-border/60 space-y-3">
-                    <div className="flex items-center justify-between pb-2 border-b border-border/60">
+                  <div className="bg-muted/30 dark:bg-white/[0.03] p-4 rounded-xl border border-border dark:border-white/10 space-y-3">
+                    <div className="flex items-center justify-between pb-2 border-b border-border dark:border-white/10">
                       <div>
                         <span className="text-[8px] text-muted-foreground font-bold uppercase block">Technical Assessment Status</span>
-                        <span className="text-xs font-bold text-foreground mt-0.5 block">{selectedApp.interviewStatus || 'Scheduled'}</span>
+                        <span className="text-xs font-bold text-foreground dark:text-white mt-0.5 block">{selectedApp.interviewStatus || 'Scheduled'}</span>
                       </div>
                       {selectedApp.interviewScore !== undefined && selectedApp.interviewScore !== null && (
                         <div className="text-right">
                           <span className="text-[8px] text-muted-foreground font-bold uppercase block">Score</span>
-                          <span className="text-xs font-black text-amber-500 block">{selectedApp.interviewScore}/100</span>
+                          <span className="text-xs font-black text-amber-500 dark:text-amber-400 block">{selectedApp.interviewScore}/100</span>
                         </div>
                       )}
                     </div>
@@ -1782,7 +1782,7 @@ export default function PipelineBoard() {
                       </p>
                     </div>
                     {selectedApp.interviewCompletedAt && (
-                      <p className="text-[9px] text-muted-foreground/60 mt-2">
+                      <p className="text-[9px] text-muted-foreground mt-2">
                         Completed at: {formatDate(selectedApp.interviewCompletedAt)}
                       </p>
                     )}
@@ -1794,7 +1794,7 @@ export default function PipelineBoard() {
               {drawerTab === 'evaluation' && (
                 <div className="space-y-5">
                   <h4 className="font-bold uppercase text-muted-foreground text-[9px] tracking-wider mb-2">Recruiter Evaluation & Star Rating</h4>
-                  <div className="space-y-4 bg-muted/15 p-4 rounded-xl border border-border/60">
+                  <div className="space-y-4 bg-muted/30 dark:bg-white/[0.03] p-4 rounded-xl border border-border dark:border-white/10">
                     <div className="space-y-1.5">
                       <Label className="text-[9px] text-muted-foreground font-bold uppercase">Recruiter Score Evaluation (1-5 Stars)</Label>
                       <div className="flex items-center gap-1.5 mt-1">
@@ -1807,8 +1807,8 @@ export default function PipelineBoard() {
                             <Star
                               className={`w-6 h-6 cursor-pointer ${
                                 star <= recruiterScoreVal
-                                  ? 'text-amber-500 fill-amber-500'
-                                  : 'text-muted/80'
+                                  ? 'text-amber-400 fill-amber-400'
+                                  : 'text-muted-foreground/40'
                               }`}
                             />
                           </button>
@@ -1822,14 +1822,14 @@ export default function PipelineBoard() {
                         value={recruiterNotesVal}
                         onChange={(e) => setRecruiterNotesVal(e.target.value)}
                         placeholder="Write candidate evaluation highlights, review summary, or next assessment parameters..."
-                        className="w-full h-24 bg-card border border-border/80 rounded-xl p-2.5 text-xs text-foreground placeholder:text-muted-foreground/45 focus:outline-none focus:ring-2 focus:ring-primary/45"
+                        className="w-full h-24 bg-card dark:bg-white/[0.04] border border-border dark:border-white/10 rounded-xl p-2.5 text-xs text-foreground dark:text-white placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/45"
                       />
                     </div>
 
                     <Button
                       onClick={handleUpdateEvaluation}
                       size="sm"
-                      className="bg-primary hover:bg-primary/95 text-white font-bold rounded-xl w-full text-xs shadow-md"
+                      className="bg-primary hover:bg-primary/90 text-white font-bold rounded-xl w-full text-xs shadow-md cursor-pointer"
                     >
                       Save Evaluation Notes
                     </Button>
@@ -1843,11 +1843,11 @@ export default function PipelineBoard() {
                   <h4 className="font-bold uppercase text-muted-foreground text-[9px] tracking-wider mb-2">Stage Change Activity Log</h4>
                   <div className="space-y-3.5 pl-2 max-h-[380px] overflow-y-auto">
                     {selectedApp.stageHistory.map((hist, idx) => (
-                      <div key={idx} className="text-[10px] leading-relaxed relative pb-2 border-l border-border pl-4 last:border-l-0">
+                      <div key={idx} className="text-[10px] leading-relaxed relative pb-2 border-l border-border dark:border-white/15 pl-4 last:border-l-0">
                         <div className="w-2.5 h-2.5 bg-primary/20 border border-primary rounded-full absolute -left-[6px] top-1" />
-                        <p className="font-bold text-foreground uppercase tracking-wide">{hist.stage}</p>
+                        <p className="font-bold text-foreground dark:text-white uppercase tracking-wide">{hist.stage}</p>
                         {hist.notes && <p className="text-muted-foreground mt-0.5 italic">Comment: {hist.notes}</p>}
-                        <p className="text-[8px] text-muted-foreground/60 mt-1">
+                        <p className="text-[8px] text-muted-foreground mt-1">
                           Date: {formatDate(hist.changedAt)}
                         </p>
                       </div>
@@ -1858,8 +1858,8 @@ export default function PipelineBoard() {
             </div>
 
             {/* Drawer Close Actions Footer */}
-            <div className="p-4 border-t border-border/60 bg-muted/10 flex items-center justify-end shrink-0">
-              <Button onClick={() => setDrawerOpen(false)} variant="outline" className="text-xs rounded-xl border-border/60 bg-transparent text-foreground hover:bg-muted font-bold px-4 py-2">
+            <div className="p-4 border-t border-border dark:border-white/10 bg-muted/20 dark:bg-white/[0.02] flex items-center justify-end shrink-0">
+              <Button onClick={() => setDrawerOpen(false)} variant="outline" className="text-xs rounded-xl border-border dark:border-white/15 bg-transparent text-foreground hover:text-foreground dark:text-zinc-200 dark:hover:text-white hover:bg-muted dark:hover:bg-white/10 font-bold px-4 py-2">
                 Close Profile
               </Button>
             </div>
@@ -1872,19 +1872,19 @@ export default function PipelineBoard() {
         <div 
           className="fixed bottom-6 left-1/2 -translate-x-1/2 flex items-center justify-between z-40 px-6 py-2.5 w-[95%] sm:w-auto gap-8 group/toolbar"
           style={{
-            background: 'rgba(15, 23, 42, 0.85)',
+            background: 'rgba(15, 23, 42, 0.9)',
             backdropFilter: 'blur(20px)',
             WebkitBackdropFilter: 'blur(20px)',
-            border: '1px solid rgba(255, 255, 255, 0.06)',
+            border: '1px solid rgba(255, 255, 255, 0.12)',
             borderRadius: '999px',
-            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.35)',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.45)',
           }}
         >
           <div className="flex items-center gap-6 flex-wrap sm:flex-nowrap">
             {/* Selection Counter */}
             <div className="flex items-center gap-2 shrink-0">
               <span className="w-1.5 h-1.5 rounded-full bg-[#8B5CF6] shrink-0" />
-              <span className="text-sm font-medium text-white/90 font-sans tracking-tight">
+              <span className="text-sm font-semibold text-white font-sans tracking-tight">
                 {selectedIds.length} Selected
               </span>
             </div>
@@ -1894,14 +1894,14 @@ export default function PipelineBoard() {
               <select
                 value={bulkActionStage}
                 onChange={(e) => setBulkActionStage(e.target.value)}
-                className="h-10 px-4 text-xs font-medium focus:outline-none cursor-pointer text-white/80 hover:text-white hover:bg-white/[0.06] transition-all"
+                className="h-10 px-4 text-xs font-medium focus:outline-none cursor-pointer text-zinc-200 hover:text-white hover:bg-white/[0.08] transition-all"
                 style={{
-                  background: '#050505',
+                  background: '#0a0a0c',
                   borderRadius: '12px',
-                  border: '1px solid rgba(255, 255, 255, 0.08)',
+                  border: '1px solid rgba(255, 255, 255, 0.12)',
                 }}
               >
-                <option value="" className="bg-[#050505] text-white/50">Move Stage...</option>
+                <option value="" className="bg-[#0a0a0c] text-zinc-400">Move Stage...</option>
                 {ACTIVE_STAGES.map((s) => (
                   <option key={s} value={s}>{s}</option>
                 ))}
@@ -1909,7 +1909,7 @@ export default function PipelineBoard() {
               <Button
                 onClick={handleBulkMove}
                 disabled={!bulkActionStage || loading}
-                className="h-10 px-4 rounded-full bg-transparent hover:bg-white/[0.06] text-white/80 hover:text-white disabled:opacity-40 font-medium text-xs border border-white/[0.08] cursor-pointer transition-all"
+                className="h-10 px-4 rounded-full bg-transparent hover:bg-white/10 text-zinc-200 hover:text-white disabled:opacity-40 font-medium text-xs border border-white/15 cursor-pointer transition-all"
               >
                 {loading && bulkActionStage ? `Updating ${selectedIds.length} candidates...` : 'Apply'}
               </Button>
@@ -1920,7 +1920,7 @@ export default function PipelineBoard() {
               <Button
                 onClick={handleBulkScreen}
                 disabled={loading}
-                className="h-10 px-4 rounded-full font-medium text-xs flex items-center justify-center cursor-pointer transition-all hover:bg-[#A855F7] disabled:opacity-40"
+                className="h-10 px-4 rounded-full font-medium text-xs flex items-center justify-center cursor-pointer transition-all hover:bg-[#9d68fb] disabled:opacity-40"
                 style={{
                   background: '#8B5CF6',
                   color: 'white',
@@ -1937,30 +1937,30 @@ export default function PipelineBoard() {
               <Button
                 onClick={handleBulkAssign}
                 disabled={loading}
-                className="h-10 px-4 rounded-full bg-transparent text-white/80 hover:text-white hover:bg-white/[0.06] font-medium text-xs border-0 cursor-pointer flex items-center justify-center transition-all disabled:opacity-40"
+                className="h-10 px-4 rounded-full bg-transparent text-zinc-200 hover:text-white hover:bg-white/10 font-medium text-xs border-0 cursor-pointer flex items-center justify-center transition-all disabled:opacity-40"
                 title="Assign recruiter"
               >
-                <UserPlus className="w-4 h-4 mr-2 shrink-0 text-white/70" strokeWidth={2} />
+                <UserPlus className="w-4 h-4 mr-2 shrink-0 text-zinc-300" strokeWidth={2} />
                 Assign
               </Button>
 
               <Button
                 onClick={handleBulkSendEmail}
                 disabled={loading}
-                className="h-10 px-4 rounded-full bg-transparent text-white/80 hover:text-white hover:bg-white/[0.06] font-medium text-xs border-0 cursor-pointer flex items-center justify-center transition-all disabled:opacity-40"
+                className="h-10 px-4 rounded-full bg-transparent text-zinc-200 hover:text-white hover:bg-white/10 font-medium text-xs border-0 cursor-pointer flex items-center justify-center transition-all disabled:opacity-40"
                 title="Email selected candidates"
               >
-                <Mail className="w-4 h-4 mr-2 shrink-0 text-white/70" strokeWidth={2} />
+                <Mail className="w-4 h-4 mr-2 shrink-0 text-zinc-300" strokeWidth={2} />
                 Email
               </Button>
 
               <Button
                 onClick={handleBulkExport}
                 disabled={loading}
-                className="h-10 px-4 rounded-full bg-transparent text-white/80 hover:text-white hover:bg-white/[0.06] font-medium text-xs border-0 cursor-pointer flex items-center justify-center transition-all disabled:opacity-40"
+                className="h-10 px-4 rounded-full bg-transparent text-zinc-200 hover:text-white hover:bg-white/10 font-medium text-xs border-0 cursor-pointer flex items-center justify-center transition-all disabled:opacity-40"
                 title="Export to CSV"
               >
-                <FileSpreadsheet className="w-4 h-4 mr-2 shrink-0 text-white/70" strokeWidth={2} />
+                <FileSpreadsheet className="w-4 h-4 mr-2 shrink-0 text-zinc-300" strokeWidth={2} />
                 Export
               </Button>
             </div>
@@ -1970,10 +1970,10 @@ export default function PipelineBoard() {
               <Button
                 onClick={handleBulkReject}
                 disabled={loading}
-                className="h-10 px-4 rounded-full font-medium text-xs flex items-center justify-center cursor-pointer transition-all hover:bg-red-500/15 disabled:opacity-40"
+                className="h-10 px-4 rounded-full font-medium text-xs flex items-center justify-center cursor-pointer transition-all hover:bg-rose-500/20 disabled:opacity-40"
                 style={{
-                  background: 'rgba(239, 68, 68, 0.08)',
-                  color: '#EF4444',
+                  background: 'rgba(239, 68, 68, 0.12)',
+                  color: '#F87171',
                   border: '0',
                 }}
               >
@@ -1987,7 +1987,7 @@ export default function PipelineBoard() {
           <div className="shrink-0 border-l border-white/10 pl-2">
             <Button
               onClick={() => setSelectedIds([])}
-              className="h-10 w-10 p-0 rounded-full bg-transparent hover:bg-white/[0.06] text-white/40 hover:text-white opacity-0 group-hover/toolbar:opacity-100 transition-opacity duration-200 cursor-pointer flex items-center justify-center border-0"
+              className="h-10 w-10 p-0 rounded-full bg-transparent hover:bg-white/10 text-zinc-400 hover:text-white opacity-0 group-hover/toolbar:opacity-100 transition-opacity duration-200 cursor-pointer flex items-center justify-center border-0"
               title="Deselect all"
             >
               <X className="w-4 h-4" strokeWidth={2} />

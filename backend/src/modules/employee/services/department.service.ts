@@ -125,7 +125,18 @@ export class DepartmentService {
     const page = pagination?.page || 1;
     const limit = pagination?.limit || 10;
 
-    return createPaginatedResponse(departments, total, page, limit);
+    const enrichedDepartments = await Promise.all(
+      departments.map(async (dept) => {
+        const count = await EmployeeRepository.countByDepartment(dept._id.toString());
+        const deptObj = typeof (dept as any).toObject === 'function' ? (dept as any).toObject() : dept;
+        return {
+          ...deptObj,
+          employeeCount: count,
+        };
+      })
+    );
+
+    return createPaginatedResponse(enrichedDepartments, total, page, limit);
   }
 
   /**

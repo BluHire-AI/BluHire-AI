@@ -181,57 +181,57 @@ export default function JobsManagement() {
   return (
     <div className="space-y-6 select-none">
       {/* Sub Navigation Tabs */}
-      <div className="flex flex-wrap items-center justify-between border-b border-white/5 pb-4 gap-4">
-        <div className="flex items-center gap-1.5 bg-white/5 p-1 rounded-xl border border-white/5">
+      <div className="flex flex-wrap items-center justify-between border-b border-border dark:border-white/5 pb-4 gap-4">
+        <div className="flex items-center gap-1.5 bg-muted/50 dark:bg-white/5 p-1 rounded-xl border border-border dark:border-white/5">
           <Link href="/dashboard/recruitment">
-            <span className="text-xs font-semibold px-4 py-2 rounded-lg text-zinc-400 hover:text-white cursor-pointer block border border-transparent">
+            <span className="text-xs font-semibold px-4 py-2 rounded-lg text-muted-foreground hover:text-foreground dark:hover:text-white cursor-pointer block border border-transparent">
               Overview
             </span>
           </Link>
           <Link href="/dashboard/recruitment/jobs">
-            <span className="text-xs font-semibold px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white shadow-sm cursor-pointer block">
+            <span className="text-xs font-semibold px-4 py-2 rounded-lg bg-card dark:bg-white/10 border border-border dark:border-white/10 text-primary dark:text-white shadow-xs cursor-pointer block">
               Job Posts
             </span>
           </Link>
           <Link href="/dashboard/recruitment/pipeline">
-            <span className="text-xs font-semibold px-4 py-2 rounded-lg text-zinc-400 hover:text-white cursor-pointer block border border-transparent">
+            <span className="text-xs font-semibold px-4 py-2 rounded-lg text-muted-foreground hover:text-foreground dark:hover:text-white cursor-pointer block border border-transparent transition-colors">
               Pipeline Board
             </span>
           </Link>
           <Link href="/dashboard/recruitment/candidates">
-            <span className="text-xs font-semibold px-4 py-2 rounded-lg text-zinc-400 hover:text-white cursor-pointer block border border-transparent">
+            <span className="text-xs font-semibold px-4 py-2 rounded-lg text-muted-foreground hover:text-foreground dark:hover:text-white cursor-pointer block border border-transparent transition-colors">
               Candidates
             </span>
           </Link>
           <Link href="/dashboard/recruitment/ai-interviews">
-            <span className="text-xs font-semibold px-4 py-2 rounded-lg text-zinc-400 hover:text-white cursor-pointer block transition-colors border border-transparent">
+            <span className="text-xs font-semibold px-4 py-2 rounded-lg text-muted-foreground hover:text-foreground dark:hover:text-white cursor-pointer block transition-colors border border-transparent">
               AI Interviews
             </span>
           </Link>
         </div>
-        <Button onClick={openCreateModal} size="sm" className="bg-gradient-to-tr from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white text-xs font-semibold rounded-xl border border-white/10 shadow-lg shadow-indigo-600/10 cursor-pointer h-9 px-4 gap-1.5">
+        <Button onClick={openCreateModal} size="sm" className="bg-primary hover:bg-primary-hover text-white text-xs font-semibold rounded-xl border-0 shadow-md cursor-pointer h-9 px-4 gap-1.5">
           <Plus className="w-3.5 h-3.5" />
           Create Job
         </Button>
       </div>
 
       {/* Toolbar Filter */}
-      <div className="flex flex-col sm:flex-row gap-3 items-center justify-between bg-card/45 p-4 rounded-2xl border border-white/5 shadow-2xl">
+      <div className="flex flex-col sm:flex-row gap-3 items-center justify-between bg-card dark:bg-card/45 p-4 rounded-2xl border border-border dark:border-white/10 shadow-[0_4px_20px_rgba(23,32,51,0.04)] dark:shadow-2xl">
         <div className="relative w-full sm:w-80">
-          <Search className="absolute left-3 top-2.5 w-3.5 h-3.5 text-zinc-450" />
+          <Search className="absolute left-3 top-2.5 w-3.5 h-3.5 text-muted-foreground" />
           <Input
             placeholder="Search job title or code..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-9 text-xs h-9 bg-white/5 border-white/5 focus:border-indigo-500/50 focus:ring-indigo-500/20 text-white rounded-xl"
+            className="pl-9 text-xs h-9 bg-background dark:bg-white/5 border-border dark:border-white/10 focus:border-primary/50 focus:ring-primary/20 text-foreground dark:text-white rounded-xl placeholder:text-muted-foreground"
           />
         </div>
         <div className="flex gap-2 w-full sm:w-auto justify-end">
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-40 h-9 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 text-xs font-semibold text-zinc-300">
+            <SelectTrigger className="w-40 h-9 rounded-xl border border-border dark:border-white/10 bg-card dark:bg-white/5 hover:bg-muted dark:hover:bg-white/10 text-xs font-semibold text-foreground dark:text-zinc-300">
               <SelectValue placeholder="All Statuses" />
             </SelectTrigger>
-            <SelectContent className="bg-zinc-950 border border-white/10">
+            <SelectContent>
               <SelectItem value="ALL">All Statuses</SelectItem>
               <SelectItem value="DRAFT">Draft</SelectItem>
               <SelectItem value="OPEN">Open/Published</SelectItem>
@@ -243,65 +243,65 @@ export default function JobsManagement() {
       </div>
 
       {/* Jobs Table List */}
-      <Card className="bg-card/45 backdrop-blur-2xl border-white/5 shadow-2xl rounded-2xl overflow-hidden">
+      <Card className="bg-card dark:bg-card/45 backdrop-blur-2xl border-border dark:border-white/10 shadow-[0_4px_20px_rgba(23,32,51,0.04)] dark:shadow-2xl rounded-2xl overflow-hidden">
         {loading ? (
-          <div className="text-center py-20 text-zinc-500 font-semibold flex items-center justify-center">
-            <RefreshCw className="animate-spin h-5 w-5 text-indigo-400 mr-2" />
+          <div className="text-center py-20 text-muted-foreground font-semibold flex items-center justify-center">
+            <RefreshCw className="animate-spin h-5 w-5 text-primary mr-2" />
             Loading jobs records...
           </div>
         ) : filteredJobs.length === 0 ? (
-          <div className="text-center py-20 text-zinc-500 text-xs">No job positions found.</div>
+          <div className="text-center py-20 text-muted-foreground text-xs">No job positions found.</div>
         ) : (
           <Table>
-            <TableHeader className="bg-white/5 border-b border-white/5">
-              <TableRow className="hover:bg-transparent border-b border-white/5">
-                <TableHead className="text-[9px] font-extrabold uppercase tracking-wider text-zinc-450 border-b border-white/5">Job Code</TableHead>
-                <TableHead className="text-[9px] font-extrabold uppercase tracking-wider text-zinc-450 border-b border-white/5">Job Title</TableHead>
-                <TableHead className="text-[9px] font-extrabold uppercase tracking-wider text-zinc-455 border-b border-white/5">Department</TableHead>
-                <TableHead className="text-[9px] font-extrabold uppercase tracking-wider text-zinc-455 border-b border-white/5">Status</TableHead>
-                <TableHead className="text-[9px] font-extrabold uppercase tracking-wider text-zinc-455 border-b border-white/5">Openings</TableHead>
-                <TableHead className="text-[9px] font-extrabold uppercase tracking-wider text-zinc-455 border-b border-white/5 text-right w-24">Actions</TableHead>
+            <TableHeader className="bg-muted/30 dark:bg-white/5 border-b border-border dark:border-white/10">
+              <TableRow className="hover:bg-transparent border-b border-border dark:border-white/10">
+                <TableHead className="text-small-label font-bold text-foreground dark:text-zinc-300 border-b border-border dark:border-white/10">Job Code</TableHead>
+                <TableHead className="text-small-label font-bold text-foreground dark:text-zinc-300 border-b border-border dark:border-white/10">Job Title</TableHead>
+                <TableHead className="text-small-label font-bold text-foreground dark:text-zinc-300 border-b border-border dark:border-white/10">Department</TableHead>
+                <TableHead className="text-small-label font-bold text-foreground dark:text-zinc-300 border-b border-border dark:border-white/10">Status</TableHead>
+                <TableHead className="text-small-label font-bold text-foreground dark:text-zinc-300 border-b border-border dark:border-white/10">Openings</TableHead>
+                <TableHead className="text-small-label font-bold text-foreground dark:text-zinc-300 border-b border-border dark:border-white/10 text-right w-24">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredJobs.map((job) => (
-                <TableRow key={job._id} className="hover:bg-white/5 border-b border-white/5 transition-colors">
-                  <TableCell className="text-xs font-mono font-semibold text-zinc-400">{job.jobCode}</TableCell>
-                  <TableCell className="text-xs font-bold text-white">{job.title}</TableCell>
-                  <TableCell className="text-xs text-zinc-300">{job.departmentId?.name || 'Unassigned'}</TableCell>
+                <TableRow key={job._id} className="hover:bg-muted/30 dark:hover:bg-white/5 border-b border-border dark:border-white/10 transition-colors">
+                  <TableCell className="text-xs font-mono font-semibold text-muted-foreground">{job.jobCode}</TableCell>
+                  <TableCell className="text-xs font-bold text-foreground dark:text-white">{job.title}</TableCell>
+                  <TableCell className="text-xs text-muted-foreground dark:text-zinc-300">{job.departmentId?.name || 'Unassigned'}</TableCell>
                   <TableCell>
                     <span
                       className={`text-[9px] font-bold px-2 py-0.5 rounded uppercase border ${
                         job.status === 'OPEN'
-                          ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20'
+                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:border-emerald-500/20'
                           : job.status === 'CLOSED'
-                          ? 'bg-rose-500/10 text-rose-350 border-rose-500/20'
-                          : 'bg-white/5 text-zinc-400 border-white/5'
+                          ? 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-500/10 dark:text-rose-350 dark:border-rose-500/20'
+                          : 'bg-muted text-muted-foreground border-border dark:bg-white/5 dark:text-zinc-400 dark:border-white/5'
                       }`}
                     >
                       {job.status}
                     </span>
                   </TableCell>
-                  <TableCell className="text-xs font-semibold text-zinc-300">{job.openings}</TableCell>
+                  <TableCell className="text-xs font-semibold text-foreground dark:text-zinc-300">{job.openings}</TableCell>
                   <TableCell className="text-right flex items-center justify-end gap-1.5 h-12">
                     <Link href={`/careers/jobs/${job._id}`} target="_blank">
-                      <Button size="icon" variant="ghost" className="w-7 h-7 rounded-lg hover:bg-white/5 text-zinc-450 hover:text-white cursor-pointer border border-transparent">
+                      <Button size="icon" variant="ghost" className="w-7 h-7 rounded-lg hover:bg-muted dark:hover:bg-white/5 text-muted-foreground hover:text-foreground dark:hover:text-white cursor-pointer border border-transparent">
                         <Eye className="w-3.5 h-3.5" />
                       </Button>
                     </Link>
-                    <Button onClick={() => openEditModal(job)} size="icon" variant="ghost" className="w-7 h-7 rounded-lg hover:bg-white/5 text-indigo-400 hover:text-white cursor-pointer border border-transparent">
+                    <Button onClick={() => openEditModal(job)} size="icon" variant="ghost" className="w-7 h-7 rounded-lg hover:bg-muted dark:hover:bg-white/5 text-primary hover:text-primary dark:hover:text-white cursor-pointer border border-transparent">
                       <Edit3 className="w-3.5 h-3.5" />
                     </Button>
                     {job.status === 'DRAFT' || job.status === 'CLOSED' ? (
-                      <Button onClick={() => handlePublishToggle(job, 'OPEN')} size="icon" variant="ghost" className="w-7 h-7 rounded-lg hover:bg-white/5 text-emerald-450 hover:text-white cursor-pointer border border-transparent">
+                      <Button onClick={() => handlePublishToggle(job, 'OPEN')} size="icon" variant="ghost" className="w-7 h-7 rounded-lg hover:bg-emerald-500/15 text-emerald-600 dark:text-emerald-450 hover:text-emerald-700 dark:hover:text-white cursor-pointer border border-transparent">
                         <CheckCircle2 className="w-3.5 h-3.5" />
                       </Button>
                     ) : (
-                      <Button onClick={() => handlePublishToggle(job, 'CLOSED')} size="icon" variant="ghost" className="w-7 h-7 rounded-lg hover:bg-white/5 text-amber-500 hover:text-white cursor-pointer border border-transparent">
+                      <Button onClick={() => handlePublishToggle(job, 'CLOSED')} size="icon" variant="ghost" className="w-7 h-7 rounded-lg hover:bg-amber-500/15 text-amber-600 dark:text-amber-500 hover:text-amber-700 dark:hover:text-white cursor-pointer border border-transparent">
                         <XCircle className="w-3.5 h-3.5" />
                       </Button>
                     )}
-                    <Button onClick={() => handleDeleteJob(job._id)} size="icon" variant="ghost" className="w-7 h-7 rounded-lg hover:bg-white/5 text-red-400 hover:text-white cursor-pointer border border-transparent">
+                    <Button onClick={() => handleDeleteJob(job._id)} size="icon" variant="ghost" className="w-7 h-7 rounded-lg hover:bg-rose-500/15 text-rose-600 dark:text-red-400 hover:text-rose-700 dark:hover:text-white cursor-pointer border border-transparent">
                       <Trash2 className="w-3.5 h-3.5" />
                     </Button>
                   </TableCell>
@@ -314,28 +314,30 @@ export default function JobsManagement() {
 
       {/* Creation/Edit Dialog Modal */}
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-        <DialogContent className="max-w-xl max-h-[85vh] overflow-y-auto rounded-2xl p-6 bg-card/95 border-white/5 text-white backdrop-blur-3xl shadow-2xl">
-          <DialogHeader className="border-b border-white/5 pb-4 mb-4">
-            <DialogTitle className="text-sm font-bold text-white">
+        <DialogContent className="max-w-xl max-h-[85vh] overflow-y-auto rounded-2xl p-6 bg-card dark:bg-card/95 border-border dark:border-white/5 text-foreground dark:text-white backdrop-blur-3xl shadow-2xl">
+          <DialogHeader className="border-b border-border dark:border-white/5 pb-4 mb-4">
+            <DialogTitle className="text-sm font-bold text-foreground dark:text-white">
               {editingJob ? 'Modify Job Details' : 'Post New Job Position'}
             </DialogTitle>
-            <DialogDescription className="text-[10px] text-zinc-400">Provide details for the recruitment listing.</DialogDescription>
+            <DialogDescription className="text-[10px] text-muted-foreground">Provide details for the recruitment listing.</DialogDescription>
           </DialogHeader>
 
-          <form onSubmit={handleSaveJob} className="space-y-4 py-2 text-white">
+          <form onSubmit={handleSaveJob} className="space-y-4 py-2 text-foreground dark:text-white">
             <div className="space-y-1">
-              <Label htmlFor="title" className="text-xs font-semibold text-zinc-300">Job Title *</Label>
-              <Input id="title" required value={title} onChange={(e) => setTitle(e.target.value)} className="rounded-xl text-xs h-10 bg-white/5 border-white/5 text-white" />
+              <Label htmlFor="title" className="text-xs font-semibold text-foreground dark:text-zinc-300">Job Title *</Label>
+              <Input id="title" required value={title} onChange={(e) => setTitle(e.target.value)} className="rounded-xl text-xs h-10 bg-card dark:bg-white/5 border-border dark:border-white/5 text-foreground dark:text-white" />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1">
-                <Label htmlFor="dept" className="text-xs font-semibold text-zinc-300">Department *</Label>
+                <Label htmlFor="dept" className="text-xs font-semibold text-foreground dark:text-zinc-300">Department *</Label>
                 <Select value={deptId} onValueChange={setDeptId} searchable={true}>
-                  <SelectTrigger id="dept" className="w-full bg-white/5 border border-white/5 text-xs text-white h-10 rounded-xl">
-                    <SelectValue placeholder="Select Department..." />
+                  <SelectTrigger id="dept" className="w-full bg-card dark:bg-white/5 border border-border dark:border-white/5 text-xs text-foreground dark:text-white h-10 rounded-xl">
+                    <SelectValue>
+                      {departments.find((d) => d._id === deptId)?.name || "Select Department..."}
+                    </SelectValue>
                   </SelectTrigger>
-                  <SelectContent className="bg-zinc-950 border border-white/10">
+                  <SelectContent>
                     {departments.map((d) => (
                       <SelectItem key={d._id} value={d._id}>{d.name}</SelectItem>
                     ))}
@@ -343,12 +345,14 @@ export default function JobsManagement() {
                 </Select>
               </div>
               <div className="space-y-1">
-                <Label htmlFor="desig" className="text-xs font-semibold text-zinc-300">Designation *</Label>
+                <Label htmlFor="desig" className="text-xs font-semibold text-foreground dark:text-zinc-300">Designation *</Label>
                 <Select value={desigId} onValueChange={setDesigId} searchable={true}>
-                  <SelectTrigger id="desig" className="w-full bg-white/5 border border-white/5 text-xs text-white h-10 rounded-xl">
-                    <SelectValue placeholder="Select Designation..." />
+                  <SelectTrigger id="desig" className="w-full bg-card dark:bg-white/5 border border-border dark:border-white/5 text-xs text-foreground dark:text-white h-10 rounded-xl">
+                    <SelectValue>
+                      {designations.find((d) => d._id === desigId)?.title || "Select Designation..."}
+                    </SelectValue>
                   </SelectTrigger>
-                  <SelectContent className="bg-zinc-950 border border-white/10">
+                  <SelectContent>
                     {designations.map((d) => (
                       <SelectItem key={d._id} value={d._id}>{d.title}</SelectItem>
                     ))}
@@ -358,45 +362,45 @@ export default function JobsManagement() {
             </div>
 
             <div className="space-y-1">
-              <Label htmlFor="desc" className="text-xs font-semibold text-zinc-300">Role Overview *</Label>
-              <Textarea id="desc" required placeholder="Describe the responsibilities and background of the role." value={description} onChange={(e) => setDescription(e.target.value)} className="rounded-xl text-xs min-h-[80px] bg-white/5 border-white/5 text-white" />
+              <Label htmlFor="desc" className="text-xs font-semibold text-foreground dark:text-zinc-300">Role Overview *</Label>
+              <Textarea id="desc" required placeholder="Describe the responsibilities and background of the role." value={description} onChange={(e) => setDescription(e.target.value)} className="rounded-xl text-xs min-h-[80px] bg-card dark:bg-white/5 border-border dark:border-white/5 text-foreground dark:text-white" />
             </div>
 
             <div className="space-y-1">
-              <Label htmlFor="resps" className="text-xs font-semibold text-zinc-300">Key Responsibilities *</Label>
-              <Textarea id="resps" required placeholder="Outline list of responsibilities..." value={responsibilities} onChange={(e) => setResponsibilities(e.target.value)} className="rounded-xl text-xs min-h-[80px] bg-white/5 border-white/5 text-white" />
+              <Label htmlFor="resps" className="text-xs font-semibold text-foreground dark:text-zinc-300">Key Responsibilities *</Label>
+              <Textarea id="resps" required placeholder="Outline list of responsibilities..." value={responsibilities} onChange={(e) => setResponsibilities(e.target.value)} className="rounded-xl text-xs min-h-[80px] bg-card dark:bg-white/5 border-border dark:border-white/5 text-foreground dark:text-white" />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1">
-                <Label htmlFor="reqS" className="text-xs font-semibold text-zinc-300">Required Skills (Comma-separated) *</Label>
-                <Input id="reqS" required placeholder="React, Node.js, SQL" value={requiredSkills} onChange={(e) => setRequiredSkills(e.target.value)} className="rounded-xl text-xs h-10 bg-white/5 border-white/5 text-white" />
+                <Label htmlFor="reqS" className="text-xs font-semibold text-foreground dark:text-zinc-300">Required Skills (Comma-separated) *</Label>
+                <Input id="reqS" required placeholder="React, Node.js, SQL" value={requiredSkills} onChange={(e) => setRequiredSkills(e.target.value)} className="rounded-xl text-xs h-10 bg-card dark:bg-white/5 border-border dark:border-white/5 text-foreground dark:text-white" />
               </div>
               <div className="space-y-1">
-                <Label htmlFor="prefS" className="text-xs font-semibold text-zinc-300">Preferred Skills (Comma-separated)</Label>
-                <Input id="prefS" placeholder="Docker, AWS S3" value={preferredSkills} onChange={(e) => setPreferredSkills(e.target.value)} className="rounded-xl text-xs h-10 bg-white/5 border-white/5 text-white" />
+                <Label htmlFor="prefS" className="text-xs font-semibold text-foreground dark:text-zinc-300">Preferred Skills (Comma-separated)</Label>
+                <Input id="prefS" placeholder="Docker, AWS S3" value={preferredSkills} onChange={(e) => setPreferredSkills(e.target.value)} className="rounded-xl text-xs h-10 bg-card dark:bg-white/5 border-border dark:border-white/5 text-foreground dark:text-white" />
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1">
-                <Label htmlFor="exp" className="text-xs font-semibold text-zinc-300">Experience Required *</Label>
-                <Input id="exp" required value={experience} onChange={(e) => setExperience(e.target.value)} className="rounded-xl text-xs h-10 bg-white/5 border-white/5 text-white" />
+                <Label htmlFor="exp" className="text-xs font-semibold text-foreground dark:text-zinc-300">Experience Required *</Label>
+                <Input id="exp" required value={experience} onChange={(e) => setExperience(e.target.value)} className="rounded-xl text-xs h-10 bg-card dark:bg-white/5 border-border dark:border-white/5 text-foreground dark:text-white" />
               </div>
               <div className="space-y-1">
-                <Label htmlFor="edu" className="text-xs font-semibold text-zinc-300">Education Required *</Label>
-                <Input id="edu" required value={education} onChange={(e) => setEducation(e.target.value)} className="rounded-xl text-xs h-10 bg-white/5 border-white/5 text-white" />
+                <Label htmlFor="edu" className="text-xs font-semibold text-foreground dark:text-zinc-300">Education Required *</Label>
+                <Input id="edu" required value={education} onChange={(e) => setEducation(e.target.value)} className="rounded-xl text-xs h-10 bg-card dark:bg-white/5 border-border dark:border-white/5 text-foreground dark:text-white" />
               </div>
             </div>
 
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-1">
-                <Label htmlFor="type" className="text-xs font-semibold text-zinc-300">Employment Type *</Label>
+                <Label htmlFor="type" className="text-xs font-semibold text-foreground dark:text-zinc-300">Employment Type *</Label>
                 <Select value={empType} onValueChange={setEmpType}>
-                  <SelectTrigger id="type" className="w-full bg-white/5 border border-white/5 text-xs text-white h-10 rounded-xl">
+                  <SelectTrigger id="type" className="w-full bg-card dark:bg-white/5 border border-border dark:border-white/5 text-xs text-foreground dark:text-white h-10 rounded-xl">
                     <SelectValue placeholder="Select Type..." />
                   </SelectTrigger>
-                  <SelectContent className="bg-zinc-950 border border-white/10">
+                  <SelectContent>
                     <SelectItem value="FULL_TIME">Full Time</SelectItem>
                     <SelectItem value="PART_TIME">Part Time</SelectItem>
                     <SelectItem value="CONTRACT">Contract</SelectItem>
@@ -405,31 +409,31 @@ export default function JobsManagement() {
                 </Select>
               </div>
               <div className="space-y-1">
-                <Label htmlFor="loc" className="text-xs font-semibold text-zinc-300">Location *</Label>
-                <Input id="loc" required value={location} onChange={(e) => setLocation(e.target.value)} className="rounded-xl text-xs h-10 bg-white/5 border-white/5 text-white" />
+                <Label htmlFor="loc" className="text-xs font-semibold text-foreground dark:text-zinc-300">Location *</Label>
+                <Input id="loc" required value={location} onChange={(e) => setLocation(e.target.value)} className="rounded-xl text-xs h-10 bg-card dark:bg-white/5 border-border dark:border-white/5 text-foreground dark:text-white" />
               </div>
               <div className="space-y-1">
-                <Label htmlFor="open" className="text-xs font-semibold text-zinc-300">Openings *</Label>
-                <Input id="open" type="number" required value={openings} onChange={(e) => setOpenings(e.target.value)} className="rounded-xl text-xs h-10 bg-white/5 border-white/5 text-white" />
+                <Label htmlFor="open" className="text-xs font-semibold text-foreground dark:text-zinc-300">Openings *</Label>
+                <Input id="open" type="number" required value={openings} onChange={(e) => setOpenings(e.target.value)} className="rounded-xl text-xs h-10 bg-card dark:bg-white/5 border-border dark:border-white/5 text-foreground dark:text-white" />
               </div>
             </div>
 
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-1">
-                <Label htmlFor="salMin" className="text-xs font-semibold text-zinc-300">Salary Min ($)</Label>
-                <Input id="salMin" type="number" value={salaryMin} onChange={(e) => setSalaryMin(e.target.value)} className="rounded-xl text-xs h-10 bg-white/5 border-white/5 text-white" />
+                <Label htmlFor="salMin" className="text-xs font-semibold text-foreground dark:text-zinc-300">Salary Min ($)</Label>
+                <Input id="salMin" type="number" value={salaryMin} onChange={(e) => setSalaryMin(e.target.value)} className="rounded-xl text-xs h-10 bg-card dark:bg-white/5 border-border dark:border-white/5 text-foreground dark:text-white" />
               </div>
               <div className="space-y-1">
-                <Label htmlFor="salMax" className="text-xs font-semibold text-zinc-300">Salary Max ($)</Label>
-                <Input id="salMax" type="number" value={salaryMax} onChange={(e) => setSalaryMax(e.target.value)} className="rounded-xl text-xs h-10 bg-white/5 border-white/5 text-white" />
+                <Label htmlFor="salMax" className="text-xs font-semibold text-foreground dark:text-zinc-300">Salary Max ($)</Label>
+                <Input id="salMax" type="number" value={salaryMax} onChange={(e) => setSalaryMax(e.target.value)} className="rounded-xl text-xs h-10 bg-card dark:bg-white/5 border-border dark:border-white/5 text-foreground dark:text-white" />
               </div>
               <div className="space-y-1">
-                <Label htmlFor="status" className="text-xs font-semibold text-zinc-300">Status *</Label>
+                <Label htmlFor="status" className="text-xs font-semibold text-foreground dark:text-zinc-300">Status *</Label>
                 <Select value={status} onValueChange={setStatus}>
-                  <SelectTrigger id="status" className="w-full bg-white/5 border border-white/5 text-xs text-white h-10 rounded-xl">
+                  <SelectTrigger id="status" className="w-full bg-card dark:bg-white/5 border border-border dark:border-white/5 text-xs text-foreground dark:text-white h-10 rounded-xl">
                     <SelectValue placeholder="Select Status..." />
                   </SelectTrigger>
-                  <SelectContent className="bg-zinc-950 border border-white/10">
+                  <SelectContent>
                     <SelectItem value="DRAFT">Draft</SelectItem>
                     <SelectItem value="OPEN">Open (Publish)</SelectItem>
                     <SelectItem value="CLOSED">Closed</SelectItem>
@@ -440,7 +444,7 @@ export default function JobsManagement() {
             </div>
 
             <DialogFooter className="pt-4 gap-2">
-              <Button type="button" variant="outline" onClick={() => setModalOpen(false)} className="text-xs rounded-xl border-white/5 bg-white/5 hover:bg-white/10 text-zinc-300">Cancel</Button>
+              <Button type="button" variant="outline" onClick={() => setModalOpen(false)} className="text-xs rounded-xl border-border dark:border-white/5 bg-card dark:bg-white/5 hover:bg-muted dark:hover:bg-white/10 text-foreground dark:text-zinc-300">Cancel</Button>
               <Button type="submit" className="bg-gradient-to-tr from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white text-xs font-semibold rounded-xl border border-white/10 shadow-lg shadow-indigo-600/10 cursor-pointer">Save Specifications</Button>
             </DialogFooter>
           </form>

@@ -116,7 +116,9 @@ export interface IHierarchyNode {
 
 export interface IOrganizationChart {
   rootNode: IHierarchyNode | null;
+  rootNodes?: IHierarchyNode[];
   totalEmployees: number;
+  activeEmployees: number;
   totalManagers: number;
   totalDepartments: number;
 }

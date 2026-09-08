@@ -120,7 +120,7 @@ export function GlobalBackground() {
   return (
     <canvas
       ref={canvasRef}
-      className="fixed inset-0 w-full h-full pointer-events-none z-0"
+      className="fixed inset-0 w-full h-full pointer-events-none z-0 dark:block hidden"
       style={{ mixBlendMode: 'screen' }}
     />
   );

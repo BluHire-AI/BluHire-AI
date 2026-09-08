@@ -24,6 +24,7 @@ import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
 import { api } from '@/lib/api';
 import { toast } from 'sonner';
+import StarField from '@/components/StarField';
 
 interface NavItem {
   name: string;
@@ -37,6 +38,58 @@ interface NavSection {
   groupKey: string;
   items: NavItem[];
 }
+
+const isRouteActive = (itemHref: string, currentPathname: string, searchParamsStr: string = ''): boolean => {
+  if (!currentPathname) return false;
+
+  // Handle query tab links (e.g. candidate tabs /dashboard?tab=active)
+  if (itemHref.includes('?tab=')) {
+    const tabParam = itemHref.substring(itemHref.indexOf('?') + 1);
+    return currentPathname === '/dashboard' && searchParamsStr.includes(tabParam);
+  }
+
+  // Exact match for top-level dashboard
+  if (itemHref === '/dashboard') {
+    return currentPathname === '/dashboard' && (!searchParamsStr || !searchParamsStr.includes('tab='));
+  }
+
+  // AI Interviews vs Recruitment specific priority
+  if (itemHref === '/dashboard/recruitment') {
+    return (
+      (currentPathname === '/dashboard/recruitment' || currentPathname.startsWith('/dashboard/recruitment/')) &&
+      !currentPathname.startsWith('/dashboard/recruitment/ai-interviews')
+    );
+  }
+
+  if (itemHref === '/dashboard/recruitment/ai-interviews') {
+    return (
+      currentPathname === '/dashboard/recruitment/ai-interviews' ||
+      currentPathname.startsWith('/dashboard/recruitment/ai-interviews/')
+    );
+  }
+
+  // Standard nested routes matching (exact or subroute with trailing slash)
+  return currentPathname === itemHref || currentPathname.startsWith(`${itemHref}/`);
+};
+
+const getHeaderTitle = (pathname: string): string => {
+  if (pathname === '/dashboard') return 'Overview';
+  if (pathname.startsWith('/dashboard/employees')) return 'Employees';
+  if (pathname.startsWith('/dashboard/directory')) return 'Employee Directory';
+  if (pathname.startsWith('/dashboard/org-chart')) return 'Organization Chart';
+  if (pathname.startsWith('/dashboard/attendance')) return 'Attendance & Leaves';
+  if (pathname.startsWith('/dashboard/recruitment/ai-interviews')) return 'AI Interviews';
+  if (pathname.startsWith('/dashboard/recruitment')) return 'Recruitment';
+  if (pathname.startsWith('/dashboard/performance')) return 'Performance & Coaching';
+  if (pathname.startsWith('/dashboard/payroll')) return 'Payroll Management';
+  if (pathname.startsWith('/dashboard/copilot')) return 'AI Copilot';
+  if (pathname.startsWith('/dashboard/knowledge')) return 'Knowledge Base';
+  if (pathname.startsWith('/dashboard/departments')) return 'Departments';
+  if (pathname.startsWith('/dashboard/designations')) return 'Designations';
+  if (pathname.startsWith('/dashboard/analytics')) return 'Executive Analytics';
+  if (pathname.startsWith('/dashboard/profile')) return 'Profile';
+  return 'BluHire AI';
+};
 
 const getNavigation = (role?: string): NavSection[] => {
   if (role === 'CANDIDATE') {
@@ -118,9 +171,10 @@ export default function DashboardLayout({
   const pathname = usePathname();
   const router = useRouter();
   const { user, logout, setUser, setTokens, refreshToken: storeRefreshToken } = useAuthStore();
-  const { theme, setTheme } = useTheme();
+  const { theme, resolvedTheme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [apiOffline, setApiOffline] = useState(false);
+  const isDark = (resolvedTheme || theme) === 'dark';
 
   useEffect(() => {
     const checkHealth = async () => {
@@ -258,11 +312,20 @@ export default function DashboardLayout({
     const isOpen = openGroups[groupKey];
     return (
       <button
+        type="button"
         onClick={() => toggleGroup(groupKey)}
-        className="w-full flex items-center justify-between px-3.5 py-2 text-small-label text-white/45 hover:text-white/85 transition-colors mt-4 first:mt-0"
+        className="w-full flex items-center justify-between px-3 py-1.5 text-[10px] font-bold tracking-[0.12em] uppercase text-slate-500 dark:text-zinc-400 hover:text-indigo-600 dark:hover:text-white transition-colors mt-4 first:mt-0 cursor-pointer rounded-lg group select-none"
       >
-        <span>{title}</span>
-        {isOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+        <span className="flex-1 min-w-0 text-left truncate pr-2 font-bold tracking-[0.12em] uppercase">
+          {title}
+        </span>
+        <div className="shrink-0 flex items-center justify-center w-4 h-4">
+          {isOpen ? (
+            <ChevronDown className="w-3.5 h-3.5 text-slate-400 dark:text-zinc-500 group-hover:text-indigo-600 dark:group-hover:text-white transition-colors" />
+          ) : (
+            <ChevronRight className="w-3.5 h-3.5 text-slate-400 dark:text-zinc-500 group-hover:text-indigo-600 dark:group-hover:text-white transition-colors" />
+          )}
+        </div>
       </button>
     );
   };
@@ -272,17 +335,23 @@ export default function DashboardLayout({
 
   return (
     <AuthProvider>
-      <div className="flex h-screen w-screen bg-transparent overflow-hidden p-3 gap-4 text-foreground selection:bg-primary/25 selection:text-white">
+      <div className="relative flex h-screen w-screen bg-background text-foreground overflow-hidden p-3 gap-4 selection:bg-indigo-500/20 selection:text-indigo-900 dark:selection:bg-primary/25 dark:selection:text-white">
+        {/* Animated Connected-Node Network Background Scene */}
+        <div className="bg-scene">
+          <div className="bg-ambient" />
+          <StarField dark={isDark} />
+        </div>
+
         {/* Sidebar - Floating Glass Command Center */}
-        <div className="w-64 bg-white/[0.03] backdrop-blur-2xl border border-white/10 flex flex-col z-20 shadow-[0_8px_32px_rgba(0,0,0,0.35)] rounded-[24px] h-full overflow-hidden shrink-0">
-          <div className="h-16 flex items-center px-6 border-b border-white/10 justify-between bg-white/[0.02]">
+        <div className="w-64 glass-sidebar anim-sidebar bg-card/85 dark:bg-[#0e101e]/80 backdrop-blur-2xl border border-border dark:border-white/10 flex flex-col z-20 shadow-[0_8px_32px_rgba(23,32,51,0.08)] dark:shadow-[0_12px_40px_rgba(0,0,0,0.45)] rounded-[24px] h-full overflow-hidden shrink-0">
+          <div className="h-16 flex items-center px-6 border-b border-border dark:border-white/10 justify-between bg-muted/20 dark:bg-white/[0.02]">
             <div className="flex items-center">
-              <div className="w-8 h-8 rounded-xl bg-[#8B5CF6]/10 border border-[#8B5CF6]/25 flex items-center justify-center text-[#8B5CF6] mr-2.5 shadow-[0_0_12px_rgba(139,92,246,0.15)]">
+              <div className="w-8 h-8 rounded-xl bg-primary/10 border border-primary/25 flex items-center justify-center text-primary mr-2.5 shadow-xs dark:shadow-[0_0_12px_rgba(139,92,246,0.15)]">
                 <Building className="w-4.5 h-4.5" />
               </div>
-              <span className="font-extrabold text-base tracking-tight bg-gradient-to-r from-violet-400 via-indigo-400 to-[#8B5CF6] bg-clip-text text-transparent">BluHire-AI</span>
+              <span className="font-extrabold text-base tracking-tight bg-gradient-to-r from-indigo-600 via-violet-600 to-purple-600 dark:from-violet-400 dark:via-indigo-400 dark:to-[#8B5CF6] bg-clip-text text-transparent">BluHire-AI</span>
             </div>
-            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+            <div className="w-2 h-2 rounded-full bg-emerald-500 pulse-dot shadow-[0_0_8px_rgba(16,185,129,0.6)]" />
           </div>
 
           <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-4">
@@ -291,21 +360,17 @@ export default function DashboardLayout({
               <div>
                 <Link
                   href="/dashboard"
-                  className={`relative flex items-center px-4 py-2.5 rounded-xl text-sidebar transition-all group duration-250 ${
-                    pathname === '/dashboard' && searchStr === ''
-                      ? 'text-white bg-[#8B5CF6]/10 border border-[#8B5CF6]/20 shadow-[0_0_15px_rgba(139,92,246,0.1)]'
-                      : 'text-white/65 hover:text-white hover:bg-white/[0.04] border border-transparent'
+                  className={`relative flex items-center px-4 py-2.5 rounded-xl text-sm font-medium transition-all group duration-200 ${
+                    isRouteActive('/dashboard', pathname, searchStr)
+                      ? 'text-indigo-600 dark:text-white bg-indigo-50/90 dark:bg-[#8B5CF6]/15 border border-indigo-200/80 dark:border-[#8B5CF6]/30 font-semibold shadow-xs'
+                      : 'text-slate-600 dark:text-zinc-300 hover:text-indigo-600 dark:hover:text-white hover:bg-indigo-50/50 dark:hover:bg-white/[0.04] border border-transparent'
                   }`}
                 >
-                  {pathname === '/dashboard' && searchStr === '' && (
-                    <motion.div
-                      layoutId="active-nav-glow"
-                      className="absolute left-0 w-1 h-5 rounded-r bg-[#8B5CF6] shadow-[0_0_8px_rgba(139,92,246,0.5)]"
-                      transition={{ type: 'spring', stiffness: 380, damping: 30 }}
-                    />
+                  {isRouteActive('/dashboard', pathname, searchStr) && (
+                    <div className="absolute left-0 w-1 h-5 rounded-r bg-indigo-600 dark:bg-[#8B5CF6] shadow-xs dark:shadow-[0_0_8px_rgba(139,92,246,0.5)] transition-all duration-200" />
                   )}
-                  <LayoutDashboard className={`w-4.5 h-4.5 mr-3 transition-transform duration-250 group-hover:scale-105 ${
-                    pathname === '/dashboard' && searchStr === '' ? 'text-[#8B5CF6]' : 'text-white/45 group-hover:text-white/80'
+                  <LayoutDashboard className={`w-4.5 h-4.5 mr-3 transition-transform duration-200 group-hover:scale-105 ${
+                    isRouteActive('/dashboard', pathname, searchStr) ? 'text-indigo-600 dark:text-[#8B5CF6]' : 'text-slate-500 dark:text-zinc-400 group-hover:text-indigo-600 dark:group-hover:text-white'
                   }`} />
                   Dashboard
                 </Link>
@@ -328,22 +393,22 @@ export default function DashboardLayout({
                           if (item.roles && user && !item.roles.includes(user.role)) {
                             return null;
                           }
-                          const isTabActive = item.href.includes('?tab=')
-                            ? pathname === '/dashboard' && searchStr === item.href.substring(item.href.indexOf('?'))
-                            : pathname === item.href;
-                          
+                          const isTabActive = isRouteActive(item.href, pathname, searchStr);
                           const Icon = item.icon;
                           return (
                             <Link
                               key={item.name}
                               href={item.href}
-                              className={`flex items-center px-4 py-2.5 rounded-xl text-sidebar transition-all group duration-250 ${
+                              className={`relative flex items-center px-4 py-2.5 rounded-xl text-sm font-medium transition-all group duration-200 ${
                                 isTabActive
-                                  ? 'text-white bg-[#8B5CF6]/10 border border-[#8B5CF6]/20 shadow-[0_0_15px_rgba(139,92,246,0.1)]'
-                                  : 'text-white/65 hover:text-white hover:bg-white/[0.04] border border-transparent'
+                                  ? 'text-indigo-600 dark:text-white bg-indigo-50/90 dark:bg-[#8B5CF6]/15 border border-indigo-200/80 dark:border-[#8B5CF6]/30 font-semibold shadow-xs'
+                                  : 'text-slate-600 dark:text-zinc-300 hover:text-indigo-600 dark:hover:text-white hover:bg-indigo-50/50 dark:hover:bg-white/[0.04] border border-transparent'
                               }`}
                             >
-                              <Icon className={`w-4 h-4 mr-3 ${isTabActive ? 'text-[#8B5CF6]' : 'text-white/45 group-hover:text-white/80'}`} />
+                              {isTabActive && (
+                                <div className="absolute left-0 w-1 h-5 rounded-r bg-indigo-600 dark:bg-[#8B5CF6] shadow-xs dark:shadow-[0_0_8px_rgba(139,92,246,0.5)] transition-all duration-200" />
+                              )}
+                              <Icon className={`w-4 h-4 mr-3 ${isTabActive ? 'text-indigo-600 dark:text-[#8B5CF6]' : 'text-slate-500 dark:text-zinc-400 group-hover:text-indigo-600 dark:group-hover:text-white'}`} />
                               {item.name}
                             </Link>
                           );
@@ -359,21 +424,17 @@ export default function DashboardLayout({
                 <div>
                   <Link
                     href="/dashboard/analytics"
-                    className={`relative flex items-center px-4 py-2.5 rounded-xl text-sidebar transition-all group duration-250 ${
-                      pathname === '/dashboard/analytics'
-                        ? 'text-white bg-[#8B5CF6]/10 border border-[#8B5CF6]/20 shadow-[0_0_15px_rgba(139,92,246,0.1)]'
-                        : 'text-white/65 hover:text-white hover:bg-white/[0.04] border border-transparent'
+                    className={`relative flex items-center px-4 py-2.5 rounded-xl text-sm font-medium transition-all group duration-200 ${
+                      isRouteActive('/dashboard/analytics', pathname, searchStr)
+                        ? 'text-indigo-600 dark:text-white bg-indigo-50/90 dark:bg-[#8B5CF6]/15 border border-indigo-200/80 dark:border-[#8B5CF6]/30 font-semibold shadow-xs'
+                        : 'text-slate-600 dark:text-zinc-300 hover:text-indigo-600 dark:hover:text-white hover:bg-indigo-50/50 dark:hover:bg-white/[0.04] border border-transparent'
                     }`}
                   >
-                    {pathname === '/dashboard/analytics' && (
-                      <motion.div
-                        layoutId="active-nav-glow"
-                        className="absolute left-0 w-1 h-5 rounded-r bg-[#8B5CF6]"
-                        transition={{ type: 'spring', stiffness: 380, damping: 30 }}
-                      />
+                    {isRouteActive('/dashboard/analytics', pathname, searchStr) && (
+                      <div className="absolute left-0 w-1 h-5 rounded-r bg-indigo-600 dark:bg-[#8B5CF6] transition-all duration-200" />
                     )}
-                    <BarChart3 className={`w-4.5 h-4.5 mr-3 transition-transform duration-250 group-hover:scale-105 ${
-                      pathname === '/dashboard/analytics' ? 'text-[#8B5CF6]' : 'text-white/45 group-hover:text-white/80'
+                    <BarChart3 className={`w-4.5 h-4.5 mr-3 transition-transform duration-200 group-hover:scale-105 ${
+                      isRouteActive('/dashboard/analytics', pathname, searchStr) ? 'text-indigo-600 dark:text-[#8B5CF6]' : 'text-slate-500 dark:text-zinc-400 group-hover:text-indigo-600 dark:group-hover:text-white'
                     }`} />
                     Analytics
                   </Link>
@@ -385,21 +446,17 @@ export default function DashboardLayout({
                 <div>
                   <Link
                     href="/dashboard/profile"
-                    className={`relative flex items-center px-4 py-2.5 rounded-xl text-sidebar transition-all group duration-250 ${
-                      pathname === '/dashboard/profile'
-                        ? 'text-white bg-[#8B5CF6]/10 border border-[#8B5CF6]/20 shadow-[0_0_15px_rgba(139,92,246,0.1)]'
-                        : 'text-white/65 hover:text-white hover:bg-white/[0.04] border border-transparent'
+                    className={`relative flex items-center px-4 py-2.5 rounded-xl text-sm font-medium transition-all group duration-200 ${
+                      isRouteActive('/dashboard/profile', pathname, searchStr)
+                        ? 'text-indigo-600 dark:text-white bg-indigo-50/90 dark:bg-[#8B5CF6]/15 border border-indigo-200/80 dark:border-[#8B5CF6]/30 font-semibold shadow-xs'
+                        : 'text-slate-600 dark:text-zinc-300 hover:text-indigo-600 dark:hover:text-white hover:bg-indigo-50/50 dark:hover:bg-white/[0.04] border border-transparent'
                     }`}
                   >
-                    {pathname === '/dashboard/profile' && (
-                      <motion.div
-                        layoutId="active-nav-glow"
-                        className="absolute left-0 w-1 h-5 rounded-r bg-[#8B5CF6]"
-                        transition={{ type: 'spring', stiffness: 380, damping: 30 }}
-                      />
+                    {isRouteActive('/dashboard/profile', pathname, searchStr) && (
+                      <div className="absolute left-0 w-1 h-5 rounded-r bg-indigo-600 dark:bg-[#8B5CF6] transition-all duration-200" />
                     )}
-                    <UserCircle className={`w-4.5 h-4.5 mr-3 transition-transform duration-250 group-hover:scale-105 ${
-                      pathname === '/dashboard/profile' ? 'text-[#8B5CF6]' : 'text-white/45 group-hover:text-white/80'
+                    <UserCircle className={`w-4.5 h-4.5 mr-3 transition-transform duration-200 group-hover:scale-105 ${
+                      isRouteActive('/dashboard/profile', pathname, searchStr) ? 'text-indigo-600 dark:text-[#8B5CF6]' : 'text-slate-500 dark:text-zinc-400 group-hover:text-indigo-600 dark:group-hover:text-white'
                     }`} />
                     Profile
                   </Link>
@@ -421,13 +478,16 @@ export default function DashboardLayout({
                       >
                         <Link
                           href="/dashboard/profile"
-                          className={`flex items-center px-4 py-2.5 rounded-xl text-sidebar transition-all group duration-300 ${
-                            pathname === '/dashboard/profile'
-                              ? 'text-white bg-[#8B5CF6]/10 border border-[#8B5CF6]/20 shadow-[0_0_15px_rgba(139,92,246,0.1)]'
-                              : 'text-white/65 hover:text-white hover:bg-white/[0.04] border border-transparent'
+                          className={`relative flex items-center px-4 py-2.5 rounded-xl text-sm font-medium transition-all group duration-200 ${
+                            isRouteActive('/dashboard/profile', pathname, searchStr)
+                              ? 'text-indigo-600 dark:text-white bg-indigo-50/90 dark:bg-[#8B5CF6]/15 border border-indigo-200/80 dark:border-[#8B5CF6]/30 font-semibold shadow-xs'
+                              : 'text-slate-600 dark:text-zinc-300 hover:text-indigo-600 dark:hover:text-white hover:bg-indigo-50/50 dark:hover:bg-white/[0.04] border border-transparent'
                           }`}
                         >
-                          <UserCircle className={`w-4.5 h-4.5 mr-3 ${pathname === '/dashboard/profile' ? 'text-[#8B5CF6]' : 'text-white/45'}`} />
+                          {isRouteActive('/dashboard/profile', pathname, searchStr) && (
+                            <div className="absolute left-0 w-1 h-5 rounded-r bg-indigo-600 dark:bg-[#8B5CF6] transition-all duration-200" />
+                          )}
+                          <UserCircle className={`w-4.5 h-4.5 mr-3 ${isRouteActive('/dashboard/profile', pathname, searchStr) ? 'text-indigo-600 dark:text-[#8B5CF6]' : 'text-slate-500 dark:text-zinc-400 group-hover:text-indigo-600 dark:group-hover:text-white'}`} />
                           Profile
                         </Link>
                       </motion.div>
@@ -438,10 +498,10 @@ export default function DashboardLayout({
             </div>
           </nav>
 
-          <div className="p-3 border-t border-white/10 bg-white/[0.01]">
+          <div className="p-3 border-t border-border dark:border-white/10 bg-muted/20 dark:bg-white/[0.01]">
             <Button
               variant="ghost"
-              className="w-full justify-start text-white/45 hover:text-[#EF4444] hover:bg-[#EF4444]/10 rounded-xl cursor-pointer"
+              className="w-full justify-start text-slate-600 dark:text-zinc-300 hover:text-destructive hover:bg-destructive/10 rounded-xl cursor-pointer font-medium"
               onClick={handleLogout}
             >
               <LogOut className="w-4.5 h-4.5 mr-3" />
@@ -451,21 +511,12 @@ export default function DashboardLayout({
         </div>
 
         {/* Main content area */}
-        <div className="flex-1 flex flex-col gap-3 h-full overflow-hidden">
+        <div className="flex-1 flex flex-col gap-3 h-full overflow-hidden z-10">
           {/* Top Navbar - Glass Header */}
-          <header className="h-16 bg-white/[0.03] backdrop-blur-2xl border border-white/10 flex items-center justify-between px-6 z-10 shadow-[0_8px_32px_rgba(0,0,0,0.25)] rounded-[24px] shrink-0">
+          <header className="h-16 glass-header anim-header bg-card/85 dark:bg-[#0e101e]/80 backdrop-blur-2xl border border-border dark:border-white/10 flex items-center justify-between px-6 z-10 shadow-[0_4px_20px_rgba(23,32,51,0.06)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.25)] rounded-[24px] shrink-0">
             <div>
-              <h2 className="text-small-label text-white">
-                {pathname === '/dashboard' ? 'Overview' : 
-                 pathname.startsWith('/dashboard/employees') ? 'Employees' : 
-                 pathname === '/dashboard/directory' ? 'Employee Directory' : 
-                 pathname === '/dashboard/org-chart' ? 'Organization Chart' : 
-                 pathname === '/dashboard/departments' ? 'Departments' : 
-                 pathname === '/dashboard/designations' ? 'Designations' : 
-                 pathname.startsWith('/dashboard/recruitment') ? 'Recruitment' : 
-                 pathname.startsWith('/dashboard/copilot') ? 'AI Copilot' :
-                 pathname === '/dashboard/knowledge' ? 'Knowledge Base' :
-                 pathname === '/dashboard/profile' ? 'Profile' : 'HRMinds AI'}
+              <h2 className="text-small-label text-foreground dark:text-white font-bold tracking-wider uppercase">
+                {getHeaderTitle(pathname)}
               </h2>
             </div>
 
@@ -473,47 +524,47 @@ export default function DashboardLayout({
               {/* Theme Toggle */}
               {mounted && (
                 <button
-                  onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-                  className="p-2 rounded-xl text-white/45 hover:text-white hover:bg-white/[0.04] transition-all cursor-pointer border border-transparent hover:border-white/10"
+                  onClick={() => setTheme(isDark ? 'light' : 'dark')}
+                  className="p-2 rounded-xl text-slate-600 dark:text-zinc-300 hover:text-foreground dark:hover:text-white hover:bg-muted dark:hover:bg-white/[0.04] transition-all cursor-pointer border border-border dark:border-transparent dark:hover:border-white/10 theme-toggle"
                   aria-label="Toggle Theme"
                 >
-                  {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+                  {isDark ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-indigo-600" />}
                 </button>
               )}
 
-              <div className="h-4 w-px bg-white/10" />
+              <div className="h-4 w-px bg-border dark:bg-white/10" />
 
               {mounted && user?.role && (
-                <span className="text-small-label px-3 py-1 rounded-full bg-[#8B5CF6]/10 text-[#8B5CF6] tracking-wider uppercase font-mono hidden sm:block border border-[#8B5CF6]/20">
+                <span className="text-small-label px-3 py-1 rounded-full bg-primary/10 text-primary tracking-wider uppercase font-mono hidden sm:block border border-primary/20 font-semibold">
                   {user.role.replace('_', ' ')}
                 </span>
               )}
 
               {mounted && user && (
                 <DropdownMenu>
-                  <DropdownMenuTrigger className="relative h-8 w-8 rounded-xl focus:outline-none focus:ring-1 focus:ring-[#8B5CF6] cursor-pointer overflow-hidden border border-white/10">
+                  <DropdownMenuTrigger className="relative h-8 w-8 rounded-xl focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer overflow-hidden border border-border dark:border-white/10">
                     <Avatar className="h-8 w-8 rounded-xl">
                       <AvatarImage src={user?.profileImage} alt={user?.firstName} />
-                      <AvatarFallback className="rounded-xl bg-gradient-to-tr from-violet-600 to-[#8B5CF6] text-white font-semibold text-xs">
+                      <AvatarFallback className="rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-600 text-white font-semibold text-xs">
                         {getInitials(user?.firstName, user?.lastName)}
                       </AvatarFallback>
                     </Avatar>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-56 rounded-xl p-1.5 shadow-2xl border-white/10 bg-[#0F0E17]/95 backdrop-blur-xl text-popover-foreground" align="end">
+                  <DropdownMenuContent className="w-56 rounded-xl p-1.5 shadow-2xl border-border dark:border-white/10 bg-popover dark:bg-[#0F0E17]/95 backdrop-blur-xl text-popover-foreground" align="end">
                     <DropdownMenuLabel className="font-normal px-2.5 py-2">
                       <div className="flex flex-col space-y-1">
-                        <p className="text-xs font-semibold leading-none text-white">{user?.firstName} {user?.lastName}</p>
-                        <p className="text-[10px] leading-none text-white/45">
+                        <p className="text-xs font-semibold leading-none text-foreground dark:text-white">{user?.firstName} {user?.lastName}</p>
+                        <p className="text-[10px] leading-none text-muted-foreground dark:text-white/45">
                           {user?.email}
                         </p>
                       </div>
                     </DropdownMenuLabel>
-                    <DropdownMenuSeparator className="bg-white/10" />
-                    <DropdownMenuItem className="rounded-lg py-2 focus:bg-white/[0.06] text-xs cursor-pointer">
+                    <DropdownMenuSeparator className="bg-border dark:bg-white/10" />
+                    <DropdownMenuItem className="rounded-lg py-2 focus:bg-muted dark:focus:bg-white/[0.06] text-xs cursor-pointer text-foreground">
                       <Link href="/dashboard/profile" className="w-full">Profile Settings</Link>
                     </DropdownMenuItem>
-                    <DropdownMenuSeparator className="bg-white/10" />
-                    <DropdownMenuItem className="text-red-400 focus:bg-[#EF4444]/10 rounded-lg py-2 cursor-pointer text-xs" onClick={handleLogout}>
+                    <DropdownMenuSeparator className="bg-border dark:bg-white/10" />
+                    <DropdownMenuItem className="text-destructive focus:bg-destructive/10 rounded-lg py-2 cursor-pointer text-xs" onClick={handleLogout}>
                       <LogOut className="mr-2 h-3.5 w-3.5" />
                       <span>Log Out</span>
                     </DropdownMenuItem>
@@ -529,7 +580,7 @@ export default function DashboardLayout({
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, ease: 'easeOut' }}
-              className="max-w-7xl mx-auto space-y-6"
+              className="max-w-7xl mx-auto space-y-6 anim-hero"
             >
               {apiOffline && (
                 <div className="bg-red-500/10 border border-red-500/30 text-red-550 rounded-xl p-4 flex items-start gap-3 text-xs shadow-sm select-none z-50">

@@ -85,7 +85,7 @@ function DialogContent({ children, className, ...props }: DialogContentProps) {
       {/* Content Box */}
       <div 
         className={cn(
-          "relative z-50 w-full max-w-lg rounded-xl border border-zinc-200 bg-white p-6 shadow-lg animate-in fade-in-0 zoom-in-95 duration-200 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-50",
+          "relative z-50 w-full max-w-lg rounded-2xl border border-border bg-card p-6 shadow-2xl animate-in fade-in-0 zoom-in-95 duration-200 text-card-foreground dark:border-white/10 dark:bg-[#0F0E17]/95 dark:backdrop-blur-xl",
           className
         )}
         {...props}
@@ -93,7 +93,7 @@ function DialogContent({ children, className, ...props }: DialogContentProps) {
         {children}
         <button
           onClick={() => context.setOpen(false)}
-          className="absolute right-4 top-4 rounded-md p-1 opacity-70 transition-opacity hover:opacity-100 focus:outline-none dark:hover:bg-zinc-900 cursor-pointer"
+          className="absolute right-4 top-4 rounded-md p-1 opacity-70 transition-opacity hover:opacity-100 focus:outline-none hover:bg-muted dark:hover:bg-white/10 cursor-pointer"
         >
           <X className="h-4 w-4" />
           <span className="sr-only">Close</span>

@@ -282,17 +282,17 @@ export default function AttendanceManagementPage() {
                             <span className="font-bold text-zinc-900 dark:text-zinc-150">
                               {emp.firstName} {emp.lastName}
                             </span>
-                            <span className="text-xs text-zinc-400 font-mono mt-0.5">{emp.employeeCode} • {emp.email}</span>
+                            <span className="text-xs text-muted-foreground font-mono mt-0.5">{emp.employeeCode} • {emp.email}</span>
                           </div>
                         </td>
 
                         {/* Dept/Designation */}
-                        <td className="p-4 text-zinc-650 dark:text-zinc-400 text-xs">
+                        <td className="p-4 text-muted-foreground dark:text-zinc-400 text-xs">
                           <div className="flex flex-col">
-                            <span className="font-medium text-zinc-700 dark:text-zinc-350">
+                            <span className="font-medium text-foreground dark:text-zinc-350">
                               {emp.designationId?.title || 'Associate'}
                             </span>
-                            <span className="text-zinc-400 dark:text-zinc-500 mt-0.5">
+                            <span className="text-muted-foreground dark:text-zinc-500 mt-0.5">
                               {emp.departmentId?.name || 'General'}
                             </span>
                           </div>
@@ -364,7 +364,7 @@ export default function AttendanceManagementPage() {
                               </Button>
                             )}
                             {checkedOut && (
-                              <span className="text-xs text-zinc-400 italic">No actions available</span>
+                              <span className="text-xs text-muted-foreground italic">No actions available</span>
                             )}
                           </div>
                         </td>

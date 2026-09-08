@@ -186,7 +186,7 @@ export default function AttendanceCalendarPage() {
           ) : (
             <div className="grid grid-cols-7 gap-2.5">
               {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d => (
-                <div key={d} className="text-center text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider pb-2">{d}</div>
+                <div key={d} className="text-center text-[10px] font-bold text-muted-foreground dark:text-zinc-400 uppercase tracking-wider pb-2">{d}</div>
               ))}
               {Array.from({ length: firstDay }).map((_, i) => <div key={`e-${i}`} className="bg-zinc-50/20 dark:bg-zinc-950/10 rounded-xl" />)}
               {Array.from({ length: daysInMonth }).map((_, i) => {
@@ -203,18 +203,18 @@ export default function AttendanceCalendarPage() {
                     whileHover={!isFuture ? { scale: 1.03 } : {}}
                     onClick={() => handleDayClick(day, isFuture)}
                     className={`relative rounded-xl border p-2 min-h-[72px] flex flex-col items-center justify-between cursor-pointer transition-all
-                      ${isToday ? 'border-blue-500 bg-blue-50/20 dark:bg-blue-950/20 shadow-sm' : 'border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-900/60 hover:bg-zinc-50/30 dark:hover:bg-zinc-800/20'}
+                      ${isToday ? 'border-primary bg-primary/10 dark:bg-primary/20 shadow-xs' : 'border-border dark:border-zinc-800 bg-card dark:bg-zinc-900/60 hover:bg-muted/40 dark:hover:bg-zinc-800/20'}
                       ${isFuture ? 'opacity-30 cursor-not-allowed' : ''}
                     `}
                   >
-                    <span className={`text-xs font-extrabold ${isToday ? 'text-blue-600 dark:text-blue-400' : 'text-zinc-650 dark:text-zinc-350'}`}>
+                    <span className={`text-xs font-extrabold ${isToday ? 'text-primary dark:text-blue-400' : 'text-foreground dark:text-zinc-200'}`}>
                       {day}
                     </span>
                     {config && (
                       <div className="flex flex-col items-center gap-1 mt-1">
                         <div className={`w-2.5 h-2.5 rounded-full ${dot}`} title={config.label} />
                         {(record?.workingHours ?? 0) > 0 && (
-                          <span className="text-[9px] text-zinc-400 dark:text-zinc-550 font-bold">{fmtHours(record!.workingHours)}</span>
+                          <span className="text-[9px] text-muted-foreground dark:text-zinc-400 font-bold">{fmtHours(record!.workingHours)}</span>
                         )}
                       </div>
                     )}
@@ -231,20 +231,20 @@ export default function AttendanceCalendarPage() {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="text-sm font-bold uppercase tracking-wider flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-blue-500" />
+              <Sparkles className="w-4 h-4 text-primary dark:text-blue-500" />
               Day Details
             </DialogTitle>
-            <DialogDescription className="text-zinc-400 font-medium">{selectedDateStr}</DialogDescription>
+            <DialogDescription className="text-muted-foreground dark:text-zinc-400 font-medium">{selectedDateStr}</DialogDescription>
           </DialogHeader>
 
           {selectedInfo && (
             <div className="py-4 space-y-4">
               {/* Status Banner */}
-              <div className={`flex items-center gap-3 p-4 rounded-xl border border-dashed ${STATUS_CONFIG[selectedInfo.status]?.bg || 'bg-zinc-50 dark:bg-zinc-800/30'}`}>
+              <div className={`flex items-center gap-3 p-4 rounded-xl border border-dashed ${STATUS_CONFIG[selectedInfo.status]?.bg || 'bg-muted/40 dark:bg-zinc-800/30'}`}>
                 <div className={`w-3 h-3 rounded-full ${STATUS_CONFIG[selectedInfo.status]?.dot || 'bg-zinc-400'}`} />
                 <div>
-                  <p className="text-xs text-zinc-400 font-bold uppercase">Status</p>
-                  <p className={`text-base font-bold ${STATUS_CONFIG[selectedInfo.status]?.text || 'text-zinc-850'}`}>
+                  <p className="text-xs text-muted-foreground dark:text-zinc-400 font-bold uppercase">Status</p>
+                  <p className={`text-base font-bold ${STATUS_CONFIG[selectedInfo.status]?.text || 'text-foreground dark:text-zinc-100'}`}>
                     {STATUS_CONFIG[selectedInfo.status]?.label || 'No log details'}
                   </p>
                 </div>

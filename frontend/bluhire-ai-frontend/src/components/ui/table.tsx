@@ -12,7 +12,7 @@ Table.displayName = "Table"
 
 const TableHeader = React.forwardRef<HTMLTableSectionElement, React.HTMLAttributes<HTMLTableSectionElement>>(
   ({ className, ...props }, ref) => (
-    <thead ref={ref} className={cn("[&_tr]:border-b [&_tr]:border-zinc-200 dark:[&_tr]:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/40", className)} {...props} />
+    <thead ref={ref} className={cn("[&_tr]:border-b [&_tr]:border-border dark:[&_tr]:border-white/10 bg-muted/50 dark:bg-white/[0.02]", className)} {...props} />
   )
 )
 TableHeader.displayName = "TableHeader"
@@ -26,28 +26,28 @@ TableBody.displayName = "TableBody"
 
 const TableFooter = React.forwardRef<HTMLTableSectionElement, React.HTMLAttributes<HTMLTableSectionElement>>(
   ({ className, ...props }, ref) => (
-    <tfoot ref={ref} className={cn("border-t bg-zinc-50 dark:bg-zinc-900/40 font-medium [&_tr]:last-child:border-b-0", className)} {...props} />
+    <tfoot ref={ref} className={cn("border-t border-border bg-muted/40 dark:bg-zinc-900/40 font-medium [&_tr]:last-child:border-b-0", className)} {...props} />
   )
 )
 TableFooter.displayName = "TableFooter"
 
 const TableRow = React.forwardRef<HTMLTableRowElement, React.HTMLAttributes<HTMLTableRowElement>>(
   ({ className, ...props }, ref) => (
-    <tr ref={ref} className={cn("border-b border-zinc-200 dark:border-zinc-800 transition-colors hover:bg-zinc-100/50 dark:hover:bg-zinc-800/40 data-[state=selected]:bg-zinc-100 dark:data-[state=selected]:bg-zinc-800", className)} {...props} />
+    <tr ref={ref} className={cn("border-b border-border dark:border-white/10 transition-colors hover:bg-muted/40 dark:hover:bg-white/[0.03] data-[state=selected]:bg-muted dark:data-[state=selected]:bg-white/[0.06]", className)} {...props} />
   )
 )
 TableRow.displayName = "TableRow"
 
 const TableHead = React.forwardRef<HTMLTableCellElement, React.ThHTMLAttributes<HTMLTableCellElement>>(
   ({ className, ...props }, ref) => (
-    <th ref={ref} className={cn("h-10 px-4 text-left align-middle font-semibold text-zinc-500 dark:text-zinc-400 [&:has([role=checkbox])]:pr-0 [&:has([role=checkbox])]:pl-0", className)} {...props} />
+    <th ref={ref} className={cn("h-10 px-4 text-left align-middle font-bold text-foreground dark:text-zinc-300 [&:has([role=checkbox])]:pr-0 [&:has([role=checkbox])]:pl-0 text-xs uppercase tracking-wider", className)} {...props} />
   )
 )
 TableHead.displayName = "TableHead"
 
 const TableCell = React.forwardRef<HTMLTableCellElement, React.TdHTMLAttributes<HTMLTableCellElement>>(
   ({ className, ...props }, ref) => (
-    <td ref={ref} className={cn("p-4 align-middle text-zinc-700 dark:text-zinc-300 [&:has([role=checkbox])]:pr-0 [&:has([role=checkbox])]:pl-0", className)} {...props} />
+    <td ref={ref} className={cn("p-4 align-middle text-muted-foreground dark:text-zinc-300 [&:has([role=checkbox])]:pr-0 [&:has([role=checkbox])]:pl-0 text-sm", className)} {...props} />
   )
 )
 TableCell.displayName = "TableCell"

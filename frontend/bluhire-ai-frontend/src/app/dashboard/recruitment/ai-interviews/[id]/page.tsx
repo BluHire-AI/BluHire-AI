@@ -35,10 +35,10 @@ export default function CandidateDetailPage() {
 
   if (error || !candidateInfo) {
     return (
-      <div className="p-8 text-red-500 bg-red-50 rounded-lg text-center max-w-xl mx-auto mt-10">
-        <h3 className="text-xl font-bold mb-2">Failed to load candidate</h3>
-        <p className="text-sm">We couldn't retrieve the details for this candidate. They may have been removed or the data is incomplete.</p>
-        <Link href="/dashboard/recruitment/ai-interviews" className="text-blue-600 hover:underline mt-4 inline-block font-medium">Return to Pipeline</Link>
+      <div className="p-8 text-rose-400 bg-rose-500/10 border border-rose-500/20 rounded-2xl text-center max-w-xl mx-auto mt-10">
+        <h3 className="text-xl font-bold mb-2 text-white">Failed to load candidate</h3>
+        <p className="text-sm text-zinc-400">We couldn't retrieve the details for this candidate. They may have been removed or the data is incomplete.</p>
+        <Link href="/dashboard/recruitment/ai-interviews" className="text-purple-400 hover:underline mt-4 inline-block font-medium">Return to Pipeline</Link>
       </div>
     );
   }
@@ -62,42 +62,42 @@ export default function CandidateDetailPage() {
     <div className="p-8 max-w-7xl mx-auto space-y-8 font-sans">
       {/* Top Bar Navigation */}
       <div className="flex items-center space-x-4">
-        <Link href="/dashboard/recruitment/ai-interviews" className="p-2 hover:bg-slate-100 rounded-lg transition-colors">
-          <ChevronLeft className="h-5 w-5 text-slate-500" />
+        <Link href="/dashboard/recruitment/ai-interviews" className="p-2 hover:bg-muted dark:hover:bg-white/10 rounded-xl transition-colors border border-border dark:border-transparent dark:hover:border-white/10">
+          <ChevronLeft className="h-5 w-5 text-muted-foreground dark:text-zinc-400 hover:text-foreground dark:hover:text-white" />
         </Link>
-        <span className="text-sm font-medium text-slate-500">Back to Pipeline</span>
+        <span className="text-sm font-medium text-muted-foreground dark:text-zinc-400">Back to Pipeline</span>
       </div>
 
       {/* Candidate Profile Header Card */}
       <motion.div 
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-white border border-slate-200 rounded-2xl shadow-sm p-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-6"
+        className="bg-card dark:bg-card/80 backdrop-blur-md border border-border dark:border-white/10 rounded-2xl shadow-[0_4px_20px_rgba(23,32,51,0.06)] dark:shadow-lg p-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-6"
       >
         <div className="flex items-center space-x-6">
-          <div className="w-20 h-20 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-2xl font-bold shadow-inner border-4 border-white ring-1 ring-slate-100">
+          <div className="w-20 h-20 bg-primary/10 dark:bg-primary/20 text-primary dark:text-purple-300 rounded-full flex items-center justify-center text-2xl font-bold shadow-inner border-2 border-primary/30 ring-1 ring-border dark:ring-white/10">
             {initial}{lastName.charAt(0)}
           </div>
           <div>
-            <h1 className="text-3xl font-bold text-slate-900">
+            <h1 className="text-3xl font-bold text-foreground dark:text-white">
               {firstName} {lastName}
             </h1>
-            <div className="flex flex-wrap gap-4 mt-3 text-sm text-slate-500">
-              <span className="flex items-center gap-1.5"><Mail className="w-4 h-4" /> {email}</span>
-              <span className="flex items-center gap-1.5"><Calendar className="w-4 h-4" /> Interview Date: {displayDate}</span>
+            <div className="flex flex-wrap gap-4 mt-3 text-sm text-muted-foreground dark:text-zinc-400">
+              <span className="flex items-center gap-1.5"><Mail className="w-4 h-4 text-muted-foreground dark:text-zinc-400" /> {email}</span>
+              <span className="flex items-center gap-1.5"><Calendar className="w-4 h-4 text-muted-foreground dark:text-zinc-400" /> Interview Date: {displayDate}</span>
             </div>
           </div>
         </div>
 
         {/* Current Status Badge */}
-        <div className="bg-slate-50 border border-slate-200 px-6 py-4 rounded-xl text-center min-w-[200px]">
-          <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Application Status</p>
-          <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-            candidate.status === 'UNDER_REVIEW' ? 'bg-amber-100 text-amber-800' :
-            candidate.status === 'SHORTLISTED' ? 'bg-purple-100 text-purple-800' :
-            candidate.status === 'SELECTED' ? 'bg-emerald-100 text-emerald-800' :
-            candidate.status === 'REJECTED' ? 'bg-red-100 text-red-800' :
-            'bg-slate-100 text-slate-800'
+        <div className="bg-muted/40 dark:bg-white/[0.03] border border-border dark:border-white/10 px-6 py-4 rounded-xl text-center min-w-[200px]">
+          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground dark:text-zinc-400 mb-1">Application Status</p>
+          <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold tracking-wide uppercase border ${
+            candidate.status === 'UNDER_REVIEW' ? 'badge-review' :
+            candidate.status === 'SHORTLISTED' ? 'badge-shortlisted' :
+            candidate.status === 'SELECTED' ? 'badge-hired' :
+            candidate.status === 'REJECTED' ? 'badge-rejected' :
+            'bg-muted text-muted-foreground border-border dark:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-700'
           }`}>
             {candidate.status ? candidate.status.replace(/_/g, ' ') : 'PENDING'}
           </span>
@@ -105,7 +105,7 @@ export default function CandidateDetailPage() {
       </motion.div>
 
       {/* Detail View Tabs */}
-      <div className="border-b border-slate-200">
+      <div className="border-b border-border dark:border-white/10">
         <nav className="flex space-x-8" aria-label="Tabs">
           {[
             { id: 'scorecard', label: 'AI Scorecard' },
@@ -116,10 +116,10 @@ export default function CandidateDetailPage() {
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
               className={`
-                whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors
+                whitespace-nowrap py-4 px-1 border-b-2 font-bold text-sm transition-colors cursor-pointer
                 ${activeTab === tab.id
-                  ? 'border-blue-600 text-blue-600'
-                  : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+                  ? 'border-primary text-primary dark:text-purple-400'
+                  : 'border-transparent text-muted-foreground dark:text-zinc-400 hover:text-foreground dark:hover:text-white hover:border-border dark:hover:border-zinc-600'
                 }
               `}
             >
@@ -135,11 +135,15 @@ export default function CandidateDetailPage() {
           key={activeTab}
           initial={{ opacity: 0, x: -10 }}
           animate={{ opacity: 1, x: 0 }}
-          className={`min-h-[400px] ${activeTab !== 'scorecard' ? 'bg-slate-50 rounded-2xl border border-dashed border-slate-300 flex items-center justify-center text-slate-400' : ''}`}
+          className="min-h-[400px]"
         >
           {activeTab === 'scorecard' && <ScorecardTab candidateId={candidateId as string} />}
           {activeTab === 'playback' && <MediaPlaybackTab candidateId={candidateId as string} />}
-          {activeTab === 'report' && <div className="text-center p-8">Report Viewer Component will render here</div>}
+          {activeTab === 'report' && (
+            <div className="bg-card dark:bg-card/80 backdrop-blur-md rounded-2xl border border-dashed border-border dark:border-white/10 flex items-center justify-center text-muted-foreground dark:text-zinc-400 p-12 min-h-[400px]">
+              <p className="text-muted-foreground dark:text-zinc-400">Report Viewer Component will render here</p>
+            </div>
+          )}
         </motion.div>
       </ErrorBoundary>
 

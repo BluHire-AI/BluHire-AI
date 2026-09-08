@@ -22,17 +22,17 @@ export const MediaPlaybackTab: React.FC<MediaPlaybackTabProps> = ({ candidateId 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64 w-full">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
     );
   }
 
   if (error || !media || (!media.recordings.length && !media.transcripts.length)) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 w-full text-slate-500 bg-slate-50 border border-dashed border-slate-200 rounded-2xl p-8 text-center">
-        <AlertCircle className="w-10 h-10 text-slate-400 mb-3" />
-        <h3 className="text-lg font-semibold text-slate-700">No Media Available</h3>
-        <p className="text-sm mt-1 max-w-sm">
+      <div className="flex flex-col items-center justify-center h-64 w-full text-muted-foreground dark:text-zinc-400 bg-card dark:bg-white/[0.02] border border-dashed border-border dark:border-white/10 rounded-2xl p-8 text-center">
+        <AlertCircle className="w-10 h-10 text-muted-foreground dark:text-zinc-500 mb-3" />
+        <h3 className="text-lg font-semibold text-foreground dark:text-white">No Media Available</h3>
+        <p className="text-sm mt-1 max-w-sm text-muted-foreground dark:text-zinc-400">
           The interview recording and transcript for this candidate are not available.
         </p>
       </div>
@@ -44,29 +44,29 @@ export const MediaPlaybackTab: React.FC<MediaPlaybackTabProps> = ({ candidateId 
   const currentTranscript = transcripts[activeQuestion];
 
   return (
-    <div className="w-full bg-white rounded-2xl border border-slate-200 shadow-sm font-sans flex flex-col md:flex-row overflow-hidden min-h-[500px]">
+    <div className="w-full bg-card dark:bg-card/80 backdrop-blur-md rounded-2xl border border-border dark:border-white/10 shadow-[0_4px_20px_rgba(23,32,51,0.06)] dark:shadow-lg font-sans flex flex-col md:flex-row overflow-hidden min-h-[500px]">
       
       {/* Sidebar - Question Navigation */}
-      <div className="md:w-1/3 bg-slate-50 border-r border-slate-200 flex flex-col">
-        <div className="p-4 border-b border-slate-200 bg-slate-100/50">
-          <h3 className="font-bold text-slate-800">Interview Segments</h3>
-          <p className="text-xs text-slate-500">{recordings.length} recorded answers</p>
+      <div className="md:w-1/3 bg-muted/20 dark:bg-white/[0.02] border-r border-border dark:border-white/10 flex flex-col">
+        <div className="p-4 border-b border-border dark:border-white/10 bg-muted/30 dark:bg-white/[0.02]">
+          <h3 className="font-bold text-foreground dark:text-white">Interview Segments</h3>
+          <p className="text-xs text-muted-foreground dark:text-zinc-400">{recordings.length} recorded answers</p>
         </div>
         <div className="flex-1 overflow-y-auto">
           {recordings.map((rec: any, i: number) => (
             <button
               key={rec._id}
               onClick={() => setActiveQuestion(i)}
-              className={`w-full text-left p-4 border-b border-slate-200 transition-colors flex items-center justify-between ${
-                activeQuestion === i ? 'bg-blue-50 border-l-4 border-l-blue-600' : 'hover:bg-slate-100 border-l-4 border-l-transparent'
+              className={`w-full text-left p-4 border-b border-border dark:border-white/10 transition-colors flex items-center justify-between cursor-pointer ${
+                activeQuestion === i ? 'bg-primary/10 dark:bg-primary/15 border-l-4 border-l-primary' : 'hover:bg-muted dark:hover:bg-white/[0.04] border-l-4 border-l-transparent'
               }`}
             >
               <div>
-                <span className={`font-semibold text-sm ${activeQuestion === i ? 'text-blue-700' : 'text-slate-700'}`}>
+                <span className={`font-semibold text-sm ${activeQuestion === i ? 'text-primary dark:text-purple-300' : 'text-foreground dark:text-zinc-300'}`}>
                   Question {i + 1}
                 </span>
               </div>
-              <Video className={`w-4 h-4 ${activeQuestion === i ? 'text-blue-500' : 'text-slate-400'}`} />
+              <Video className={`w-4 h-4 ${activeQuestion === i ? 'text-primary dark:text-purple-400' : 'text-muted-foreground dark:text-zinc-500'}`} />
             </button>
           ))}
         </div>
@@ -76,7 +76,7 @@ export const MediaPlaybackTab: React.FC<MediaPlaybackTabProps> = ({ candidateId 
       <div className="md:w-2/3 p-6 flex flex-col space-y-6">
         
         {/* Video Player */}
-        <div className="bg-black rounded-xl overflow-hidden shadow-md border border-slate-800 relative w-full pt-[56.25%]">
+        <div className="bg-black rounded-xl overflow-hidden shadow-md border border-border dark:border-white/10 relative w-full pt-[56.25%]">
           {currentRecording ? (
           <video
             key={currentRecording._id}
@@ -87,24 +87,24 @@ export const MediaPlaybackTab: React.FC<MediaPlaybackTabProps> = ({ candidateId 
             Your browser does not support the video element.
           </video>
           ) : (
-            <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-500 bg-slate-900">
-              <Video className="w-12 h-12 mb-2 opacity-50" />
-              <span>Video segment not available</span>
+            <div className="absolute inset-0 flex flex-col items-center justify-center text-muted-foreground bg-muted/50 dark:bg-zinc-950">
+              <Video className="w-12 h-12 mb-2 opacity-50 text-muted-foreground" />
+              <span className="text-muted-foreground text-sm">Video segment not available</span>
             </div>
           )}
         </div>
 
         {/* Transcript Area */}
-        <div className="flex-1 bg-slate-50 rounded-xl p-6 border border-slate-200">
-          <div className="flex items-center space-x-2 mb-4 text-slate-800 font-semibold border-b pb-2">
-            <FileText className="w-5 h-5 text-indigo-500" />
-            <h3>AI Transcript</h3>
+        <div className="flex-1 bg-[#F8FAFC] dark:bg-white/[0.03] rounded-xl p-6 border border-border dark:border-white/10">
+          <div className="flex items-center space-x-2 mb-4 text-foreground dark:text-white font-semibold border-b border-border dark:border-white/10 pb-2">
+            <FileText className="w-5 h-5 text-primary dark:text-purple-400" />
+            <h3 className="text-foreground dark:text-white font-semibold">AI Transcript</h3>
           </div>
-          <div className="prose prose-sm max-w-none text-slate-600 h-full overflow-y-auto max-h-48">
+          <div className="prose dark:prose-invert prose-sm max-w-none text-muted-foreground dark:text-zinc-300 h-full overflow-y-auto max-h-48">
             {currentTranscript ? (
-              <p className="whitespace-pre-wrap">{currentTranscript.transcript}</p>
+              <p className="whitespace-pre-wrap text-foreground dark:text-zinc-300 leading-relaxed">{currentTranscript.transcript}</p>
             ) : (
-              <p className="text-slate-400 italic">No transcript generated for this segment.</p>
+              <p className="text-muted-foreground dark:text-zinc-500 italic">No transcript generated for this segment.</p>
             )}
           </div>
         </div>

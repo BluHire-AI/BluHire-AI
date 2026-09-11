@@ -1,6 +1,7 @@
 import os
+import time
 from typing import List, Dict, Any
-from app.services.knowledge_ingestion import KnowledgeIngestionService # Wait, the module name is knowledge_ingestion
+from app.services.knowledge_ingestion import KnowledgeIngestionService
 from app.services.openrouter import open_router_client
 from pymongo import MongoClient
 
@@ -16,8 +17,9 @@ class RAGService:
         
         mongo_uri = os.getenv("MONGO_URI")
         if not mongo_uri:
-            # Check parent environment or config
-            print("[RAG Service] MONGO_URI env var not found, direct DB retrieval disabled.")
+            # Node Knowledge Service handles retrieval directly and sends chunks to FastAPI.
+            # Direct DB retrieval in FastAPI is intentionally optional.
+            # print("[RAG Service] [DEBUG] MONGO_URI env var not found, direct DB retrieval disabled.")
             return None
             
         try:
@@ -173,14 +175,23 @@ class RAGService:
     def construct_system_prompt(cls, context: str) -> str:
         """Builds prompt instructing the LLM to answer using injected context and cite sources."""
         return (
-            "You are HR Copilot, an enterprise AI assistant for the HRMinds AI platform. "
-            "You must answer the user's question using ONLY the provided document context below. "
-            "If the answer cannot be found in the context, say: 'I could not find the answer in the uploaded company policies or documentation. Please consult HR.' "
-            "Never invent details or extrapolate outside the context. "
-            "Be professional, direct, and structured. Use bullet points and clean formatting.\n\n"
-            "CRITICAL CITATION REQUIREMENT:\n"
-            "For every assertion or rule you state, you MUST immediately cite the source number or filename at the end of the sentence. "
-            "At the end of your response, you must add a 'Sources:' list referencing the document names and page numbers of the files you retrieved.\n\n"
+            "You are HR Copilot, an enterprise AI assistant for the HRMinds AI platform.\n"
+            "You must answer the user's question using ONLY the provided document context below.\n\n"
+            "CRITICAL GUIDELINES:\n"
+            "1. ADAPT ANSWER LENGTH TO THE QUESTION:\n"
+            "   - Specific factual questions (e.g., 'What are the working hours?', 'How many annual leaves are employees entitled to?'): Provide a direct, concise answer in 1-3 sentences or a few bullets. Do NOT generate an extensive report or include unrelated policy sections.\n"
+            "   - Broad overview questions (e.g., 'Tell me the company policies', 'Tell me about Dhanush'): Provide a clean, structured summary grouped by topic or section.\n"
+            "   - Comparison questions: Provide a clear, concise comparison.\n"
+            "2. NEVER COPY VERBATIM OR DUMP DOCUMENTS: Synthesize and summarize the relevant information in your own clear words. Never reproduce raw context blocks or full documents.\n"
+            "3. NO STANDALONE OR EMPTY BULLETS: Never output empty bullet points ('-', '*', or '•' with no text or only whitespace). Every bullet must contain substantive content. Do not insert bullet markers between headings or sections.\n"
+            "4. CITATION ATTRIBUTION (AVOID REPETITION):\n"
+            "   - Do NOT repeat '[Source 1]' at the end of every individual sentence or bullet point when all information comes from the same source.\n"
+            "   - If all or most information comes from a single source, state the answer naturally and include the attribution at the end in a clean 'Sources:' section (e.g., 'Source: HR Employee Handbook, Page 1').\n"
+            "   - Only use inline source tags (e.g. [Source 2]) if multiple distinct sources support different facts in the same answer and distinction is necessary.\n"
+            "5. GROUNDING & SAFETY:\n"
+            "   - Use ONLY retrieved context. Never invent details, dates, numbers, or extrapolate outside the context.\n"
+            "   - If the answer cannot be found in the context, say: 'I could not find the answer in the uploaded company policies or documentation. Please consult HR.'\n"
+            "   - Be professional, direct, and structured. Use Markdown formatting cleanly.\n\n"
             "Here is the context documentation:\n"
             "==============================\n"
             f"{context}\n"
@@ -197,28 +208,39 @@ class RAGService:
         4. Query OpenRouter
         """
         from app.services.knowledge_ingestion import KnowledgeIngestionService
+        t_rag_start = time.perf_counter()
         
         db = cls.get_mongo_db()
+        t_db = time.perf_counter()
         
         # 1 & 2. If chunks are not provided, generate embedding and perform retrieval
         if chunks is None:
+            t_direct_start = time.perf_counter()
             embedding = KnowledgeIngestionService.generate_embeddings([query])[0]
             chunks = cls.retrieve_chunks_direct(embedding, limit=5, is_approved_only=is_approved_only)
+            print(f"[RAG Service Timing] Direct retrieval: {(time.perf_counter() - t_direct_start)*1000:.2f} ms")
         
         # 3. Assemble Context
+        t_ctx_start = time.perf_counter()
         context_str = cls.assemble_context(chunks, db)
+        t_ctx_end = time.perf_counter()
         
         # 4. Construct prompts
+        t_prompt_start = time.perf_counter()
         system_prompt = cls.construct_system_prompt(context_str)
         user_prompt = f"Question: {query}"
+        t_prompt_end = time.perf_counter()
         
         # 5. Get LLM response
+        t_llm_start = time.perf_counter()
         answer = await open_router_client.get_completion(
             system_prompt=system_prompt,
             user_prompt=user_prompt
         )
+        t_llm_end = time.perf_counter()
         
         # Format sources citation metadata to return to client
+        t_cite_start = time.perf_counter()
         citations = []
         doc_cache = {}
         for chunk in chunks:
@@ -247,6 +269,17 @@ class RAGService:
                 "sectionTitle": chunk.get("sectionTitle", "General Section"),
                 "score": chunk.get("score", 1.0)
             })
+        t_cite_end = time.perf_counter()
+
+        print(
+            f"[RAG Service Timing Breakdown]\n"
+            f"  DB Check:         {(t_db - t_rag_start)*1000:.2f} ms\n"
+            f"  Context Assembly: {(t_ctx_end - t_ctx_start)*1000:.2f} ms\n"
+            f"  Prompt Construct: {(t_prompt_end - t_prompt_start)*1000:.2f} ms\n"
+            f"  OpenRouter LLM:   {(t_llm_end - t_llm_start)*1000:.2f} ms\n"
+            f"  Citations Build:  {(t_cite_end - t_cite_start)*1000:.2f} ms\n"
+            f"  Total RAG Serv:   {(t_cite_end - t_rag_start)*1000:.2f} ms"
+        )
 
         return {
             "query": query,

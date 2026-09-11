@@ -70,80 +70,80 @@ export default function RegisterPage() {
   };
 
   return (
-    <Card className="w-full border-white/10 bg-white/[0.03] backdrop-blur-2xl rounded-[24px] shadow-2xl relative overflow-hidden group">
-      <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-[#8B5CF6]/30 to-transparent" />
-      <CardHeader className="space-y-1.5 pb-6">
-        <CardTitle className="text-xl font-bold tracking-tight text-white">Create an account</CardTitle>
-        <CardDescription className="text-xs text-white/60">
-          Enter your details below to set up your profile
+    <Card className="w-full border-border/80 dark:border-white/10 bg-card/90 dark:bg-[#0e101e]/85 backdrop-blur-2xl rounded-2xl shadow-xl relative overflow-hidden group my-4">
+      <div className="absolute top-0 left-0 w-full h-[1.5px] bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
+      <CardHeader className="space-y-1.5 pb-5">
+        <CardTitle className="text-xl sm:text-2xl font-bold tracking-tight text-foreground dark:text-white">Create an account</CardTitle>
+        <CardDescription className="text-xs text-muted-foreground dark:text-zinc-400">
+          Enter your details below to set up your workspace profile
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-3.5">
           <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1">
-              <Label htmlFor="firstName" className="text-xs font-medium text-white/80">First name</Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="firstName" className="text-xs font-semibold text-foreground/90 dark:text-zinc-300">First name</Label>
               <Input 
                 id="firstName" 
                 placeholder="John" 
                 {...register('firstName')}
-                className={`text-xs h-10 bg-white/[0.02] border-white/10 focus:border-[#8B5CF6]/50 focus:ring-[#8B5CF6]/20 text-white rounded-xl ${errors.firstName ? 'border-destructive/50' : ''}`}
+                className={`text-xs h-10 bg-background/50 dark:bg-white/[0.03] border-border dark:border-white/15 focus:border-primary/60 focus:ring-2 focus:ring-primary/25 text-foreground dark:text-white rounded-xl placeholder:text-muted-foreground/60 transition-all ${errors.firstName ? 'border-destructive/60' : ''}`}
               />
               {errors.firstName && (
-                <p className="text-[11px] text-destructive mt-1">{errors.firstName.message}</p>
+                <p className="text-[11px] text-destructive mt-1 font-medium">{errors.firstName.message}</p>
               )}
             </div>
-            <div className="space-y-1">
-              <Label htmlFor="lastName" className="text-xs font-medium text-white/80">Last name</Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="lastName" className="text-xs font-semibold text-foreground/90 dark:text-zinc-300">Last name</Label>
               <Input 
                 id="lastName" 
                 placeholder="Doe" 
                 {...register('lastName')}
-                className={`text-xs h-10 bg-white/[0.02] border-white/10 focus:border-[#8B5CF6]/50 focus:ring-[#8B5CF6]/20 text-white rounded-xl ${errors.lastName ? 'border-destructive/50' : ''}`}
+                className={`text-xs h-10 bg-background/50 dark:bg-white/[0.03] border-border dark:border-white/15 focus:border-primary/60 focus:ring-2 focus:ring-primary/25 text-foreground dark:text-white rounded-xl placeholder:text-muted-foreground/60 transition-all ${errors.lastName ? 'border-destructive/60' : ''}`}
               />
               {errors.lastName && (
-                <p className="text-[11px] text-destructive mt-1">{errors.lastName.message}</p>
+                <p className="text-[11px] text-destructive mt-1 font-medium">{errors.lastName.message}</p>
               )}
             </div>
           </div>
           
           <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1">
-              <Label htmlFor="email" className="text-xs font-medium text-white/80">Email address</Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="email" className="text-xs font-semibold text-foreground/90 dark:text-zinc-300">Email address</Label>
               <Input 
                 id="email" 
                 type="email" 
                 placeholder="name@company.com" 
                 {...register('email')}
-                className={`text-xs h-10 bg-white/[0.02] border-white/10 focus:border-[#8B5CF6]/50 focus:ring-[#8B5CF6]/20 text-white rounded-xl ${errors.email ? 'border-destructive/50' : ''}`}
+                className={`text-xs h-10 bg-background/50 dark:bg-white/[0.03] border-border dark:border-white/15 focus:border-primary/60 focus:ring-2 focus:ring-primary/25 text-foreground dark:text-white rounded-xl placeholder:text-muted-foreground/60 transition-all ${errors.email ? 'border-destructive/60' : ''}`}
               />
               {errors.email && (
-                <p className="text-[11px] text-destructive mt-1">{errors.email.message}</p>
+                <p className="text-[11px] text-destructive mt-1 font-medium">{errors.email.message}</p>
               )}
             </div>
             
-            <div className="space-y-1">
-              <Label htmlFor="employeeId" className="text-xs font-medium text-white/80">Employee ID</Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="employeeId" className="text-xs font-semibold text-foreground/90 dark:text-zinc-300">Employee ID</Label>
               <Input 
                 id="employeeId" 
                 placeholder="EMP-1234" 
                 {...register('employeeId')}
-                className={`text-xs h-10 bg-white/[0.02] border-white/10 focus:border-[#8B5CF6]/50 focus:ring-[#8B5CF6]/20 text-white rounded-xl ${errors.employeeId ? 'border-destructive/50' : ''}`}
+                className={`text-xs h-10 bg-background/50 dark:bg-white/[0.03] border-border dark:border-white/15 focus:border-primary/60 focus:ring-2 focus:ring-primary/25 text-foreground dark:text-white rounded-xl placeholder:text-muted-foreground/60 transition-all ${errors.employeeId ? 'border-destructive/60' : ''}`}
               />
               {errors.employeeId && (
-                <p className="text-[11px] text-destructive mt-1">{errors.employeeId.message}</p>
+                <p className="text-[11px] text-destructive mt-1 font-medium">{errors.employeeId.message}</p>
               )}
             </div>
           </div>
           
-          <div className="space-y-2">
-            <Label className="text-xs font-medium text-white/80">Account Role</Label>
+          <div className="space-y-1.5">
+            <Label className="text-xs font-semibold text-foreground/90 dark:text-zinc-300">Account Role</Label>
             <div className="grid grid-cols-2 gap-2">
               {[
                 { value: 'EMPLOYEE', label: 'Employee', desc: 'Core profile & timesheets.' },
                 { value: 'HR_RECRUITER', label: 'HR Recruiter', desc: 'ATS management & pipelines.' },
                 { value: 'SENIOR_MANAGER', label: 'Senior Manager', desc: 'Performances & logs.' },
-                { value: 'MANAGEMENT_ADMIN', label: 'Admin', desc: 'Full control workspace.' },
+                { value: 'MANAGEMENT_ADMIN', label: 'Admin', desc: 'Full workspace control.' },
               ].map((r) => {
                 const isSelected = activeRole === r.value;
                 return (
@@ -151,50 +151,50 @@ export default function RegisterPage() {
                     key={r.value}
                     type="button"
                     onClick={() => setValue('role', r.value as any)}
-                    className={`flex flex-col text-left p-3 rounded-xl border text-xs transition-all cursor-pointer ${
+                    className={`flex flex-col text-left p-2.5 rounded-xl border text-xs transition-all cursor-pointer ${
                       isSelected 
-                        ? 'border-[#8B5CF6] bg-[#8B5CF6]/10 text-white shadow-md shadow-[#8B5CF6]/5' 
-                        : 'border-white/10 bg-white/[0.02] text-white/60 hover:bg-white/[0.04] hover:border-white/20'
+                        ? 'border-primary bg-primary/10 text-primary dark:text-white shadow-xs' 
+                        : 'border-border/80 dark:border-white/10 bg-background/40 dark:bg-white/[0.02] text-muted-foreground hover:bg-muted/50 hover:border-border'
                     }`}
                   >
-                    <span className={`font-semibold mb-0.5 ${isSelected ? 'text-[#8B5CF6]' : 'text-white/80'}`}>{r.label}</span>
-                    <span className="text-[10px] text-white/40 leading-tight">{r.desc}</span>
+                    <span className={`font-semibold mb-0.5 ${isSelected ? 'text-primary dark:text-violet-300' : 'text-foreground/90 dark:text-zinc-200'}`}>{r.label}</span>
+                    <span className="text-[10px] text-muted-foreground dark:text-zinc-400 leading-tight">{r.desc}</span>
                   </button>
                 );
               })}
             </div>
             {errors.role && (
-              <p className="text-[11px] text-destructive mt-1">{errors.role.message}</p>
+              <p className="text-[11px] text-destructive mt-1 font-medium">{errors.role.message}</p>
             )}
           </div>
  
-          <div className="space-y-1">
-            <Label htmlFor="password" className="text-xs font-medium text-white/80">Password</Label>
+          <div className="space-y-1.5">
+            <Label htmlFor="password" className="text-xs font-semibold text-foreground/90 dark:text-zinc-300">Password</Label>
             <Input 
               id="password" 
               type="password" 
               placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;"
               {...register('password')}
-              className={`text-xs h-10 bg-white/[0.02] border-white/10 focus:border-[#8B5CF6]/50 focus:ring-[#8B5CF6]/20 text-white rounded-xl ${errors.password ? 'border-destructive/50' : ''}`}
+              className={`text-xs h-10 bg-background/50 dark:bg-white/[0.03] border-border dark:border-white/15 focus:border-primary/60 focus:ring-2 focus:ring-primary/25 text-foreground dark:text-white rounded-xl placeholder:text-muted-foreground/60 transition-all ${errors.password ? 'border-destructive/60' : ''}`}
             />
             {errors.password && (
-              <p className="text-[11px] text-destructive mt-1">{errors.password.message}</p>
+              <p className="text-[11px] text-destructive mt-1 font-medium">{errors.password.message}</p>
             )}
           </div>
           
           <Button 
             type="submit" 
-            className="w-full h-10 mt-2 bg-[#8B5CF6] hover:bg-[#A855F7] text-white text-xs font-semibold rounded-xl border-0 shadow-lg shadow-[#8B5CF6]/15 transition-all duration-250 cursor-pointer" 
+            className="w-full h-10.5 mt-2 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-600 dark:hover:bg-indigo-500 text-white text-xs font-bold rounded-xl border-0 shadow-lg shadow-indigo-600/20 dark:shadow-[0_0_20px_rgba(99,102,241,0.25)] transition-all duration-200 cursor-pointer" 
             disabled={isLoading}
           >
             {isLoading ? 'Creating account...' : 'Create workspace account'}
           </Button>
         </form>
       </CardContent>
-      <CardFooter className="flex justify-center border-t border-white/10 pt-6 bg-white/[0.01]">
-        <div className="text-xs text-white/60">
+      <CardFooter className="flex justify-center border-t border-border/80 dark:border-white/10 pt-4 pb-4 bg-muted/20 dark:bg-white/[0.01]">
+        <div className="text-xs text-muted-foreground dark:text-zinc-400">
           Already have an account?{' '}
-          <Link href="/login" className="font-semibold text-[#8B5CF6] hover:text-[#A855F7] transition-colors">
+          <Link href="/login" className="font-semibold text-primary hover:text-primary/80 transition-colors">
             Sign in
           </Link>
         </div>

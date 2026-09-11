@@ -7,6 +7,7 @@ import { recruitmentService, Job } from '@/services/recruitment.service';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
+import { BluHireBackground } from '@/components/layout/BluHireBackground';
 
 export default function CareersLandingPage() {
   const [jobs, setJobs] = useState<Job[]>([]);
@@ -52,51 +53,60 @@ export default function CareersLandingPage() {
   const types = ['ALL', 'FULL_TIME', 'PART_TIME', 'CONTRACT', 'INTERN'];
 
   return (
-    <div className="min-h-screen bg-transparent text-foreground font-sans pb-16">
-      {/* Brand Navbar */}
-      <header className="h-16 bg-card/40 backdrop-blur-xl border-b border-border flex items-center justify-between px-8 z-10 shadow-lg sticky top-0">
+    <BluHireBackground showConstellation={true} className="pb-16">
+      {/* Brand Public Navbar */}
+      <header className="h-16 bg-card/85 dark:bg-[#0e101e]/80 backdrop-blur-2xl border-b border-border/80 dark:border-white/10 flex items-center justify-between px-6 sm:px-10 z-20 shadow-xs sticky top-0">
         <div className="flex items-center">
-          <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center text-primary mr-2.5">
+          <div className="w-8 h-8 rounded-xl bg-primary/10 border border-primary/25 flex items-center justify-center text-primary mr-3 shadow-xs">
             <Building2 className="w-4.5 h-4.5" />
           </div>
-          <span className="text-h2 bg-gradient-to-r from-primary via-purple-400 to-fuchsia-500 bg-clip-text text-transparent">
+          <span className="font-extrabold text-base sm:text-lg tracking-tight bg-gradient-to-r from-indigo-600 via-violet-600 to-purple-600 dark:from-violet-400 dark:via-indigo-300 dark:to-[#8B5CF6] bg-clip-text text-transparent">
             BluHire-AI Careers
           </span>
         </div>
         <Link href="/dashboard">
-          <Button variant="outline" size="sm" className="text-xs bg-muted/30 border-border hover:bg-muted/80 text-foreground rounded-xl">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="text-xs font-semibold bg-background/50 dark:bg-white/[0.04] border-border/80 dark:border-white/10 hover:bg-muted/80 text-foreground dark:text-white rounded-xl h-9 px-3.5 cursor-pointer shadow-xs"
+          >
             Employee Login
           </Button>
         </Link>
       </header>
 
       {/* Hero Banner */}
-      <section className="py-24 text-center relative overflow-hidden bg-transparent">
+      <section className="pt-16 pb-12 text-center relative overflow-hidden">
         <div className="max-w-4xl mx-auto px-6 relative z-10">
-          <h1 className="text-h1 mb-4 bg-gradient-to-r from-primary via-purple-400 to-fuchsia-500 bg-clip-text text-transparent">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-primary/10 border border-primary/25 text-primary text-xs font-semibold tracking-wider uppercase mb-4 select-none">
+            <Briefcase className="w-3.5 h-3.5 text-primary" />
+            <span>Open Opportunities</span>
+          </div>
+
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-foreground dark:text-white mb-4">
             Find Your Next Career Move
           </h1>
-          <p className="text-body-copy text-muted-foreground max-w-xl mx-auto mb-8 leading-relaxed">
-            Join a fast-growing, inclusive team building next-generation AI automation platforms.
+          <p className="text-sm sm:text-base text-muted-foreground dark:text-zinc-400 max-w-xl mx-auto mb-8 leading-relaxed font-sans">
+            Join a fast-growing team building next-generation AI automation platforms. Work on challenging engineering and operational frontiers.
           </p>
 
-          {/* Search bar */}
-          <div className="flex flex-col sm:flex-row gap-3 max-w-2xl mx-auto glass bg-card/65 p-2 rounded-2xl shadow-2xl border border-border">
+          {/* Search & Filter Toolbar */}
+          <div className="flex flex-col sm:flex-row gap-3 max-w-2xl mx-auto bg-card/90 dark:bg-[#0e101e]/85 backdrop-blur-2xl p-2.5 rounded-2xl shadow-xl border border-border/80 dark:border-white/10">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
+              <Search className="absolute left-3.5 top-3 w-4 h-4 text-muted-foreground dark:text-zinc-400" />
               <Input
                 type="text"
-                placeholder="Search jobs, required skills, keywords..."
+                placeholder="Search jobs, required skills, or keywords..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="pl-10 h-10 bg-transparent border-0 ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 focus:outline-none text-grid text-foreground placeholder:text-muted-foreground"
+                className="pl-10 h-10 bg-transparent border-0 ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 focus:outline-none text-xs sm:text-sm text-foreground dark:text-white placeholder:text-muted-foreground/60"
               />
             </div>
             <div className="flex gap-2">
               <select
                 value={locationFilter}
                 onChange={(e) => setLocationFilter(e.target.value)}
-                className="bg-muted/50 border border-border rounded-xl px-3 py-2 text-xs text-foreground focus:outline-none cursor-pointer hover:bg-muted/80"
+                className="bg-background/50 dark:bg-white/[0.04] border border-border/80 dark:border-white/15 rounded-xl px-3 py-2 text-xs font-medium text-foreground dark:text-zinc-200 focus:outline-none focus:ring-2 focus:ring-primary/25 cursor-pointer hover:bg-muted/50"
               >
                 {locations.map((loc) => (
                   <option key={loc} value={loc} className="bg-popover text-foreground">
@@ -107,7 +117,7 @@ export default function CareersLandingPage() {
               <select
                 value={typeFilter}
                 onChange={(e) => setTypeFilter(e.target.value)}
-                className="bg-muted/50 border border-border rounded-xl px-3 py-2 text-xs text-foreground focus:outline-none cursor-pointer hover:bg-muted/80"
+                className="bg-background/50 dark:bg-white/[0.04] border border-border/80 dark:border-white/15 rounded-xl px-3 py-2 text-xs font-medium text-foreground dark:text-zinc-200 focus:outline-none focus:ring-2 focus:ring-primary/25 cursor-pointer hover:bg-muted/50"
               >
                 {types.map((t) => (
                   <option key={t} value={t} className="bg-popover text-foreground">
@@ -120,72 +130,84 @@ export default function CareersLandingPage() {
         </div>
       </section>
 
-      {/* Listings */}
-      <main className="max-w-6xl mx-auto py-4 px-6">
+      {/* Job Listings Grid */}
+      <main className="max-w-6xl mx-auto py-4 px-6 sm:px-8">
         {loading ? (
-          <div className="flex items-center justify-center py-20 text-muted-foreground font-medium">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mr-3" />
-            Loading open opportunities...
+          <div className="flex flex-col items-center justify-center py-24 space-y-3 bg-card/40 dark:bg-[#0e101e]/40 border border-border/80 dark:border-white/10 rounded-2xl backdrop-blur-xl">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+            <p className="text-xs text-muted-foreground font-medium">Loading open opportunities...</p>
           </div>
         ) : filteredJobs.length === 0 ? (
-          <div className="text-center py-20 text-muted-foreground">
-            <Briefcase className="w-12 h-12 mx-auto mb-3 text-border" />
-            No open jobs matching your search parameters.
+          <div className="text-center py-20 bg-card/40 dark:bg-[#0e101e]/40 border border-border/80 dark:border-white/10 rounded-2xl backdrop-blur-xl space-y-3">
+            <Briefcase className="w-12 h-12 text-muted-foreground/50 mx-auto" />
+            <h3 className="text-base font-semibold text-foreground dark:text-white">No matching job openings</h3>
+            <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+              No positions currently match your search parameters. Try adjusting your filters or search keywords.
+            </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {filteredJobs.map((job) => (
               <Card
                 key={job._id}
-                className="flex flex-col glass bg-card/40 border border-border hover:border-primary/30 hover:shadow-2xl transition-all duration-300 rounded-2xl overflow-hidden group hover:scale-[1.01] hover:glow-primary/5"
+                className="flex flex-col border border-border/80 dark:border-white/10 bg-card/90 dark:bg-[#0e101e]/90 backdrop-blur-xl rounded-2xl shadow-xs hover:border-primary/40 transition-all duration-200 overflow-hidden group hover:shadow-lg hover:scale-[1.01]"
               >
-                <CardHeader className="p-6">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-small-label bg-primary/10 text-primary border border-primary/20 px-2.5 py-1 rounded">
+                <CardHeader className="p-5 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold uppercase tracking-wider bg-primary/10 text-primary dark:text-violet-300 border border-primary/25 px-2.5 py-1 rounded-md">
                       {job.employmentType.replace('_', ' ')}
                     </span>
-                    <span className="text-small-label text-muted-foreground font-mono">{job.jobCode}</span>
+                    <span className="text-[10px] font-mono font-semibold text-muted-foreground dark:text-zinc-400 bg-muted/60 dark:bg-white/[0.04] px-2 py-0.5 rounded">
+                      {job.jobCode}
+                    </span>
                   </div>
-                  <CardTitle className="text-h2 text-foreground group-hover:text-primary transition-colors">
-                    {job.title}
-                  </CardTitle>
-                  <CardDescription className="text-body-copy text-muted-foreground flex items-center gap-1.5 mt-1">
-                    {job.departmentId?.name || 'Department'}
-                  </CardDescription>
+                  <div>
+                    <CardTitle className="text-base font-bold text-foreground dark:text-white group-hover:text-primary transition-colors">
+                      {job.title}
+                    </CardTitle>
+                    <CardDescription className="text-xs text-muted-foreground dark:text-zinc-400 flex items-center gap-1.5 mt-1 font-medium">
+                      {job.departmentId?.name || 'General Department'}
+                    </CardDescription>
+                  </div>
                 </CardHeader>
-                <CardContent className="flex-1 px-6 pb-6">
-                  <p className="text-body-copy text-muted-foreground line-clamp-3 mb-4 leading-relaxed">
+
+                <CardContent className="flex-1 px-5 pb-5 space-y-3">
+                  <p className="text-xs text-muted-foreground dark:text-zinc-400 line-clamp-3 leading-relaxed">
                     {job.description}
                   </p>
-                  <div className="flex flex-wrap gap-1.5 mt-auto">
+                  <div className="flex flex-wrap gap-1.5 pt-2">
                     {job.requiredSkills.slice(0, 3).map((skill) => (
                       <span
                         key={skill}
-                        className="text-small-label px-2 py-0.5 rounded-full bg-muted border border-border text-muted-foreground normal-case font-semibold"
+                        className="text-[10px] font-medium px-2 py-0.5 rounded-md bg-muted/60 dark:bg-white/[0.05] border border-border/60 dark:border-white/10 text-foreground/80 dark:text-zinc-300"
                       >
                         {skill}
                       </span>
                     ))}
                     {job.requiredSkills.length > 3 && (
-                      <span className="text-small-label text-muted-foreground/60 px-1 py-0.5 normal-case font-bold">
+                      <span className="text-[10px] font-bold text-muted-foreground dark:text-zinc-400 px-1 py-0.5">
                         +{job.requiredSkills.length - 3} more
                       </span>
                     )}
                   </div>
                 </CardContent>
-                <CardFooter className="p-6 border-t border-border bg-card/25 flex items-center justify-between">
-                  <div className="flex items-center text-small-label text-muted-foreground gap-3 normal-case font-medium">
+
+                <CardFooter className="p-5 border-t border-border/80 dark:border-white/10 bg-muted/20 dark:bg-white/[0.01] flex items-center justify-between">
+                  <div className="flex items-center text-xs text-muted-foreground dark:text-zinc-400 gap-3 font-medium">
                     <span className="flex items-center gap-1">
-                      <MapPin className="w-3.5 h-3.5 text-muted-foreground/60" />
+                      <MapPin className="w-3.5 h-3.5 text-muted-foreground" />
                       {job.location}
                     </span>
                     <span className="flex items-center gap-1">
-                      <Clock className="w-3.5 h-3.5 text-muted-foreground/60" />
+                      <Clock className="w-3.5 h-3.5 text-muted-foreground" />
                       {job.openings} {job.openings > 1 ? 'openings' : 'opening'}
                     </span>
                   </div>
                   <Link href={`/careers/jobs/${job._id}`}>
-                    <Button size="sm" className="text-xs bg-primary hover:bg-primary/90 text-primary-foreground font-bold h-8 rounded-lg flex items-center gap-1.5 shadow-md shadow-primary/10 cursor-pointer">
+                    <Button 
+                      size="sm" 
+                      className="text-xs bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-600 dark:hover:bg-indigo-500 text-white font-semibold h-8.5 px-3 rounded-xl flex items-center gap-1.5 shadow-md shadow-indigo-600/10 cursor-pointer transition-all"
+                    >
                       <Eye className="w-3.5 h-3.5" />
                       View
                     </Button>
@@ -196,6 +218,6 @@ export default function CareersLandingPage() {
           </div>
         )}
       </main>
-    </div>
+    </BluHireBackground>
   );
 }

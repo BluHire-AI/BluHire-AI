@@ -11,8 +11,9 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid 
 } from 'recharts';
 import { motion, AnimatePresence } from 'framer-motion';
+import ReactMarkdown from 'react-markdown';
 import { useAuthStore } from '@/lib/store/auth';
-import { knowledgeService, KnowledgeDocument, SearchResult, KnowledgeAnalytics } from '@/services/knowledge.service';
+import { knowledgeService, KnowledgeDocument, SearchResult, KnowledgeAnalytics, RAGCitation, RAGResponse } from '@/services/knowledge.service';
 
 export default function KnowledgeBasePage() {
   const { user } = useAuthStore();
@@ -41,6 +42,8 @@ export default function KnowledgeBasePage() {
   // Search States
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+  const [searchAnswer, setSearchAnswer] = useState('');
+  const [searchCitations, setSearchCitations] = useState<RAGCitation[]>([]);
   const [searching, setSearching] = useState(false);
   const [searchTriggered, setSearchTriggered] = useState(false);
   const [searchError, setSearchError] = useState('');
@@ -138,8 +141,10 @@ export default function KnowledgeBasePage() {
       setSearching(true);
       setSearchTriggered(true);
       setSearchError('');
-      const results = await knowledgeService.search(searchQuery);
-      setSearchResults(results);
+      const response = await knowledgeService.search(searchQuery);
+      setSearchAnswer(response.answer || '');
+      setSearchResults(response.chunks || []);
+      setSearchCitations(response.citations || []);
     } catch (err: any) {
       console.error('Semantic search failed:', err);
       const hasFailedDocs = documents.some(d => d.status === 'FAILED');
@@ -356,63 +361,190 @@ export default function KnowledgeBasePage() {
                     We couldn't find any policy document matching your search. Ensure relevant documents are uploaded and employee access is approved.
                   </p>
                 </div>
-              ) : searchResults.length > 0 ? (
-                <div className="space-y-4">
-                  <h3 className="text-h2 text-muted-foreground dark:text-white/40 mb-2">Semantic Search Matches</h3>
-                  
-                  <div className="grid grid-cols-1 gap-4">
-                    {searchResults.map((result, index) => (
-                      <motion.div
-                        key={result._id || index}
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: index * 0.05 }}
-                        className="bg-card dark:bg-white/[0.03] backdrop-blur-xl border border-border dark:border-white/10 rounded-[24px] p-6 shadow-sm dark:shadow-2xl space-y-4 hover:border-[#8B5CF6]/30 transition-all group"
-                      >
-                        {/* Source info */}
-                        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border dark:border-white/10 pb-3">
-                          <div className="flex items-center gap-2">
-                            <span className="text-small-label bg-[#8B5CF6]/10 text-[#8B5CF6] dark:text-[#c084fc] border border-[#8B5CF6]/20">
-                              {result.document.documentType}
-                            </span>
-                            <h4 className="text-grid font-bold text-foreground dark:text-white">
-                              {result.document.title}
-                            </h4>
+              ) : searchTriggered && (searchResults.length > 0 || searchAnswer) ? (
+                <div className="space-y-6">
+                  {/* AI Generated Answer Card */}
+                  {searchAnswer && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="bg-gradient-to-br from-[#8B5CF6]/10 via-[#8B5CF6]/5 to-transparent backdrop-blur-xl border border-[#8B5CF6]/30 rounded-[24px] p-6 sm:p-8 shadow-lg shadow-[#8B5CF6]/5 space-y-4"
+                    >
+                      <div className="flex items-center justify-between border-b border-[#8B5CF6]/20 pb-3">
+                        <div className="flex items-center gap-2.5">
+                          <div className="p-2 rounded-xl bg-[#8B5CF6]/20 text-[#8B5CF6] dark:text-[#c084fc]">
+                            <Sparkles className="w-5 h-5" />
                           </div>
-
-                          <div className="flex items-center gap-3">
-                            <span className="text-small-label px-2 py-0.5 rounded-lg bg-muted/60 dark:bg-white/[0.04] text-muted-foreground dark:text-white/60 border border-border dark:border-white/10 normal-case">
-                              Page {result.pageNumber || 1}
-                            </span>
-                            <span className="text-small-label px-2 py-0.5 rounded-lg bg-muted/60 dark:bg-white/[0.04] text-muted-foreground dark:text-white/60 border border-border dark:border-white/10 normal-case">
-                              Section: {result.sectionTitle || 'General'}
-                            </span>
-                            <span className="text-small-label px-2.5 py-0.5 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-450 border border-emerald-500/20 shadow-sm flex items-center gap-1">
-                              <ShieldCheck className="w-3.5 h-3.5" />
-                              Match: {Math.round(result.score * 100)}%
-                            </span>
+                          <div>
+                            <h3 className="text-base font-bold text-foreground dark:text-white flex items-center gap-2">
+                              AI Answer
+                            </h3>
+                            <p className="text-xs text-muted-foreground dark:text-white/40">
+                              Synthesized from verified organizational knowledge & document context
+                            </p>
                           </div>
                         </div>
 
-                        {/* Content text */}
-                        <p className="text-body-copy text-foreground dark:text-white/80 leading-relaxed font-normal">
-                          {result.content}
-                        </p>
-
-                        {/* Source reference footer */}
-                        <div className="flex items-center justify-between pt-2">
-                          <span className="text-small-label text-muted-foreground dark:text-white/40 flex items-center gap-1 normal-case">
-                            <FileText className="w-3.5 h-3.5 text-muted-foreground/40 dark:text-white/20" />
-                            {result.document.fileName}
+                        {searchCitations.length > 0 && (
+                          <span className="text-small-label px-2.5 py-1 rounded-lg bg-[#8B5CF6]/15 text-[#8B5CF6] dark:text-[#c084fc] border border-[#8B5CF6]/25 font-semibold">
+                            {searchCitations.length} {searchCitations.length === 1 ? 'Source' : 'Sources'} Cited
                           </span>
-                          <button className="text-small-label text-[#8B5CF6] hover:text-[#A855F7] hover:underline flex items-center gap-1 group-hover:translate-x-0.5 transition-transform cursor-pointer border-0 bg-transparent normal-case font-bold">
-                            View context snippet
-                            <ArrowRight className="w-3.5 h-3.5" />
-                          </button>
+                        )}
+                      </div>
+
+                      {/* Formatted Answer */}
+                      <div className="text-body-copy text-foreground dark:text-white/90 leading-relaxed text-sm sm:text-base font-normal space-y-3">
+                        <ReactMarkdown
+                          components={{
+                            h1: ({ node, ...props }) => (
+                              <h3 className="text-base sm:text-lg font-bold text-foreground dark:text-white mt-3 mb-1.5 flex items-center gap-2" {...props} />
+                            ),
+                            h2: ({ node, ...props }) => (
+                              <h4 className="text-sm sm:text-base font-bold text-foreground dark:text-white mt-2.5 mb-1 flex items-center gap-1.5" {...props} />
+                            ),
+                            h3: ({ node, ...props }) => (
+                              <h5 className="text-xs sm:text-sm font-bold text-[#8B5CF6] dark:text-[#c084fc] mt-2 mb-1 tracking-wide uppercase" {...props} />
+                            ),
+                            p: ({ node, ...props }) => (
+                              <p className="mb-2 leading-relaxed text-foreground/90 dark:text-white/85" {...props} />
+                            ),
+                            ul: ({ node, ...props }) => (
+                              <ul className="list-disc list-inside space-y-1 my-2 ml-1 text-foreground/90 dark:text-white/85" {...props} />
+                            ),
+                            ol: ({ node, ...props }) => (
+                              <ol className="list-decimal list-inside space-y-1 my-2 ml-1 text-foreground/90 dark:text-white/85" {...props} />
+                            ),
+                            li: ({ node, children, ...props }) => {
+                              // Guard: if list item is empty or only whitespace, do not render a bullet
+                              if (!children) return null;
+                              if (typeof children === 'string' && children.trim() === '') return null;
+                              if (Array.isArray(children) && children.length === 1 && typeof children[0] === 'string' && children[0].trim() === '') return null;
+                              return <li className="leading-relaxed marker:text-[#8B5CF6]" {...props}>{children}</li>;
+                            },
+                            strong: ({ node, ...props }) => (
+                              <strong className="font-semibold text-foreground dark:text-white" {...props} />
+                            ),
+                            em: ({ node, ...props }) => (
+                              <em className="italic text-foreground/80 dark:text-white/80" {...props} />
+                            ),
+                            code: ({ node, className, children, ...props }) => {
+                              const match = /language-(\w+)/.exec(className || '');
+                              return (
+                                <code className="bg-muted/70 dark:bg-white/[0.08] px-1.5 py-0.5 rounded text-xs font-mono text-[#8B5CF6] dark:text-[#c084fc] border border-border/50 dark:border-white/10" {...props}>
+                                  {children}
+                                </code>
+                              );
+                            },
+                            pre: ({ node, ...props }) => (
+                              <pre className="bg-muted/80 dark:bg-black/40 p-3 rounded-xl overflow-x-auto text-xs font-mono my-2 border border-border dark:border-white/10" {...props} />
+                            ),
+                            a: ({ node, ...props }) => (
+                              <a className="text-[#8B5CF6] hover:text-[#A855F7] underline font-medium" target="_blank" rel="noopener noreferrer" {...props} />
+                            ),
+                            blockquote: ({ node, ...props }) => (
+                              <blockquote className="border-l-2 border-[#8B5CF6]/40 pl-3 my-2 italic text-muted-foreground dark:text-white/60" {...props} />
+                            )
+                          }}
+                        >
+                          {searchAnswer}
+                        </ReactMarkdown>
+                      </div>
+
+                      {/* Citations Badges */}
+                      {searchCitations.length > 0 && (
+                        <div className="pt-3 border-t border-border/50 dark:border-white/10 flex flex-wrap items-center gap-2">
+                          <span className="text-xs font-semibold text-muted-foreground dark:text-white/50">
+                            Cited Evidence:
+                          </span>
+                          {searchCitations.map((citation, cIdx) => (
+                            <span
+                              key={cIdx}
+                              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-muted/60 dark:bg-white/[0.05] border border-border dark:border-white/10 text-xs text-foreground dark:text-white/80 font-medium"
+                            >
+                              <FileText className="w-3.5 h-3.5 text-[#8B5CF6]" />
+                              <span>{citation.title || citation.fileName}</span>
+                              <span className="text-muted-foreground dark:text-white/40 text-[11px]">
+                                (p. {citation.pageNumber})
+                              </span>
+                            </span>
+                          ))}
                         </div>
-                      </motion.div>
-                    ))}
-                  </div>
+                      )}
+                    </motion.div>
+                  )}
+
+                  {/* Retrieved Sources Section */}
+                  {searchResults.length > 0 && (
+                    <div className="space-y-4 pt-2">
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-h2 text-foreground dark:text-white flex items-center gap-2">
+                          <Layers className="w-4 h-4 text-[#8B5CF6]" />
+                          Retrieved Sources
+                        </h3>
+                        <span className="text-xs text-muted-foreground dark:text-white/40">
+                          {searchResults.length} {searchResults.length === 1 ? 'source match' : 'source matches'}
+                        </span>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 gap-4">
+                        {searchResults.map((result, index) => (
+                          <motion.div
+                            key={result._id || index}
+                            initial={{ opacity: 0, x: -10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: index * 0.05 }}
+                            className="bg-card dark:bg-white/[0.03] backdrop-blur-xl border border-border dark:border-white/10 rounded-[24px] p-6 shadow-sm dark:shadow-2xl space-y-4 hover:border-[#8B5CF6]/30 transition-all group"
+                          >
+                            {/* Source info */}
+                            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border dark:border-white/10 pb-3">
+                              <div className="flex items-center gap-2">
+                                <span className="text-small-label bg-[#8B5CF6]/10 text-[#8B5CF6] dark:text-[#c084fc] border border-[#8B5CF6]/20">
+                                  {result.document.documentType}
+                                </span>
+                                <h4 className="text-grid font-bold text-foreground dark:text-white">
+                                  {result.document.title}
+                                </h4>
+                              </div>
+
+                              <div className="flex items-center gap-3">
+                                <span className="text-small-label px-2 py-0.5 rounded-lg bg-muted/60 dark:bg-white/[0.04] text-muted-foreground dark:text-white/60 border border-border dark:border-white/10 normal-case">
+                                  Page {result.pageNumber || 1}
+                                </span>
+                                <span className="text-small-label px-2 py-0.5 rounded-lg bg-muted/60 dark:bg-white/[0.04] text-muted-foreground dark:text-white/60 border border-border dark:border-white/10 normal-case">
+                                  Section: {result.sectionTitle || 'General'}
+                                </span>
+                                <span className="text-small-label px-2.5 py-0.5 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-450 border border-emerald-500/20 shadow-sm flex items-center gap-1">
+                                  <ShieldCheck className="w-3.5 h-3.5" />
+                                  Match: {Math.round(result.score * 100)}%
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* Content text */}
+                            <div className="space-y-1">
+                              <span className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground dark:text-white/40">
+                                Context Snippet:
+                              </span>
+                              <p className="text-body-copy text-foreground/80 dark:text-white/70 leading-relaxed font-normal text-xs sm:text-sm">
+                                {result.content}
+                              </p>
+                            </div>
+
+                            {/* Source reference footer */}
+                            <div className="flex items-center justify-between pt-2">
+                              <span className="text-small-label text-muted-foreground dark:text-white/40 flex items-center gap-1 normal-case">
+                                <FileText className="w-3.5 h-3.5 text-muted-foreground/40 dark:text-white/20" />
+                                {result.document.fileName}
+                              </span>
+                              <span className="text-small-label text-[#8B5CF6] flex items-center gap-1 font-semibold normal-case">
+                                Supporting source evidence
+                              </span>
+                            </div>
+                          </motion.div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="bg-card dark:bg-white/[0.02] border border-border dark:border-white/10 rounded-[24px] p-12 text-center shadow-sm">

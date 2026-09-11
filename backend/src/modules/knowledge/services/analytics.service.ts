@@ -13,6 +13,7 @@ export class AnalyticsService {
     userId: string;
   }): Promise<void> {
     try {
+      const tStart = performance.now();
       console.log("Search Query:", data.query);
       console.log("Logging Analytics...");
       console.log("Results Found:", data.resultsFound);
@@ -34,7 +35,8 @@ export class AnalyticsService {
         timestamp: new Date()
       });
 
-      console.log("Analytics Saved");
+      const tEnd = performance.now();
+      console.log(`Analytics Saved in ${(tEnd - tStart).toFixed(2)} ms`);
     } catch (error: any) {
       console.error("[AnalyticsService] Error saving search log:", error.message);
     }

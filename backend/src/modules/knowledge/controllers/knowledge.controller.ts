@@ -115,29 +115,107 @@ export class KnowledgeController {
    * POST /api/v1/knowledge/search
    */
   async search(req: AuthRequest, res: Response): Promise<void> {
-    const startTime = Date.now();
+    const tTotalStart = performance.now();
     try {
       console.log(req.body);
       const { query, limit } = searchSchema.parse(req.body);
       const userRole = req.user.role;
 
+      // 1. Semantic Search
+      const tRetrievalStart = performance.now();
       const results = await knowledgeService.semanticSearch(query, userRole, limit);
-      const latency = Date.now() - startTime;
+      const tRetrievalEnd = performance.now();
+      const retrievalDuration = tRetrievalEnd - tRetrievalStart;
 
       const documentsHit = Array.from(
         new Set(results.map(r => r.document?.title || r.document?.fileName || ''))
       ).filter(Boolean);
 
-      // Record direct search analytics
+      // 2. Record search analytics
+      const tAnalyticsStart = performance.now();
       await analyticsService.recordSearch({
         query,
         resultsFound: results.length,
-        latency,
+        latency: Math.round(retrievalDuration),
         documentsHit,
         userId: req.user._id
       });
+      const tAnalyticsEnd = performance.now();
+      const analyticsDuration = tAnalyticsEnd - tAnalyticsStart;
 
-      res.json({ success: true, data: results });
+      // 3. Generate RAG answer if results were found
+      let answer = '';
+      let citations: Array<{
+        title: string;
+        fileName: string;
+        pageNumber: number;
+        sectionTitle: string;
+        score: number;
+      }> = [];
+
+      // Default citations from retrieved search results
+      citations = results.map(r => ({
+        title: r.document?.title || 'Document',
+        fileName: r.document?.fileName || 'document.pdf',
+        pageNumber: r.pageNumber || 1,
+        sectionTitle: r.sectionTitle || 'General Section',
+        score: r.score ?? 1.0
+      }));
+
+      let ragDuration = 0;
+      if (results.length > 0) {
+        try {
+          const tRagCallStart = performance.now();
+          const isApprovedOnly = userRole === SystemRoles.EMPLOYEE;
+          const ragResult = await knowledgeService.generateRAGAnswer(query, results, isApprovedOnly);
+          const tRagCallEnd = performance.now();
+          ragDuration = tRagCallEnd - tRagCallStart;
+
+          if (ragResult && ragResult.answer) {
+            answer = ragResult.answer;
+          }
+          if (ragResult && ragResult.citations && ragResult.citations.length > 0) {
+            citations = ragResult.citations;
+          }
+        } catch (ragErr: any) {
+          console.error('[Knowledge Controller] RAG answer generation failed, falling back to sources:', ragErr.message);
+          answer = 'An AI answer could not be generated at this time. Please refer to the retrieved sources below.';
+        }
+      } else {
+        answer = 'I could not find the answer in the uploaded company policies or documentation. Please consult HR.';
+      }
+
+      const tTotalEnd = performance.now();
+      const totalDuration = tTotalEnd - tTotalStart;
+
+      console.log(
+        `\n===============================================\n` +
+        `[RAG TIMING BREAKDOWN - Backend Controller]\n` +
+        `  Query:            "${query}"\n` +
+        `  Semantic Search:  ${retrievalDuration.toFixed(2).padStart(8)} ms\n` +
+        `  Analytics Save:   ${analyticsDuration.toFixed(2).padStart(8)} ms\n` +
+        `  RAG Generation:   ${ragDuration.toFixed(2).padStart(8)} ms\n` +
+        `  Other Controller: ${(totalDuration - (retrievalDuration + analyticsDuration + ragDuration)).toFixed(2).padStart(8)} ms\n` +
+        `-----------------------------------------------\n` +
+        `  TOTAL DURATION:   ${totalDuration.toFixed(2).padStart(8)} ms\n` +
+        `===============================================\n`
+      );
+
+      res.json({
+        success: true,
+        data: {
+          query,
+          answer,
+          chunks: results,
+          citations,
+          timings: {
+            retrievalMs: Math.round(retrievalDuration),
+            analyticsMs: Math.round(analyticsDuration),
+            ragMs: Math.round(ragDuration),
+            totalMs: Math.round(totalDuration)
+          }
+        }
+      });
     } catch (error: any) {
       console.error('[DEBUG Backend search] error:', error);
       if (error instanceof z.ZodError) {

@@ -7,6 +7,7 @@ import { ArrowLeft, Briefcase, MapPin, Clock, DollarSign, Award, GraduationCap, 
 import { recruitmentService, Job } from '@/services/recruitment.service';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { BluHireBackground } from '@/components/layout/BluHireBackground';
 
 export default function JobDetailPage() {
   const router = useRouter();
@@ -31,129 +32,145 @@ export default function JobDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-transparent flex flex-col items-center justify-center text-muted-foreground font-sans">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-3" />
-        Loading job specifications...
-      </div>
+      <BluHireBackground showConstellation={true}>
+        <div className="min-h-screen flex flex-col items-center justify-center space-y-3">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+          <p className="text-xs text-muted-foreground font-medium">Loading position details...</p>
+        </div>
+      </BluHireBackground>
     );
   }
 
   if (!job) {
     return (
-      <div className="min-h-screen bg-transparent flex flex-col items-center justify-center p-8 font-sans">
-        <h2 className="text-xl font-bold text-foreground mb-4">Job opening not found or no longer active.</h2>
-        <Link href="/careers">
-          <Button className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold px-6 py-2 rounded-xl transition">
-            Back to Careers
-          </Button>
-        </Link>
-      </div>
+      <BluHireBackground showConstellation={true}>
+        <div className="min-h-screen flex flex-col items-center justify-center p-8 space-y-4 text-center">
+          <Briefcase className="w-12 h-12 text-muted-foreground/50 mx-auto" />
+          <h2 className="text-lg font-bold text-foreground dark:text-white">Job opening not found or no longer active.</h2>
+          <Link href="/careers">
+            <Button className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-5 py-2 rounded-xl transition cursor-pointer">
+              Back to Careers
+            </Button>
+          </Link>
+        </div>
+      </BluHireBackground>
     );
   }
 
   return (
-    <div className="min-h-screen bg-transparent text-foreground font-sans pb-16">
+    <BluHireBackground showConstellation={true} className="pb-16">
       {/* Navbar Header */}
-      <header className="h-16 bg-card/40 backdrop-blur-xl border-b border-border flex items-center px-8 shadow-lg sticky top-0 z-50">
-        <Link href="/careers" className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
+      <header className="h-16 bg-card/85 dark:bg-[#0e101e]/80 backdrop-blur-2xl border-b border-border/80 dark:border-white/10 flex items-center px-6 sm:px-10 shadow-xs sticky top-0 z-50">
+        <Link href="/careers" className="flex items-center gap-2 text-muted-foreground hover:text-foreground dark:hover:text-white transition-colors">
           <ArrowLeft className="w-4 h-4" />
-          <span className="text-small-label">Back to Career Portal</span>
+          <span className="text-xs font-semibold uppercase tracking-wider">Back to Career Portal</span>
         </Link>
       </header>
 
-      <main className="max-w-4xl mx-auto py-12 px-6">
+      <main className="max-w-4xl mx-auto py-10 px-6">
         {/* Main Job Banner */}
-        <div className="glass bg-card/40 border border-border p-8 rounded-3xl shadow-2xl mb-8">
+        <div className="border border-border/80 dark:border-white/10 bg-card/90 dark:bg-[#0e101e]/90 backdrop-blur-2xl p-6 sm:p-8 rounded-2xl shadow-xl mb-8 relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-[1.5px] bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
+          
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-            <div>
-              <span className="text-small-label bg-primary/10 text-primary border border-primary/20 px-2.5 py-1 rounded inline-block mb-3">
-                {job.employmentType.replace('_', ' ')}
-              </span>
-              <h1 className="text-h1 text-white">
+            <div className="space-y-2">
+              <div className="flex items-center gap-2.5">
+                <span className="text-[10px] font-bold uppercase tracking-wider bg-primary/10 text-primary dark:text-violet-300 border border-primary/25 px-2.5 py-1 rounded-md">
+                  {job.employmentType.replace('_', ' ')}
+                </span>
+                <span className="text-[10px] font-mono font-semibold text-muted-foreground dark:text-zinc-400 bg-muted/60 dark:bg-white/[0.04] px-2 py-0.5 rounded">
+                  {job.jobCode}
+                </span>
+              </div>
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-foreground dark:text-white tracking-tight">
                 {job.title}
               </h1>
-              <p className="text-body-copy text-muted-foreground mt-1">
-                {job.departmentId?.name} • <span className="font-mono">{job.jobCode}</span>
+              <p className="text-xs text-muted-foreground dark:text-zinc-400 font-medium">
+                {job.departmentId?.name || 'General Department'}
               </p>
             </div>
-            <div>
+            
+            <div className="shrink-0">
               <Link href={`/careers/apply/${job._id}`}>
-                <Button size="lg" className="w-full bg-primary hover:bg-primary/95 text-primary-foreground font-extrabold px-8 py-6 rounded-xl shadow-lg shadow-primary/15 transition-all duration-300 cursor-pointer">
+                <Button size="lg" className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-600 dark:hover:bg-indigo-500 text-white font-bold px-7 py-5.5 rounded-xl shadow-lg shadow-indigo-600/20 dark:shadow-[0_0_20px_rgba(99,102,241,0.25)] transition-all cursor-pointer">
                   Apply for this position
                 </Button>
               </Link>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-8 pt-8 border-t border-border">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-muted/50 border border-border flex items-center justify-center text-primary">
-                <MapPin className="w-4.5 h-4.5" />
+          {/* Quick Metrics Grid */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6 pt-6 border-t border-border/80 dark:border-white/10">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shrink-0">
+                <MapPin className="w-4 h-4" />
               </div>
               <div>
-                <p className="text-small-label text-muted-foreground">Location</p>
-                <p className="text-grid font-bold text-foreground">{job.location}</p>
+                <p className="text-[10px] uppercase font-bold text-muted-foreground dark:text-zinc-400 tracking-wider">Location</p>
+                <p className="text-xs font-bold text-foreground dark:text-white mt-0.5">{job.location}</p>
               </div>
             </div>
 
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-muted/50 border border-border flex items-center justify-center text-primary">
-                <Clock className="w-4.5 h-4.5" />
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shrink-0">
+                <Clock className="w-4 h-4" />
               </div>
               <div>
-                <p className="text-small-label text-muted-foreground">Openings</p>
-                <p className="text-grid font-bold text-foreground">{job.openings} vacant</p>
+                <p className="text-[10px] uppercase font-bold text-muted-foreground dark:text-zinc-400 tracking-wider">Openings</p>
+                <p className="text-xs font-bold text-foreground dark:text-white mt-0.5">{job.openings} {job.openings > 1 ? 'positions' : 'position'}</p>
               </div>
             </div>
 
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-muted/50 border border-border flex items-center justify-center text-primary">
-                <DollarSign className="w-4.5 h-4.5" />
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shrink-0">
+                <DollarSign className="w-4 h-4" />
               </div>
               <div>
-                <p className="text-small-label text-muted-foreground">Salary Range</p>
-                <p className="text-grid font-bold text-foreground">
+                <p className="text-[10px] uppercase font-bold text-muted-foreground dark:text-zinc-400 tracking-wider">Salary Range</p>
+                <p className="text-xs font-bold text-foreground dark:text-white mt-0.5">
                   {job.salaryMin && job.salaryMax
                     ? `$${job.salaryMin.toLocaleString()} - $${job.salaryMax.toLocaleString()}`
-                    : 'Undisclosed'}
+                    : 'Competitive'}
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-muted/50 border border-border flex items-center justify-center text-primary">
-                <Award className="w-4.5 h-4.5" />
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shrink-0">
+                <Award className="w-4 h-4" />
               </div>
               <div>
-                <p className="text-small-label text-muted-foreground">Experience</p>
-                <p className="text-grid font-bold text-foreground">{job.experienceRequired}</p>
+                <p className="text-[10px] uppercase font-bold text-muted-foreground dark:text-zinc-400 tracking-wider">Experience</p>
+                <p className="text-xs font-bold text-foreground dark:text-white mt-0.5">{job.experienceRequired}</p>
               </div>
             </div>
           </div>
         </div>
 
         {/* Detailed Spec Sections */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div className="md:col-span-2 space-y-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="md:col-span-2 space-y-6">
             {/* Job Description */}
-            <Card className="glass bg-card/35 border border-border rounded-2xl overflow-hidden shadow-none">
-              <CardContent className="p-8">
-                <h3 className="text-h2 text-primary mb-4">
+            <Card className="border border-border/80 dark:border-white/10 bg-card/90 dark:bg-[#0e101e]/85 backdrop-blur-2xl rounded-2xl shadow-xs overflow-hidden">
+              <CardContent className="p-6 space-y-3">
+                <h3 className="text-base font-bold text-foreground dark:text-white flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-primary" />
                   Role Overview
                 </h3>
-                <div className="text-body-copy leading-relaxed text-muted-foreground whitespace-pre-wrap font-sans">
+                <div className="text-xs text-muted-foreground dark:text-zinc-400 leading-relaxed whitespace-pre-wrap font-sans">
                   {job.description}
                 </div>
               </CardContent>
             </Card>
 
             {/* Responsibilities */}
-            <Card className="glass bg-card/35 border border-border rounded-2xl overflow-hidden shadow-none">
-              <CardContent className="p-8">
-                <h3 className="text-h2 text-primary mb-4">
+            <Card className="border border-border/80 dark:border-white/10 bg-card/90 dark:bg-[#0e101e]/85 backdrop-blur-2xl rounded-2xl shadow-xs overflow-hidden">
+              <CardContent className="p-6 space-y-3">
+                <h3 className="text-base font-bold text-foreground dark:text-white flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-indigo-500" />
                   Key Responsibilities
                 </h3>
-                <div className="text-body-copy leading-relaxed text-muted-foreground whitespace-pre-wrap font-sans">
+                <div className="text-xs text-muted-foreground dark:text-zinc-400 leading-relaxed whitespace-pre-wrap font-sans">
                   {job.responsibilities}
                 </div>
               </CardContent>
@@ -163,52 +180,56 @@ export default function JobDetailPage() {
           {/* Right sidebar details */}
           <div className="space-y-6">
             {/* Skills Profile */}
-            <Card className="glass bg-card/35 border border-border rounded-2xl overflow-hidden shadow-none">
-              <CardContent className="p-6 font-sans">
-                <h4 className="text-small-label text-muted-foreground mb-4 flex items-center gap-1.5">
-                  <CheckCircle className="w-4 h-4 text-primary" />
-                  Required Skills
-                </h4>
-                <div className="flex flex-wrap gap-1.5">
-                  {job.requiredSkills.map((skill) => (
-                    <span
-                      key={skill}
-                      className="text-small-label px-2.5 py-1 rounded bg-muted border border-border text-muted-foreground normal-case font-semibold"
-                    >
-                      {skill}
-                    </span>
-                  ))}
+            <Card className="border border-border/80 dark:border-white/10 bg-card/90 dark:bg-[#0e101e]/85 backdrop-blur-2xl rounded-2xl shadow-xs overflow-hidden">
+              <CardContent className="p-6 font-sans space-y-4">
+                <div>
+                  <h4 className="text-xs font-bold text-foreground dark:text-white mb-3 flex items-center gap-1.5">
+                    <CheckCircle className="w-4 h-4 text-emerald-500" />
+                    Required Skills
+                  </h4>
+                  <div className="flex flex-wrap gap-1.5">
+                    {job.requiredSkills.map((skill) => (
+                      <span
+                        key={skill}
+                        className="text-[10px] font-medium px-2 py-0.5 rounded-md bg-muted/60 dark:bg-white/[0.05] border border-border/60 dark:border-white/10 text-foreground/90 dark:text-zinc-300"
+                      >
+                        {skill}
+                      </span>
+                    ))}
+                  </div>
                 </div>
 
                 {job.preferredSkills && job.preferredSkills.length > 0 && (
-                  <>
-                    <h4 className="text-small-label text-muted-foreground mt-6 mb-4 flex items-center gap-1.5">
-                      <CheckCircle className="w-4 h-4 text-accent" />
+                  <div className="pt-2 border-t border-border/80 dark:border-white/10">
+                    <h4 className="text-xs font-bold text-foreground dark:text-white mb-3 flex items-center gap-1.5">
+                      <CheckCircle className="w-4 h-4 text-primary" />
                       Preferred Skills
                     </h4>
                     <div className="flex flex-wrap gap-1.5">
                       {job.preferredSkills.map((skill) => (
                         <span
                           key={skill}
-                          className="text-small-label px-2.5 py-1 rounded bg-muted border border-border text-muted-foreground normal-case font-semibold"
+                          className="text-[10px] font-medium px-2 py-0.5 rounded-md bg-primary/10 border border-primary/20 text-primary dark:text-violet-300"
                         >
                           {skill}
                         </span>
                       ))}
                     </div>
-                  </>
+                  </div>
                 )}
               </CardContent>
             </Card>
 
             {/* Qualifications profile */}
-            <Card className="glass bg-card/35 border border-border rounded-2xl overflow-hidden shadow-none">
-              <CardContent className="p-6 space-y-4 font-sans">
+            <Card className="border border-border/80 dark:border-white/10 bg-card/90 dark:bg-[#0e101e]/85 backdrop-blur-2xl rounded-2xl shadow-xs overflow-hidden">
+              <CardContent className="p-6 font-sans">
                 <div className="flex items-start gap-3">
-                  <GraduationCap className="w-5 h-5 text-primary mt-0.5" />
+                  <div className="w-9 h-9 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shrink-0">
+                    <GraduationCap className="w-4.5 h-4.5" />
+                  </div>
                   <div>
-                    <h5 className="text-small-label text-muted-foreground">Education Required</h5>
-                    <p className="text-body-copy text-foreground mt-0.5">{job.educationRequired}</p>
+                    <h5 className="text-[10px] uppercase font-bold text-muted-foreground dark:text-zinc-400 tracking-wider">Education Required</h5>
+                    <p className="text-xs font-bold text-foreground dark:text-white mt-1">{job.educationRequired}</p>
                   </div>
                 </div>
               </CardContent>
@@ -216,6 +237,6 @@ export default function JobDetailPage() {
           </div>
         </div>
       </main>
-    </div>
+    </BluHireBackground>
   );
 }

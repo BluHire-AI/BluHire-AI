@@ -34,6 +34,21 @@ export interface SearchResult {
   };
 }
 
+export interface RAGCitation {
+  title: string;
+  fileName: string;
+  pageNumber: number;
+  sectionTitle: string;
+  score: number;
+}
+
+export interface RAGResponse {
+  query: string;
+  answer: string;
+  chunks: SearchResult[];
+  citations: RAGCitation[];
+}
+
 export interface KnowledgeAnalytics {
   totalDocuments: number;
   totalChunks: number;
@@ -91,9 +106,17 @@ export const knowledgeService = {
     return response.data.data;
   },
 
-  search: async (query: string, limit?: number): Promise<SearchResult[]> => {
-    console.log('[DEBUG Frontend search] payload:', { query, limit });
+  search: async (query: string, limit?: number): Promise<RAGResponse> => {
+    const tStart = performance.now();
+    console.log(`[Frontend RAG Search] Initiating search for query: "${query}"`);
     const response = await api.post('/knowledge/search', { query, limit });
+    const tEnd = performance.now();
+    console.log(
+      `[FRONTEND TIMING]\n` +
+      `  Query:                 "${query}"\n` +
+      `  Total Search Duration: ${(tEnd - tStart).toFixed(2)} ms\n` +
+      `  Backend Reported Time: ${response.data?.data?.timings?.totalMs ?? 'N/A'} ms`
+    );
     return response.data.data;
   },
 

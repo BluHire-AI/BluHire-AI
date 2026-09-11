@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { verifyAccessToken } from '../utils/jwt.util';
 import EmployeeModel from '../models/Employee';
+import { env } from '../config/env';
 
 export interface AuthRequest extends Request {
   user?: any;
@@ -12,10 +13,12 @@ export const authenticate = async (
   next: NextFunction
 ): Promise<void> => {
   const authHeader = req.headers.authorization;
-  console.log(`[AUTH] Incoming Authorization Header:`, authHeader ? `${authHeader.substring(0, 25)}...` : 'NONE');
+  if (env.AUTH_DEBUG) {
+    console.log(`[AUTH] ${authHeader ? 'Authorization header received' : 'No Authorization header received'}`);
+  }
 
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    console.log(`[AUTH] Failure: Missing or invalid Authorization header format.`);
+    console.warn(`[AUTH] Failure: Missing or invalid Authorization header format.`);
     res.status(401).json({
       success: false,
       message: 'Authentication required'
@@ -26,7 +29,9 @@ export const authenticate = async (
   const token = authHeader.split(' ')[1];
   try {
     const decoded: any = verifyAccessToken(token);
-    console.log(`[AUTH] JWT verification successful. User ID extracted: ${decoded.id}, Role: ${decoded.role}`);
+    if (env.AUTH_DEBUG) {
+      console.log(`[AUTH] JWT verification successful. User ID extracted: ${decoded.id}, Role: ${decoded.role}`);
+    }
 
     // Base user info from token
     req.user = {
@@ -48,7 +53,7 @@ export const authenticate = async (
 
     next();
   } catch (error: any) {
-    console.log(`[AUTH] Failure: JWT verification failed. Reason: ${error.message}`);
+    console.warn(`[AUTH] JWT verification failed: ${error.message}`);
     res.status(401).json({
       success: false,
       message: 'Invalid or expired token'

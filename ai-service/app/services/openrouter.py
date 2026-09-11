@@ -1,6 +1,7 @@
 import os
 import httpx
 import json
+import time
 from typing import Dict, Any
 from dotenv import load_dotenv
 
@@ -52,6 +53,7 @@ class OpenRouterClient:
 
         last_error = None
 
+        t_openrouter_start = time.perf_counter()
         for model in models_to_try:
             print(f"[OpenRouter] Attempting completion using model: {model}")
 
@@ -76,30 +78,37 @@ class OpenRouterClient:
                 }
 
             try:
+                t_call_start = time.perf_counter()
                 async with httpx.AsyncClient(timeout=60.0) as client:
                     response = await client.post(
                         self.api_url,
                         headers=headers,
                         json=payload
                     )
+                t_call_end = time.perf_counter()
 
-                    if response.status_code == 200:
-                        data = response.json()
-                        print(f"[OpenRouter] Raw Response:\n{json.dumps(data, indent=2)}")
+                if response.status_code == 200:
+                    t_parse_start = time.perf_counter()
+                    data = response.json()
+                    t_parse_end = time.perf_counter()
+                    # Truncate raw response logging if too large, but keep minimal
+                    # print(f"[OpenRouter] Raw Response:\n{json.dumps(data, indent=2)}")
 
-                        if (
-                            "choices" in data
-                            and len(data["choices"]) > 0
-                        ):
-                            actual_model = data.get("model", model)
+                    if (
+                        "choices" in data
+                        and len(data["choices"]) > 0
+                    ):
+                        actual_model = data.get("model", model)
+                        print(
+                            f"[OPENROUTER TIMING]\n"
+                            f"  Model Requested: {model}\n"
+                            f"  Model Actual:    {actual_model}\n"
+                            f"  HTTP Call:       {(t_call_end - t_call_start)*1000:.2f} ms\n"
+                            f"  Response Parse:  {(t_parse_end - t_parse_start)*1000:.2f} ms\n"
+                            f"  Total Duration:  {(time.perf_counter() - t_openrouter_start)*1000:.2f} ms"
+                        )
 
-                            print(
-                                f"[OpenRouter] Success "
-                                f"requested={model} "
-                                f"actual={actual_model}"
-                            )
-
-                            return data["choices"][0]["message"]["content"]
+                        return data["choices"][0]["message"]["content"]
 
                         last_error = f"Empty choices returned: {data}"
 

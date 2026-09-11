@@ -2,6 +2,7 @@ from fastapi import APIRouter, UploadFile, File, Form, HTTPException
 from fastapi.responses import StreamingResponse
 from typing import List, Optional
 import json
+import time
 from app.parsers.resume_parser import ResumeParser
 from app.screeners.screener import AIScreener
 from app.schemas.screening import ScreeningResult
@@ -220,29 +221,40 @@ async def ingest_knowledge_document(file: UploadFile = File(...)):
 
 @router.post("/knowledge/embed")
 async def generate_query_embedding(payload: dict):
+    t_start = time.perf_counter()
     try:
         from app.services.knowledge_ingestion import KnowledgeIngestionService
+        t_parse = time.perf_counter()
         text = payload.get("text", "")
         if not text:
             raise HTTPException(status_code=400, detail="Text field is required.")
         
+        t_model_start = time.perf_counter()
         embeddings = KnowledgeIngestionService.generate_embeddings([text])
+        t_model_end = time.perf_counter()
+        
+        t_end = time.perf_counter()
+        print(f"[FASTAPI TIMING /embed] Total: {(t_end - t_start)*1000:.2f} ms | Parse: {(t_model_start - t_start)*1000:.2f} ms | Model: {(t_model_end - t_model_start)*1000:.2f} ms")
         return {"embedding": embeddings[0]}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Embedding generation failed: {str(e)}")
 
 @router.post("/knowledge/rag")
 async def generate_rag_answer(payload: dict):
+    t_start = time.perf_counter()
     try:
         from app.services.rag_service import RAGService
         query = payload.get("query", "")
         chunks = payload.get("chunks", None)
         is_approved_only = payload.get("isApprovedOnly", False)
+        t_parsed = time.perf_counter()
         
         if not query:
             raise HTTPException(status_code=400, detail="Query field is required.")
         
         result = await RAGService.generate_rag_answer(query=query, chunks=chunks, is_approved_only=is_approved_only)
+        t_end = time.perf_counter()
+        print(f"[FASTAPI TIMING /rag] Total: {(t_end - t_start)*1000:.2f} ms | Parse: {(t_parsed - t_start)*1000:.2f} ms | RAG Execution: {(t_end - t_parsed)*1000:.2f} ms")
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"RAG completion failed: {str(e)}")

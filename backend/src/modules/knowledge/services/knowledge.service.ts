@@ -117,6 +117,7 @@ export class KnowledgeService {
    * Generates embedding for a search query
    */
   async generateEmbedding(query: string): Promise<number[]> {
+    const tStart = performance.now();
     console.log(`[Knowledge Service] Requesting embedding from FastAPI for query: "${query}"`);
     const response = await fetch(`${this.aiServiceUrl}/knowledge/embed`, {
       method: 'POST',
@@ -130,6 +131,8 @@ export class KnowledgeService {
     }
 
     const data = await response.json();
+    const tEnd = performance.now();
+    console.log(`[Knowledge Service] Embedding received from FastAPI in ${(tEnd - tStart).toFixed(2)} ms`);
     return data.embedding;
   }
 
@@ -141,12 +144,15 @@ export class KnowledgeService {
     userRole: string,
     limit: number = 5
   ): Promise<any[]> {
+    const tSearchStart = performance.now();
     try {
       // 1. Generate query embedding
+      const tEmbedStart = performance.now();
       const queryVector = await this.generateEmbedding(query);
+      const tEmbedEnd = performance.now();
 
       // 2. Resolve document access boundaries based on user roles
-      const accessibleDocIds: any[] = [];
+      const tDocFilterStart = performance.now();
       const isEmployee = userRole === SystemRoles.EMPLOYEE;
 
       const docQuery: any = {};
@@ -158,12 +164,15 @@ export class KnowledgeService {
 
       const docs = await KnowledgeDocument.find(docQuery, '_id').lean();
       const docIds = docs.map(d => d._id);
+      const tDocFilterEnd = performance.now();
 
       if (docIds.length === 0) {
+        console.log(`[Knowledge Service] No accessible documents found. Duration: ${(performance.now() - tSearchStart).toFixed(2)} ms`);
         return []; // No accessible documents indexed yet
       }
 
       // 3. Try MongoDB Atlas Vector Search
+      const tAtlasStart = performance.now();
       try {
         const atlasResults = await KnowledgeChunk.aggregate([
           {
@@ -207,7 +216,8 @@ export class KnowledgeService {
         ]);
 
         if (atlasResults && atlasResults.length > 0) {
-          console.log(`[Knowledge Service] MongoDB Atlas Vector Search returned ${atlasResults.length} matches.`);
+          const tAtlasEnd = performance.now();
+          console.log(`[Knowledge Service] MongoDB Atlas Vector Search returned ${atlasResults.length} matches in ${(tAtlasEnd - tAtlasStart).toFixed(2)} ms.`);
           return atlasResults;
         }
       } catch (err: any) {
@@ -215,11 +225,15 @@ export class KnowledgeService {
       }
 
       // 4. Cosine Fallback in-memory search
+      const tFallbackStart = performance.now();
       console.log(`[Knowledge Service] Fetching chunks for local similarity comparison...`);
+      const tChunkFetchStart = performance.now();
       const allChunks = await KnowledgeChunk.find({ documentId: { $in: docIds } })
         .populate('documentId', 'title fileName documentType')
         .lean();
+      const tChunkFetchEnd = performance.now();
 
+      const tCosineStart = performance.now();
       const scoredChunks = allChunks
         .map((chunk: any) => {
           const score = this.cosineSimilarity(queryVector, chunk.embedding);
@@ -240,12 +254,66 @@ export class KnowledgeService {
         // Sort by similarity descending
         .sort((a, b) => b.score - a.score)
         .slice(0, limit);
+      const tCosineEnd = performance.now();
+      const tFallbackEnd = performance.now();
 
-      console.log(`[Knowledge Service] Local similarity search returned ${scoredChunks.length} matches.`);
+      console.log(
+        `[Knowledge Service Retrieval Breakdown]\n` +
+        `  FastAPI Embed Call:     ${(tEmbedEnd - tEmbedStart).toFixed(2)} ms\n` +
+        `  Doc Accessibility Check: ${(tDocFilterEnd - tDocFilterStart).toFixed(2)} ms\n` +
+        `  Chunk Fetch from DB:    ${(tChunkFetchEnd - tChunkFetchStart).toFixed(2)} ms (${allChunks.length} chunks)\n` +
+        `  Cosine Math & Sorting:  ${(tCosineEnd - tCosineStart).toFixed(2)} ms\n` +
+        `  Total Local Retrieval:  ${(tFallbackEnd - tFallbackStart).toFixed(2)} ms\n` +
+        `  Total semanticSearch:   ${(performance.now() - tSearchStart).toFixed(2)} ms`
+      );
+
       return scoredChunks;
 
     } catch (error: any) {
       console.error(`[Knowledge Service] Semantic Search failed:`, error.message);
+      throw error;
+    }
+  }
+
+  /**
+   * Generates RAG answer via AI Service using query and retrieved chunks
+   */
+  async generateRAGAnswer(
+    query: string,
+    chunks: any[],
+    isApprovedOnly: boolean = false
+  ): Promise<{ query: string; answer: string; chunks: any[]; citations: any[] }> {
+    const tRagStart = performance.now();
+    try {
+      console.log(`[Knowledge Service] Requesting RAG answer from FastAPI for query: "${query}" with ${chunks.length} chunks`);
+      const response = await fetch(`${this.aiServiceUrl}/knowledge/rag`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          query,
+          chunks: chunks.map(c => ({
+            content: c.content,
+            pageNumber: c.pageNumber,
+            sectionTitle: c.sectionTitle,
+            documentId: c.documentId || c.document?._id,
+            score: c.score
+          })),
+          isApprovedOnly
+        })
+      });
+
+      if (!response.ok) {
+        const errText = await response.text();
+        console.warn(`[Knowledge Service] FastAPI RAG service returned ${response.status}: ${errText}`);
+        throw new Error(`FastAPI RAG service failed: ${response.status} - ${errText}`);
+      }
+
+      const ragData = await response.json();
+      const tRagEnd = performance.now();
+      console.log(`[Knowledge Service] FastAPI RAG response received in ${(tRagEnd - tRagStart).toFixed(2)} ms`);
+      return ragData;
+    } catch (error: any) {
+      console.error(`[Knowledge Service] RAG generation failed:`, error.message);
       throw error;
     }
   }

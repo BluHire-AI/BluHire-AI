@@ -66,7 +66,7 @@ function ResetPasswordForm() {
     } catch (error: unknown) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const err = error as any;
-      toast.error(err.response?.data?.message || 'Failed to reset password. The link may have expired.');
+      toast.error(err.response?.data?.message || 'Failed to reset password. Your verification session may have expired.');
     } finally {
       setIsLoading(false);
     }
@@ -77,19 +77,19 @@ function ResetPasswordForm() {
       <Card className="w-full border-border/80 dark:border-white/10 bg-card/90 dark:bg-[#0e101e]/85 backdrop-blur-2xl rounded-2xl shadow-xl relative overflow-hidden group">
         <div className="absolute top-0 left-0 w-full h-[1.5px] bg-gradient-to-r from-transparent via-destructive/50 to-transparent" />
         <CardHeader className="space-y-1.5 pb-5">
-          <CardTitle className="text-xl font-bold tracking-tight text-destructive">Invalid Link</CardTitle>
+          <CardTitle className="text-xl font-bold tracking-tight text-destructive">Invalid or Expired Session</CardTitle>
           <CardDescription className="text-xs text-muted-foreground dark:text-zinc-400">
-            The password reset link is invalid or has expired.
+            Your password reset verification session is invalid or has expired.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-xs text-muted-foreground dark:text-zinc-400">
-            Please request a new password reset link to proceed with updating your account credentials.
+            Please request a new OTP to proceed with updating your account credentials.
           </p>
         </CardContent>
         <CardFooter className="flex justify-center border-t border-border/80 dark:border-white/10 pt-5 pb-5 bg-muted/20 dark:bg-white/[0.01]">
           <Link href="/forgot-password" className="text-xs font-semibold text-primary hover:text-primary/80 transition-colors">
-            Request new link
+            Request new OTP
           </Link>
         </CardFooter>
       </Card>

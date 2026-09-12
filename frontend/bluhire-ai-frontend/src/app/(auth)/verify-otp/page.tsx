@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, Suspense } from 'react';
+import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -11,7 +12,7 @@ import { api } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 
 const verifyOtpSchema = z.object({
   otp: z.string().length(6, { message: 'OTP must be exactly 6 digits' }).regex(/^\d+$/, 'Must be only numbers'),
@@ -24,6 +25,8 @@ function VerifyOtpForm() {
   const searchParams = useSearchParams();
   const email = searchParams.get('email');
   const [isLoading, setIsLoading] = useState(false);
+  const [isResending, setIsResending] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(60);
 
   useEffect(() => {
     if (!email) {
@@ -31,6 +34,14 @@ function VerifyOtpForm() {
       router.push('/forgot-password');
     }
   }, [email, router]);
+
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const timer = setInterval(() => {
+      setResendCooldown((prev) => prev - 1);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [resendCooldown]);
 
   const {
     register,
@@ -44,11 +55,12 @@ function VerifyOtpForm() {
   });
 
   const onSubmit = async (data: VerifyOtpFormValues) => {
+    if (!email) return;
     try {
       setIsLoading(true);
       const response = await api.post('/auth/verify-reset-otp', {
         email,
-        otp: data.otp
+        otp: data.otp,
       });
       
       if (response.data.success) {
@@ -65,6 +77,22 @@ function VerifyOtpForm() {
     }
   };
 
+  const handleResendOtp = async () => {
+    if (!email || resendCooldown > 0 || isResending) return;
+    try {
+      setIsResending(true);
+      await api.post('/auth/forgot-password', { email });
+      toast.success('If an account exists, a new 6-digit OTP has been sent.');
+      setResendCooldown(60);
+    } catch (error: unknown) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const err = error as any;
+      toast.error(err.response?.data?.message || 'Failed to resend OTP. Please try again.');
+    } finally {
+      setIsResending(false);
+    }
+  };
+
   if (!email) return null;
 
   return (
@@ -73,7 +101,7 @@ function VerifyOtpForm() {
       <CardHeader className="space-y-1.5 pb-6">
         <CardTitle className="text-xl sm:text-2xl font-bold tracking-tight text-foreground dark:text-white">Verify OTP</CardTitle>
         <CardDescription className="text-xs text-muted-foreground dark:text-zinc-400">
-          Enter the 6-digit verification code sent to <span className="font-semibold text-foreground dark:text-white">{email}</span>
+          Enter the 6-digit OTP sent to <span className="font-semibold text-foreground dark:text-white">{email}</span>. The code expires in <span className="font-semibold text-amber-500">10 minutes</span>.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -98,10 +126,31 @@ function VerifyOtpForm() {
             className="w-full h-10.5 mt-2 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-600 dark:hover:bg-indigo-500 text-white text-xs font-bold rounded-xl border-0 shadow-lg shadow-indigo-600/20 dark:shadow-[0_0_20px_rgba(99,102,241,0.25)] transition-all duration-200 cursor-pointer" 
             disabled={isLoading}
           >
-            {isLoading ? 'Verifying code...' : 'Verify OTP'}
+            {isLoading ? 'Verifying OTP...' : 'Verify OTP'}
           </Button>
+
+          <div className="flex items-center justify-between pt-2">
+            <span className="text-[11px] text-muted-foreground">Didn&apos;t receive code?</span>
+            <Button
+              type="button"
+              variant="ghost"
+              disabled={resendCooldown > 0 || isResending}
+              onClick={handleResendOtp}
+              className="text-xs h-auto p-0 text-primary hover:text-primary/80 transition-colors font-medium cursor-pointer"
+            >
+              {isResending ? 'Sending...' : resendCooldown > 0 ? `Resend OTP in ${resendCooldown}s` : 'Resend OTP'}
+            </Button>
+          </div>
         </form>
       </CardContent>
+      <CardFooter className="flex justify-between border-t border-border/80 dark:border-white/10 pt-5 pb-5 bg-muted/20 dark:bg-white/[0.01]">
+        <Link href="/forgot-password" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+          &larr; Change email
+        </Link>
+        <Link href="/login" className="text-xs font-semibold text-primary hover:text-primary/80 transition-colors">
+          Back to login
+        </Link>
+      </CardFooter>
     </Card>
   );
 }
@@ -120,3 +169,4 @@ export default function VerifyOtpPage() {
     </Suspense>
   );
 }
+

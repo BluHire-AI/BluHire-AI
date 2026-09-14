@@ -6,6 +6,7 @@ import CandidateModel from '../../../models/Candidate';
 import JobModel from '../../../models/Job';
 import recruitmentActivityRepository from '../repositories/recruitment-activity.repository';
 import { RecruitmentActivityType } from '../../../models/RecruitmentActivity';
+import { computeSkillMatch, normalizeSkill } from '../../../utils/skill-matcher';
 
 const screeningResultSchema = z.object({
   aiScore: z.number().int().min(0).max(100),
@@ -142,12 +143,34 @@ class ScreeningWorker {
       console.log("OpenRouter Response:", JSON.stringify(result, null, 2));
       console.log("Parsed Match Score:", parsed.aiScore);
 
+      // Recompute deterministic skill matching from candidate skills and job requirements
+      const candSkills = candidate.skills || [];
+      const reqSkills = job.requiredSkills || [];
+
+      // Combine job required skills and LLM identified required skills, de-duplicating by normalized value
+      const reqMap = new Map<string, string>();
+      for (const s of [...reqSkills, ...(parsed.matchingSkills || []), ...(parsed.missingSkills || [])]) {
+        if (s && typeof s === 'string' && s.trim()) {
+          const norm = normalizeSkill(s);
+          if (!reqMap.has(norm)) {
+            reqMap.set(norm, s.trim());
+          }
+        }
+      }
+      const allRequirements = Array.from(reqMap.values());
+      const deterministicMatch = computeSkillMatch(candSkills, allRequirements);
+
+      const finalScore = deterministicMatch.totalRequirements > 0
+        ? Math.round(deterministicMatch.matchPercentage)
+        : parsed.aiScore;
+
       // Update application with matched AI results
       await ApplicationModel.findByIdAndUpdate(app._id, {
-        aiScore: parsed.aiScore,
+        aiScore: finalScore,
+        screeningScore: finalScore,
         aiRecommendation: parsed.aiRecommendation,
-        matchingSkills: parsed.matchingSkills,
-        missingSkills: parsed.missingSkills,
+        matchingSkills: deterministicMatch.matched,
+        missingSkills: deterministicMatch.missing,
         screeningSummary: parsed.screeningSummary,
         screeningStatus: 'COMPLETED',
         notes: null,

@@ -27,6 +27,7 @@ import CommunicationAnalysis from '../../../models/CommunicationAnalysis';
 import ProblemSolvingEvaluation from '../../../models/ProblemSolvingEvaluation';
 import InterviewRecommendation from '../../../models/InterviewRecommendation';
 import InterviewTranscript from '../../../models/InterviewTranscript';
+import { computeSkillMatch } from '../../../utils/skill-matcher';
 
 export class ApplicationsService {
   /**
@@ -83,14 +84,12 @@ export class ApplicationsService {
     const candSkills = candidate.skills || [];
     const reqSkills = job.requiredSkills || [];
 
-    const matchingSkills = candSkills.filter((s: string) =>
-      reqSkills.some((reqS: string) => reqS.toLowerCase().trim() === s.toLowerCase().trim())
-    );
-    const missingSkills = reqSkills.filter(
-      (reqS: string) => !candSkills.some((s: string) => s.toLowerCase().trim() === reqS.toLowerCase().trim())
+    const { matched: matchingSkills, missing: missingSkills, matchPercentage } = computeSkillMatch(
+      candSkills,
+      reqSkills
     );
 
-    const aiScore = reqSkills.length ? Math.round((matchingSkills.length / reqSkills.length) * 100) : 75;
+    const aiScore = reqSkills.length ? Math.round(matchPercentage) : 75;
     const aiRecommendation =
       aiScore >= 75
         ? 'Strongly Recommended'

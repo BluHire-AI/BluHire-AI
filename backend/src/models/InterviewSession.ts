@@ -14,6 +14,18 @@ export interface IInterviewSession extends Document {
   duration?: number; // In minutes or seconds
   publicToken?: string;
   tokenExpiresAt?: Date;
+  proctoringRiskScore?: number;
+  proctoringRiskLevel?: 'LOW' | 'MODERATE' | 'HIGH' | 'CRITICAL';
+  proctoringSummary?: {
+    gazeAwayCount?: number;
+    faceMissingCount?: number;
+    multipleFaceCount?: number;
+    tabSwitchCount?: number;
+    windowBlurCount?: number;
+    fullscreenExitCount?: number;
+    copyPasteCount?: number;
+    cameraDisconnectCount?: number;
+  };
   createdAt: Date;
   updatedAt: Date;
 }
@@ -73,6 +85,27 @@ const InterviewSessionSchema = new Schema<any>(
     },
     tokenExpiresAt: {
       type: Date,
+    },
+    proctoringRiskScore: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 100,
+    },
+    proctoringRiskLevel: {
+      type: String,
+      enum: ['LOW', 'MODERATE', 'HIGH', 'CRITICAL'],
+      default: 'LOW',
+    },
+    proctoringSummary: {
+      gazeAwayCount: { type: Number, default: 0 },
+      faceMissingCount: { type: Number, default: 0 },
+      multipleFaceCount: { type: Number, default: 0 },
+      tabSwitchCount: { type: Number, default: 0 },
+      windowBlurCount: { type: Number, default: 0 },
+      fullscreenExitCount: { type: Number, default: 0 },
+      copyPasteCount: { type: Number, default: 0 },
+      cameraDisconnectCount: { type: Number, default: 0 },
     },
   },
   {

@@ -10,7 +10,9 @@ import {
   getNextQuestion,
   getAllSessions,
   resetInterviewSession,
-  deleteInterviewSession
+  deleteInterviewSession,
+  recordProctoringEvent,
+  getSessionProctoring,
 } from '../controllers/interview.controller';
 import { authenticate } from '../middlewares/auth.middleware';
 import { authorize } from '../middlewares/role.middleware';
@@ -48,6 +50,9 @@ router.get('/public/:token/next-question', getNextQuestion);
 // Upload recording chunk/file (upload must come BEFORE submit so multer parses the body)
 router.post('/public/:token/upload', upload.single('video'), uploadRecording);
 
+// Record proctoring events
+router.post('/public/:token/proctoring-event', recordProctoringEvent);
+
 // Submit the public interview session
 router.post('/public/:token/submit', submitPublicSession);
 
@@ -57,6 +62,13 @@ router.post('/public/:token/submit', submitPublicSession);
 
 // Ensure all subsequent routes require authentication
 router.use(authenticate);
+
+// Fetch proctoring data for recruiter review
+router.get(
+  '/:id/proctoring',
+  authorize([SystemRoles.MANAGEMENT_ADMIN, SystemRoles.SENIOR_MANAGER, SystemRoles.HR_RECRUITER]),
+  getSessionProctoring
+);
 
 // Schedule a new interview and send email token
 router.post(

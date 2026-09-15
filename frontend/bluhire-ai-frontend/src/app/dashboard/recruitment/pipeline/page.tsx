@@ -680,7 +680,7 @@ export default function PipelineBoard() {
       )}
 
       {/* Filters Toolbar Row */}
-      <div className="bg-card dark:bg-card/80 backdrop-blur-md p-4.5 rounded-xl border border-border dark:border-white/10 space-y-4 shadow-[0_4px_20px_rgba(23,32,51,0.06)] dark:shadow-md">
+      <div className="sticky top-0 z-20 bg-card/95 dark:bg-[#0e101e]/95 backdrop-blur-xl p-4.5 rounded-xl border border-border dark:border-white/10 space-y-4 shadow-[0_4px_20px_rgba(23,32,51,0.06)] dark:shadow-lg transition-all duration-200">
         <div className="flex items-center justify-between">
           <h4 className="text-[10px] font-bold tracking-wider uppercase text-muted-foreground dark:text-zinc-300">Recruiter Filters Panel</h4>
           <div className="flex items-center gap-2">
@@ -708,32 +708,32 @@ export default function PipelineBoard() {
             </Button>
           </div>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-3">
           {/* Candidate Search */}
-          <div className="relative">
+          <div className="relative w-full">
             <Search className="absolute left-2.5 top-2.5 w-3.5 h-3.5 text-muted-foreground dark:text-zinc-400" />
             <Input
               placeholder="Search Name/Code..."
               value={searchQuery}
               onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
-              className="pl-8 text-grid h-9 rounded-xl"
+              className="pl-8 text-grid h-9 rounded-xl w-full"
             />
           </div>
 
           {/* Skill Search */}
-          <div className="relative">
+          <div className="relative w-full">
             <Award className="absolute left-2.5 top-2.5 w-3.5 h-3.5 text-muted-foreground dark:text-zinc-400" />
             <Input
               placeholder="Filter by Skill..."
               value={searchSkill}
               onChange={(e) => { setSearchSkill(e.target.value); setCurrentPage(1); }}
-              className="pl-8 text-grid h-9 rounded-xl"
+              className="pl-8 text-grid h-9 rounded-xl w-full"
             />
           </div>
 
           {/* Job Position Filter */}
           <Select value={selectedJobId} onValueChange={(val: string) => { setSelectedJobId(val); setCurrentPage(1); }} searchable={true}>
-            <SelectTrigger className="text-xs font-bold px-2.5 h-9 w-44 rounded-xl">
+            <SelectTrigger className="text-xs font-bold px-2.5 h-9 w-full rounded-xl">
               <SelectValue placeholder="All Jobs" />
             </SelectTrigger>
             <SelectContent>
@@ -746,7 +746,7 @@ export default function PipelineBoard() {
 
           {/* Stage Filter */}
           <Select value={selectedStage} onValueChange={(val: string) => { setSelectedStage(val); setCurrentPage(1); }}>
-            <SelectTrigger className="text-xs font-bold px-2.5 h-9 w-36 rounded-xl">
+            <SelectTrigger className="text-xs font-bold px-2.5 h-9 w-full rounded-xl">
               <SelectValue placeholder="All Stages" />
             </SelectTrigger>
             <SelectContent>
@@ -760,7 +760,7 @@ export default function PipelineBoard() {
 
           {/* Experience Filter */}
           <Select value={selectedExperience} onValueChange={(val: string) => { setSelectedExperience(val); setCurrentPage(1); }}>
-            <SelectTrigger className="text-xs font-bold px-2.5 h-9 w-40 rounded-xl">
+            <SelectTrigger className="text-xs font-bold px-2.5 h-9 w-full rounded-xl">
               <SelectValue placeholder="All Experience" />
             </SelectTrigger>
             <SelectContent>
@@ -774,7 +774,7 @@ export default function PipelineBoard() {
 
           {/* AI Score Filter */}
           <Select value={selectedAiScoreRange} onValueChange={(val: string) => { setSelectedAiScoreRange(val); setCurrentPage(1); }}>
-            <SelectTrigger className="text-xs font-bold px-2.5 h-9 w-40 rounded-xl">
+            <SelectTrigger className="text-xs font-bold px-2.5 h-9 w-full rounded-xl">
               <SelectValue placeholder="All AI Scores" />
             </SelectTrigger>
             <SelectContent>
@@ -787,20 +787,20 @@ export default function PipelineBoard() {
           </Select>
 
           {/* Date Picker Range (HTML date) */}
-          <div className="flex items-center gap-1.5 min-w-[170px]">
+          <div className="flex items-center gap-1 min-w-0 w-full">
             <input
               type="date"
               value={startDate}
               onChange={(e) => { setStartDate(e.target.value); setCurrentPage(1); }}
-              className="bg-card dark:bg-white/[0.04] border border-border dark:border-white/10 text-[10px] font-bold p-1 rounded-xl text-foreground dark:text-zinc-200 focus:outline-none focus:border-primary h-9 w-full cursor-pointer hover:bg-muted/50 dark:hover:bg-white/[0.08]"
+              className="bg-card dark:bg-white/[0.04] border border-border dark:border-white/10 text-[10px] font-bold px-1.5 rounded-xl text-foreground dark:text-zinc-200 focus:outline-none focus:border-primary h-9 w-full min-w-0 cursor-pointer hover:bg-muted/50 dark:hover:bg-white/[0.08]"
               title="Applied From"
             />
-            <span className="text-[10px] text-muted-foreground dark:text-zinc-400 font-bold">to</span>
+            <span className="text-[10px] text-muted-foreground dark:text-zinc-400 font-bold shrink-0">to</span>
             <input
               type="date"
               value={endDate}
               onChange={(e) => { setEndDate(e.target.value); setCurrentPage(1); }}
-              className="bg-card dark:bg-white/[0.04] border border-border dark:border-white/10 text-[10px] font-bold p-1 rounded-xl text-foreground dark:text-zinc-200 focus:outline-none focus:border-primary h-9 w-full cursor-pointer hover:bg-muted/50 dark:hover:bg-white/[0.08]"
+              className="bg-card dark:bg-white/[0.04] border border-border dark:border-white/10 text-[10px] font-bold px-1.5 rounded-xl text-foreground dark:text-zinc-200 focus:outline-none focus:border-primary h-9 w-full min-w-0 cursor-pointer hover:bg-muted/50 dark:hover:bg-white/[0.08]"
               title="Applied To"
             />
           </div>
@@ -1306,129 +1306,131 @@ export default function PipelineBoard() {
 
       {/* Sticky Bottom Bulk Operations Actions Toolbar */}
       {selectedIds.length > 0 && (
-        <div 
-          className="fixed bottom-6 left-1/2 -translate-x-1/2 flex items-center justify-between z-40 px-6 py-2.5 w-[95%] sm:w-auto gap-8 group/toolbar"
-          style={{
-            background: 'rgba(15, 23, 42, 0.9)',
-            backdropFilter: 'blur(20px)',
-            WebkitBackdropFilter: 'blur(20px)',
-            border: '1px solid rgba(255, 255, 255, 0.12)',
-            borderRadius: '999px',
-            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.45)',
-          }}
-        >
-          <div className="flex items-center gap-6 flex-wrap sm:flex-nowrap">
-            {/* Selection Counter */}
-            <div className="flex items-center gap-2 shrink-0">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#8B5CF6] shrink-0" />
-              <span className="text-sm font-semibold text-white font-sans tracking-tight">
-                {selectedIds.length} Selected
-              </span>
+        <div className="sticky bottom-6 z-40 flex justify-center w-full pointer-events-none my-2">
+          <div 
+            className="pointer-events-auto flex items-center justify-between px-6 py-2.5 w-[95%] sm:w-auto gap-8 group/toolbar"
+            style={{
+              background: 'rgba(15, 23, 42, 0.9)',
+              backdropFilter: 'blur(20px)',
+              WebkitBackdropFilter: 'blur(20px)',
+              border: '1px solid rgba(255, 255, 255, 0.12)',
+              borderRadius: '999px',
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.45)',
+            }}
+          >
+            <div className="flex items-center gap-6 flex-wrap sm:flex-nowrap">
+              {/* Selection Counter */}
+              <div className="flex items-center gap-2 shrink-0">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#8B5CF6] shrink-0" />
+                <span className="text-sm font-semibold text-white font-sans tracking-tight">
+                  {selectedIds.length} Selected
+                </span>
+              </div>
+
+              {/* Group 2: Move Stage dropdown */}
+              <div className="flex items-center gap-2 shrink-0">
+                <select
+                  value={bulkActionStage}
+                  onChange={(e) => setBulkActionStage(e.target.value)}
+                  className="h-10 px-4 text-xs font-medium focus:outline-none cursor-pointer text-zinc-200 hover:text-white hover:bg-white/[0.08] transition-all"
+                  style={{
+                    background: '#0a0a0c',
+                    borderRadius: '12px',
+                    border: '1px solid rgba(255, 255, 255, 0.12)',
+                  }}
+                >
+                  <option value="" className="bg-[#0a0a0c] text-zinc-400">Move Stage...</option>
+                  {ACTIVE_STAGES.map((s) => (
+                    <option key={s} value={s}>{s}</option>
+                  ))}
+                </select>
+                <Button
+                  onClick={handleBulkMove}
+                  disabled={!bulkActionStage || loading}
+                  className="h-10 px-4 rounded-full bg-transparent hover:bg-white/10 text-zinc-200 hover:text-white disabled:opacity-40 font-medium text-xs border border-white/15 cursor-pointer transition-all"
+                >
+                  {loading && bulkActionStage ? `Updating ${selectedIds.length} candidates...` : 'Apply'}
+                </Button>
+              </div>
+
+              {/* Group 3: Primary Action - AI Screen */}
+              <div className="shrink-0">
+                <Button
+                  onClick={handleBulkScreen}
+                  disabled={loading}
+                  className="h-10 px-4 rounded-full font-medium text-xs flex items-center justify-center cursor-pointer transition-all hover:bg-[#9d68fb] disabled:opacity-40"
+                  style={{
+                    background: '#8B5CF6',
+                    color: 'white',
+                    border: '0',
+                  }}
+                >
+                  <Sparkles className="w-4 h-4 mr-2 shrink-0 text-white" strokeWidth={2} />
+                  AI Screen
+                </Button>
+              </div>
+
+              {/* Group 4: Secondary Actions */}
+              <div className="flex items-center gap-1 shrink-0">
+                <Button
+                  onClick={handleBulkAssign}
+                  disabled={loading}
+                  className="h-10 px-4 rounded-full bg-transparent text-zinc-200 hover:text-white hover:bg-white/10 font-medium text-xs border-0 cursor-pointer flex items-center justify-center transition-all disabled:opacity-40"
+                  title="Assign recruiter"
+                >
+                  <UserPlus className="w-4 h-4 mr-2 shrink-0 text-zinc-300" strokeWidth={2} />
+                  Assign
+                </Button>
+
+                <Button
+                  onClick={handleBulkSendEmail}
+                  disabled={loading}
+                  className="h-10 px-4 rounded-full bg-transparent text-zinc-200 hover:text-white hover:bg-white/10 font-medium text-xs border-0 cursor-pointer flex items-center justify-center transition-all disabled:opacity-40"
+                  title="Email selected candidates"
+                >
+                  <Mail className="w-4 h-4 mr-2 shrink-0 text-zinc-300" strokeWidth={2} />
+                  Email
+                </Button>
+
+                <Button
+                  onClick={handleBulkExport}
+                  disabled={loading}
+                  className="h-10 px-4 rounded-full bg-transparent text-zinc-200 hover:text-white hover:bg-white/10 font-medium text-xs border-0 cursor-pointer flex items-center justify-center transition-all disabled:opacity-40"
+                  title="Export to CSV"
+                >
+                  <FileSpreadsheet className="w-4 h-4 mr-2 shrink-0 text-zinc-300" strokeWidth={2} />
+                  Export
+                </Button>
+              </div>
+
+              {/* Group 5: Destructive Action - Reject */}
+              <div className="shrink-0">
+                <Button
+                  onClick={handleBulkReject}
+                  disabled={loading}
+                  className="h-10 px-4 rounded-full font-medium text-xs flex items-center justify-center cursor-pointer transition-all hover:bg-rose-500/20 disabled:opacity-40"
+                  style={{
+                    background: 'rgba(239, 68, 68, 0.12)',
+                    color: '#F87171',
+                    border: '0',
+                  }}
+                >
+                  <UserX className="w-4 h-4 mr-2 shrink-0" strokeWidth={2} />
+                  {loading && !bulkActionStage ? 'Rejecting...' : 'Reject'}
+                </Button>
+              </div>
             </div>
 
-            {/* Group 2: Move Stage dropdown */}
-            <div className="flex items-center gap-2 shrink-0">
-              <select
-                value={bulkActionStage}
-                onChange={(e) => setBulkActionStage(e.target.value)}
-                className="h-10 px-4 text-xs font-medium focus:outline-none cursor-pointer text-zinc-200 hover:text-white hover:bg-white/[0.08] transition-all"
-                style={{
-                  background: '#0a0a0c',
-                  borderRadius: '12px',
-                  border: '1px solid rgba(255, 255, 255, 0.12)',
-                }}
-              >
-                <option value="" className="bg-[#0a0a0c] text-zinc-400">Move Stage...</option>
-                {ACTIVE_STAGES.map((s) => (
-                  <option key={s} value={s}>{s}</option>
-                ))}
-              </select>
+            {/* Group 6: Close Toolbar (Deselect All) */}
+            <div className="shrink-0 border-l border-white/10 pl-2">
               <Button
-                onClick={handleBulkMove}
-                disabled={!bulkActionStage || loading}
-                className="h-10 px-4 rounded-full bg-transparent hover:bg-white/10 text-zinc-200 hover:text-white disabled:opacity-40 font-medium text-xs border border-white/15 cursor-pointer transition-all"
+                onClick={() => setSelectedIds([])}
+                className="h-10 w-10 p-0 rounded-full bg-transparent hover:bg-white/10 text-zinc-400 hover:text-white opacity-0 group-hover/toolbar:opacity-100 transition-opacity duration-200 cursor-pointer flex items-center justify-center border-0"
+                title="Deselect all"
               >
-                {loading && bulkActionStage ? `Updating ${selectedIds.length} candidates...` : 'Apply'}
+                <X className="w-4 h-4" strokeWidth={2} />
               </Button>
             </div>
-
-            {/* Group 3: Primary Action - AI Screen */}
-            <div className="shrink-0">
-              <Button
-                onClick={handleBulkScreen}
-                disabled={loading}
-                className="h-10 px-4 rounded-full font-medium text-xs flex items-center justify-center cursor-pointer transition-all hover:bg-[#9d68fb] disabled:opacity-40"
-                style={{
-                  background: '#8B5CF6',
-                  color: 'white',
-                  border: '0',
-                }}
-              >
-                <Sparkles className="w-4 h-4 mr-2 shrink-0 text-white" strokeWidth={2} />
-                AI Screen
-              </Button>
-            </div>
-
-            {/* Group 4: Secondary Actions */}
-            <div className="flex items-center gap-1 shrink-0">
-              <Button
-                onClick={handleBulkAssign}
-                disabled={loading}
-                className="h-10 px-4 rounded-full bg-transparent text-zinc-200 hover:text-white hover:bg-white/10 font-medium text-xs border-0 cursor-pointer flex items-center justify-center transition-all disabled:opacity-40"
-                title="Assign recruiter"
-              >
-                <UserPlus className="w-4 h-4 mr-2 shrink-0 text-zinc-300" strokeWidth={2} />
-                Assign
-              </Button>
-
-              <Button
-                onClick={handleBulkSendEmail}
-                disabled={loading}
-                className="h-10 px-4 rounded-full bg-transparent text-zinc-200 hover:text-white hover:bg-white/10 font-medium text-xs border-0 cursor-pointer flex items-center justify-center transition-all disabled:opacity-40"
-                title="Email selected candidates"
-              >
-                <Mail className="w-4 h-4 mr-2 shrink-0 text-zinc-300" strokeWidth={2} />
-                Email
-              </Button>
-
-              <Button
-                onClick={handleBulkExport}
-                disabled={loading}
-                className="h-10 px-4 rounded-full bg-transparent text-zinc-200 hover:text-white hover:bg-white/10 font-medium text-xs border-0 cursor-pointer flex items-center justify-center transition-all disabled:opacity-40"
-                title="Export to CSV"
-              >
-                <FileSpreadsheet className="w-4 h-4 mr-2 shrink-0 text-zinc-300" strokeWidth={2} />
-                Export
-              </Button>
-            </div>
-
-            {/* Group 5: Destructive Action - Reject */}
-            <div className="shrink-0">
-              <Button
-                onClick={handleBulkReject}
-                disabled={loading}
-                className="h-10 px-4 rounded-full font-medium text-xs flex items-center justify-center cursor-pointer transition-all hover:bg-rose-500/20 disabled:opacity-40"
-                style={{
-                  background: 'rgba(239, 68, 68, 0.12)',
-                  color: '#F87171',
-                  border: '0',
-                }}
-              >
-                <UserX className="w-4 h-4 mr-2 shrink-0" strokeWidth={2} />
-                {loading && !bulkActionStage ? 'Rejecting...' : 'Reject'}
-              </Button>
-            </div>
-          </div>
-
-          {/* Group 6: Close Toolbar (Deselect All) */}
-          <div className="shrink-0 border-l border-white/10 pl-2">
-            <Button
-              onClick={() => setSelectedIds([])}
-              className="h-10 w-10 p-0 rounded-full bg-transparent hover:bg-white/10 text-zinc-400 hover:text-white opacity-0 group-hover/toolbar:opacity-100 transition-opacity duration-200 cursor-pointer flex items-center justify-center border-0"
-              title="Deselect all"
-            >
-              <X className="w-4 h-4" strokeWidth={2} />
-            </Button>
           </div>
         </div>
       )}

@@ -9,7 +9,7 @@ import InterviewTemplate from '../models/InterviewTemplate';
 import Application, { ApplicationStage } from '../models/Application';
 import { createSuccessResponse, createErrorResponse } from '../modules/employee/dtos/common.dto';
 import { emailService } from '../services/email.service';
-import { SessionStatus } from '../types/interview.types';
+import { SessionStatus, TimelineEventType } from '../types/interview.types';
 import InterviewTranscript from '../models/InterviewTranscript';
 import InterviewRecommendation from '../models/InterviewRecommendation';
 import TechnicalEvaluation from '../models/TechnicalEvaluation';
@@ -502,3 +502,142 @@ export const getNextQuestion = async (req: Request, res: Response) => {
     return res.status(500).json(createErrorResponse('Failed to fetch next question', error.message, 500));
   }
 };
+
+/**
+ * POST /public/:token/proctoring-event
+ * Receives real-time client-side proctoring events and updates session risk metrics.
+ */
+export const recordProctoringEvent = async (req: Request, res: Response) => {
+  try {
+    const { token } = req.params;
+    const { type, severity, confidence, durationMs, timestamp, metadata } = req.body;
+
+    const session = await InterviewSession.findOne({ publicToken: token });
+    if (!session) {
+      return res.status(404).json(createErrorResponse('Interview session not found', undefined, 404));
+    }
+
+    // 1. Create Timeline Entry
+    await InterviewTimeline.create({
+      sessionId: session._id,
+      eventType: type || TimelineEventType.PROCTORING_EVENT,
+      eventData: {
+        type,
+        severity: severity || 'warning',
+        confidence: confidence ?? 0.9,
+        durationMs: durationMs ?? 0,
+        metadata: metadata || {},
+      },
+      timestamp: timestamp ? new Date(timestamp) : new Date(),
+    });
+
+    // 2. Increment Summary Counters
+    const summary = session.proctoringSummary || {
+      gazeAwayCount: 0,
+      faceMissingCount: 0,
+      multipleFaceCount: 0,
+      tabSwitchCount: 0,
+      windowBlurCount: 0,
+      fullscreenExitCount: 0,
+      copyPasteCount: 0,
+      cameraDisconnectCount: 0,
+    };
+
+    if (type === 'GAZE_AWAY') summary.gazeAwayCount = (summary.gazeAwayCount || 0) + 1;
+    else if (type === 'FACE_NOT_DETECTED') summary.faceMissingCount = (summary.faceMissingCount || 0) + 1;
+    else if (type === 'MULTIPLE_FACES_DETECTED') summary.multipleFaceCount = (summary.multipleFaceCount || 0) + 1;
+    else if (type === 'TAB_SWITCH') summary.tabSwitchCount = (summary.tabSwitchCount || 0) + 1;
+    else if (type === 'WINDOW_BLUR') summary.windowBlurCount = (summary.windowBlurCount || 0) + 1;
+    else if (type === 'FULLSCREEN_EXIT') summary.fullscreenExitCount = (summary.fullscreenExitCount || 0) + 1;
+    else if (type === 'COPY_ATTEMPT' || type === 'PASTE_ATTEMPT' || type === 'CONTEXT_MENU_ATTEMPT') {
+      summary.copyPasteCount = (summary.copyPasteCount || 0) + 1;
+    } else if (type === 'CAMERA_DISABLED' || type === 'CAMERA_DISCONNECTED') {
+      summary.cameraDisconnectCount = (summary.cameraDisconnectCount || 0) + 1;
+    }
+
+    session.proctoringSummary = summary;
+
+    // 3. Compute Cumulative Risk Score (0-100)
+    let score = 0;
+    score += (summary.gazeAwayCount || 0) * 8;
+    score += (summary.faceMissingCount || 0) * 10;
+    score += (summary.multipleFaceCount || 0) * 20;
+    score += (summary.tabSwitchCount || 0) * 15;
+    score += (summary.windowBlurCount || 0) * 10;
+    score += (summary.fullscreenExitCount || 0) * 15;
+    score += (summary.copyPasteCount || 0) * 8;
+    score += (summary.cameraDisconnectCount || 0) * 15;
+
+    session.proctoringRiskScore = Math.min(100, score);
+
+    if (session.proctoringRiskScore <= 20) {
+      session.proctoringRiskLevel = 'LOW';
+    } else if (session.proctoringRiskScore <= 50) {
+      session.proctoringRiskLevel = 'MODERATE';
+    } else if (session.proctoringRiskScore <= 75) {
+      session.proctoringRiskLevel = 'HIGH';
+    } else {
+      session.proctoringRiskLevel = 'CRITICAL';
+    }
+
+    await session.save();
+
+    return res.status(200).json(createSuccessResponse({
+      riskScore: session.proctoringRiskScore,
+      riskLevel: session.proctoringRiskLevel,
+      summary: session.proctoringSummary,
+    }, 'Proctoring event logged successfully', 200));
+  } catch (error: any) {
+    console.error('[recordProctoringEvent Error]:', error);
+    return res.status(500).json(createErrorResponse('Failed to record proctoring event', error.message, 500));
+  }
+};
+
+/**
+ * GET /:sessionId/proctoring
+ * Fetches proctoring summary and event timeline for recruiter review.
+ */
+export const getSessionProctoring = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const session = await InterviewSession.findById(id);
+
+    if (!session) {
+      return res.status(404).json(createErrorResponse('Session not found', undefined, 404));
+    }
+
+    // Fetch proctoring events from timeline
+    const proctoringEvents = await InterviewTimeline.find({
+      sessionId: session._id,
+      eventType: {
+        $in: [
+          'PROCTORING_EVENT', 'GAZE_AWAY', 'FACE_NOT_DETECTED', 'MULTIPLE_FACES_DETECTED',
+          'TAB_SWITCH', 'WINDOW_BLUR', 'WINDOW_FOCUS_RETURNED', 'FULLSCREEN_EXIT',
+          'CAMERA_DISABLED', 'CAMERA_DISCONNECTED', 'MICROPHONE_DISABLED',
+          'SCREEN_SHARE_STOPPED', 'COPY_ATTEMPT', 'PASTE_ATTEMPT', 'CONTEXT_MENU_ATTEMPT',
+          'PROCTORING_UNAVAILABLE'
+        ] as any
+      }
+    }).sort({ timestamp: 1 });
+
+    return res.status(200).json(createSuccessResponse({
+      sessionId: session._id,
+      riskScore: session.proctoringRiskScore ?? 0,
+      riskLevel: session.proctoringRiskLevel ?? 'LOW',
+      summary: session.proctoringSummary ?? {
+        gazeAwayCount: 0,
+        faceMissingCount: 0,
+        multipleFaceCount: 0,
+        tabSwitchCount: 0,
+        windowBlurCount: 0,
+        fullscreenExitCount: 0,
+        copyPasteCount: 0,
+        cameraDisconnectCount: 0,
+      },
+      events: proctoringEvents,
+    }, 'Proctoring data retrieved successfully', 200));
+  } catch (error: any) {
+    return res.status(500).json(createErrorResponse('Failed to fetch proctoring data', error.message, 500));
+  }
+};
+

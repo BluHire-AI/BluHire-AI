@@ -37,13 +37,15 @@ export const PreparationCountdown: React.FC<PreparationCountdownProps> = ({
   if (!isActive) return null;
 
   return (
-    <div className="flex flex-col items-center justify-center p-8 bg-slate-900/50 rounded-2xl border border-slate-700 backdrop-blur-sm">
-      <h3 className="text-xl font-medium text-slate-300 mb-4">Get Ready</h3>
-      <p className="text-sm text-slate-400 mb-6 text-center max-w-sm">
-        Recording will start automatically in...
-      </p>
+    <div className="flex flex-col items-center justify-center p-8 bg-[#0e101e]/90 rounded-[24px] border border-white/15 backdrop-blur-xl shadow-2xl space-y-4">
+      <div className="text-center">
+        <h3 className="text-lg font-bold text-white tracking-tight">Get Ready</h3>
+        <p className="text-xs text-zinc-400 mt-1">
+          Recording begins automatically in...
+        </p>
+      </div>
       
-      <div className="relative w-32 h-32 flex items-center justify-center">
+      <div className="relative w-28 h-28 flex items-center justify-center">
         {/* Animated Background Ring */}
         <motion.svg 
           className="absolute inset-0 w-full h-full -rotate-90"
@@ -54,16 +56,16 @@ export const PreparationCountdown: React.FC<PreparationCountdownProps> = ({
             cy="50"
             r="45"
             fill="none"
-            stroke="rgba(59, 130, 246, 0.2)"
-            strokeWidth="8"
+            stroke="rgba(139, 92, 246, 0.2)"
+            strokeWidth="7"
           />
           <motion.circle
             cx="50"
             cy="50"
             r="45"
             fill="none"
-            stroke="#3b82f6"
-            strokeWidth="8"
+            stroke="#8B5CF6"
+            strokeWidth="7"
             strokeLinecap="round"
             initial={{ pathLength: 1 }}
             animate={{ pathLength: timeLeft / duration }}
@@ -79,7 +81,7 @@ export const PreparationCountdown: React.FC<PreparationCountdownProps> = ({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 1.5, y: -10 }}
             transition={{ duration: 0.3 }}
-            className="text-5xl font-bold text-white z-10"
+            className="text-4xl font-extrabold text-white z-10 font-mono tracking-tight"
           >
             {timeLeft}
           </motion.span>

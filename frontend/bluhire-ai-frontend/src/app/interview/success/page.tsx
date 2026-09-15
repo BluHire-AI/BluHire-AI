@@ -1,56 +1,74 @@
 'use client';
 
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { BrainCircuit, CheckCircle2 } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { CheckCircle2, ShieldCheck, Building } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import StarField from '@/components/StarField';
 
 export default function InterviewSuccess() {
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-slate-50 dark:bg-zinc-950 p-4">
-      <div className="w-full max-w-md">
-        <div className="flex items-center gap-2 mb-8 justify-center">
-          <BrainCircuit className="w-8 h-8 text-blue-600" />
-          <span className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-            BluHire <span className="text-blue-600">AI</span>
+    <div className="relative flex flex-col items-center justify-center min-h-screen bg-[#050505] text-white p-4 sm:p-6 overflow-hidden selection:bg-primary/30 selection:text-white">
+      {/* Animated Connected-Node Background Scene */}
+      <div className="bg-scene">
+        <div className="bg-ambient" />
+        <StarField dark={true} />
+      </div>
+
+      <div className="relative z-10 w-full max-w-xl space-y-6 anim-hero">
+        {/* Top Header Branding */}
+        <div className="flex flex-col items-center justify-center text-center space-y-2">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-primary/10 border border-primary/25 flex items-center justify-center text-primary shadow-[0_0_15px_rgba(139,92,246,0.25)]">
+              <Building className="w-5 h-5" />
+            </div>
+            <span className="font-extrabold text-2xl tracking-tight bg-gradient-to-r from-indigo-400 via-violet-400 to-[#8B5CF6] bg-clip-text text-transparent">
+              BluHire-AI
+            </span>
+          </div>
+          <span className="text-[10px] font-mono font-bold tracking-[0.2em] uppercase text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 rounded-full">
+            Assessment Completed
           </span>
         </div>
 
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.4 }}
-        >
-          <Card className="shadow-xl border-slate-200/60 dark:border-zinc-800/60 overflow-hidden text-center">
-            <div className="h-2 bg-emerald-500 w-full" />
-            
-            <CardHeader className="pt-10 pb-4">
-              <motion.div 
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
-                className="mx-auto w-20 h-20 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-500 rounded-full flex items-center justify-center mb-6"
-              >
-                <CheckCircle2 className="w-10 h-10" />
-              </motion.div>
-              <CardTitle className="text-3xl font-extrabold text-slate-900 dark:text-white mb-2">
+        {/* Main Success Glass Card */}
+        <div className="bg-card/85 dark:bg-[#0e101e]/85 backdrop-blur-2xl border border-border dark:border-white/10 rounded-[28px] shadow-[0_16px_50px_rgba(0,0,0,0.6)] overflow-hidden text-center">
+          <div className="h-1 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 w-full" />
+          
+          <div className="p-8 space-y-6">
+            {/* Glowing Icon */}
+            <div className="mx-auto w-20 h-20 bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 rounded-2xl flex items-center justify-center shadow-[0_0_30px_rgba(16,185,129,0.3)]">
+              <CheckCircle2 className="w-10 h-10" />
+            </div>
+
+            <div className="space-y-2">
+              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
                 Interview Completed
-              </CardTitle>
-              <CardDescription className="text-base text-slate-500 dark:text-zinc-400">
+              </h1>
+              <p className="text-xs sm:text-sm text-zinc-400 max-w-md mx-auto">
                 Thank you for completing your AI assessment.
-              </CardDescription>
-            </CardHeader>
-            
-            <CardContent className="px-8 pb-10">
-              <p className="text-slate-600 dark:text-slate-300">
-                Your responses have been successfully submitted and are currently being processed by our system.
               </p>
-              <p className="text-sm text-slate-500 dark:text-slate-500 mt-6 pt-6 border-t border-slate-100 dark:border-zinc-800">
-                You may now close this window safely. Our recruitment team will be in touch with you shortly regarding the next steps.
-              </p>
-            </CardContent>
-          </Card>
-        </motion.div>
+            </div>
+
+            {/* Next Steps Banner */}
+            <div className="bg-muted/30 dark:bg-white/[0.02] border border-border dark:border-white/10 rounded-2xl p-5 text-left flex items-start gap-4">
+              <ShieldCheck className="w-6 h-6 text-indigo-400 shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-purple-300">What happens next?</h4>
+                <p className="text-xs text-zinc-300 leading-relaxed">
+                  Your recorded responses and AI transcriptions have been saved securely. Our recruitment team will review your performance and reach out to you with the next steps regarding your application.
+                </p>
+              </div>
+            </div>
+
+            <Button
+              variant="ghost"
+              className="text-xs text-zinc-400 hover:text-white hover:bg-white/10 rounded-xl"
+              onClick={() => window.close()}
+            >
+              You may now close this browser window safely.
+            </Button>
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { getCandidateScorecard } from '@/services/candidate.service';
 import { motion } from 'framer-motion';
 import { Code, MessageSquare, BrainCircuit, CheckSquare, TrendingUp, AlertCircle } from 'lucide-react';
+import { RecruiterProctoringReport } from './RecruiterProctoringReport';
 
 interface ScorecardTabProps {
   candidateId: string;
@@ -164,7 +165,9 @@ export const ScorecardTab: React.FC<ScorecardTabProps> = ({ candidateId }) => {
           </div>
         </div>
       )}
-      
+
+      {/* AI Proctoring & Integrity Review */}
+      <RecruiterProctoringReport sessionId={candidateId} />
     </div>
   );
 };

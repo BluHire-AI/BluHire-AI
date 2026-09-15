@@ -21,7 +21,7 @@ export default function CandidateDetailPage() {
 
   const { data: candidateInfo, isLoading, error } = useQuery({
     queryKey: ['candidate', candidateId],
-    queryFn: () => getCandidateById(candidateId),
+    queryFn: () => getCandidateById(candidateId as string),
     enabled: !!candidateId,
   });
 

@@ -357,19 +357,37 @@ export const uploadRecording = async (req: Request, res: Response) => {
          const { default: InterviewTranscript } = await import('../models/InterviewTranscript');
          const { default: InterviewQuestion } = await import('../models/InterviewQuestion');
          
-         const questions = await InterviewQuestion.find({ templateId: session.templateId }).sort({ createdAt: 1 });
-         const matchedQuestion = questions[questionIndex || 0];
+         let targetQuestionId = questionId;
+         if (!targetQuestionId) {
+           const questions = await InterviewQuestion.find({ templateId: session.templateId }).sort({ createdAt: 1 });
+           const matchedQuestion = questions[Number(questionIndex) || 0];
+           if (matchedQuestion) {
+             targetQuestionId = matchedQuestion._id.toString();
+           }
+         }
 
-         const transcript = new InterviewTranscript({
-            sessionId: session._id,
-            candidateId: session.candidateId,
-            questionId: matchedQuestion ? matchedQuestion._id : new mongoose.Types.ObjectId(),
-            transcript: data.transcript,
-         });
-         await transcript.save();
-         console.log("Transcription saved successfully for recording", recording._id);
+         const qIdx = Number(questionIndex) || 0;
 
-         // Phase 4: Trigger Evaluation
+         const transcript = await InterviewTranscript.findOneAndUpdate(
+            { sessionId: session._id, questionId: targetQuestionId },
+            {
+               $set: {
+                  candidateId: session.candidateId,
+                  questionIndex: qIdx,
+                  transcript: data.transcript,
+               }
+            },
+            { upsert: true, new: true }
+         );
+         console.log(`[uploadRecording] Transcription saved/updated successfully for question ${targetQuestionId}, recording ${recording._id}`);
+
+         // Phase 4: Trigger Evaluation ONLY if transcript is substantive
+         const { isSubstantiveAnswer } = await import('../utils/transcript-validator');
+         if (!isSubstantiveAnswer(data.transcript)) {
+           console.log(`[uploadRecording] Non-substantive transcript for recording ${recording._id}. Skipping LLM evaluation.`);
+           return;
+         }
+
          try {
             const evalResponse = await fetch(`${aiServiceUrl}/evaluate`, {
                method: 'POST',

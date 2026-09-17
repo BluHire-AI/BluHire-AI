@@ -506,6 +506,25 @@ export const InterviewRoom: React.FC<{
             <span>Repeat ({2 - replayCount} left)</span>
           </button>
 
+          {/* Skip Question Button */}
+          <button
+            onClick={async () => {
+              setPhase('PROCESSING');
+              // Stop recorder if active
+              if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+                mediaRecorderRef.current.stop();
+              }
+              // Wait briefly and fetch next question directly without upload
+              setTimeout(async () => {
+                await fetchNextQuestion();
+              }, 500);
+            }}
+            disabled={phase !== 'RECORDING' && phase !== 'COUNTDOWN'}
+            className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 hover:bg-white/15 disabled:opacity-40 border border-white/15 text-xs font-semibold text-zinc-300 hover:text-white transition-all cursor-pointer disabled:cursor-not-allowed"
+          >
+            <span>Skip Question</span>
+          </button>
+
           {/* Submit Answer Button */}
           <button
             onClick={handleSubmitAnswer}

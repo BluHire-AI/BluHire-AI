@@ -33,8 +33,7 @@ class TranscriptionService:
             print(f"[TranscriptionService] Transcription complete. Length: {len(text)} chars")
             return text
         except Exception as e:
-            print(f"[TranscriptionService] Whisper transcription failed: {str(e)}")
-            print("[TranscriptionService] Returning fallback mock transcription to allow pipeline to continue.")
-            return "This is a fallback transcript because the audio processor failed. The candidate discussed their experience with React, state management, and debugging complex performance issues in large-scale web applications."
+            print(f"[TranscriptionService] Whisper transcription failed or no speech detected: {str(e)}")
+            return "[No speech detected]"
 
 transcription_service = TranscriptionService()

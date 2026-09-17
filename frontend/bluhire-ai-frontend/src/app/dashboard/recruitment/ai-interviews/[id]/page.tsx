@@ -11,6 +11,7 @@ import { motion } from 'framer-motion';
 import { ScorecardTab } from '@/components/interview/ScorecardTab';
 import { HiringDecisionCenter } from '@/components/interview/HiringDecisionCenter';
 import { MediaPlaybackTab } from '@/components/interview/MediaPlaybackTab';
+import { DetailedReportTab } from '@/components/interview/DetailedReportTab';
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
 
 export default function CandidateDetailPage() {
@@ -139,11 +140,7 @@ export default function CandidateDetailPage() {
         >
           {activeTab === 'scorecard' && <ScorecardTab candidateId={candidateId as string} />}
           {activeTab === 'playback' && <MediaPlaybackTab candidateId={candidateId as string} />}
-          {activeTab === 'report' && (
-            <div className="bg-card dark:bg-card/80 backdrop-blur-md rounded-2xl border border-dashed border-border dark:border-white/10 flex items-center justify-center text-muted-foreground dark:text-zinc-400 p-12 min-h-[400px]">
-              <p className="text-muted-foreground dark:text-zinc-400">Report Viewer Component will render here</p>
-            </div>
-          )}
+          {activeTab === 'report' && <DetailedReportTab candidateId={candidateId as string} />}
         </motion.div>
       </ErrorBoundary>
 

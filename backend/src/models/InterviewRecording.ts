@@ -5,6 +5,7 @@ export interface IInterviewRecording extends Document {
   sessionId: string; // Reference to InterviewSession _id
   candidateId: string; // Reference to Candidate _id
   questionId: string; // Reference to InterviewQuestion _id
+  questionIndex?: number;
   videoUrl: string;
   duration?: number; // Duration in seconds
   fileSize?: number; // File size in bytes

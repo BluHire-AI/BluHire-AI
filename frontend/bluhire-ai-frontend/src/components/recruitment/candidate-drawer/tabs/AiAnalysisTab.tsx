@@ -289,6 +289,111 @@ export function AiAnalysisTab({
         </div>
       )}
 
+      {/* Decision Factors & Rejection Reasons Section */}
+      {!isPending && !isProcessing && (
+        <InfoSection title="Decision Factors & Rejection Reasons" icon={AlertCircle}>
+          <div className="p-4 rounded-xl bg-card dark:bg-white/[0.02] border border-border/70 dark:border-white/10 space-y-4">
+            
+            {/* A. Resume Strengths */}
+            <div className="space-y-1.5">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 block">
+                A. Resume Strengths
+              </span>
+              {application.matchingSkills && application.matchingSkills.length > 0 ? (
+                <div className="flex flex-wrap gap-1.5">
+                  {application.matchingSkills.map((skill, idx) => (
+                    <span key={idx} className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20">
+                      ✓ {skill}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs text-muted-foreground italic">General profile alignment recorded.</p>
+              )}
+            </div>
+
+            {/* B. Resume Concerns & Missing Skills */}
+            <div className="space-y-1.5">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 block">
+                B. Resume Concerns & Missing Skills
+              </span>
+              {application.missingSkills && application.missingSkills.length > 0 ? (
+                <div className="flex flex-wrap gap-1.5">
+                  {application.missingSkills.map((skill, idx) => (
+                    <span key={idx} className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20">
+                      ⚠ Missing: {skill}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs text-muted-foreground italic">No critical missing skill gaps flagged during resume screening.</p>
+              )}
+            </div>
+
+            {/* C. Interview Findings */}
+            <div className="space-y-1.5">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-violet-600 dark:text-violet-400 block">
+                C. Interview Findings
+              </span>
+              <div className="p-3 rounded-lg bg-muted/40 dark:bg-white/[0.03] border border-border/40 dark:border-white/[0.04] text-xs space-y-1.5">
+                <div className="flex items-center justify-between text-[11px]">
+                  <span className="text-muted-foreground font-medium">Interview Assessment Status:</span>
+                  <span className="font-bold text-foreground dark:text-white">
+                    {application.interviewStatus || (application.interviewScore !== undefined && application.interviewScore !== null ? 'COMPLETED' : 'Pending')}
+                  </span>
+                </div>
+                {application.interviewFeedback ? (
+                  <p className="text-xs leading-relaxed text-foreground/90 dark:text-zinc-200 pt-1 border-t border-border/30 dark:border-white/5">
+                    {application.interviewFeedback}
+                  </p>
+                ) : (
+                  <p className="text-xs text-muted-foreground italic">
+                    {application.interviewScore === 0 ? 'Interview completed with 0 substantive responses. Technical, communication, and problem-solving ability could not be evaluated.' : 'Interview evaluation details pending assessment panel completion.'}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* D. Integrity / Proctoring Findings */}
+            <div className="space-y-1.5">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 block">
+                D. Integrity & Proctoring Findings
+              </span>
+              <div className="p-2.5 rounded-lg bg-muted/30 dark:bg-white/[0.02] border border-border/40 dark:border-white/[0.04] text-xs">
+                <p className="text-[11px] text-muted-foreground">
+                  Proctoring monitoring active. Recruiter proctoring logs available in the AI Interview Scorecard tab.
+                </p>
+              </div>
+            </div>
+
+            {/* E. Final Recommendation & Key Decision Factors */}
+            <div className="space-y-1.5 pt-1 border-t border-border/40 dark:border-white/10">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-foreground dark:text-white block">
+                E. Final Recommendation & Key Decision Factors
+              </span>
+              <div className={`p-3 rounded-xl border flex flex-col space-y-1 ${
+                rawRec === 'REJECT' || application.currentStage === 'REJECTED'
+                  ? 'bg-rose-500/[0.06] border-rose-500/20 text-rose-700 dark:text-rose-300'
+                  : rawRec === 'HIRE' || application.currentStage === 'HIRED'
+                  ? 'bg-emerald-500/[0.06] border-emerald-500/20 text-emerald-700 dark:text-emerald-300'
+                  : 'bg-amber-500/[0.06] border-amber-500/20 text-amber-700 dark:text-amber-300'
+              }`}>
+                <div className="flex items-center justify-between font-bold text-xs">
+                  <span>Recommendation: {rawRec || application.currentStage}</span>
+                  <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-black/10 dark:bg-white/10">
+                    Decision Factor
+                  </span>
+                </div>
+                <p className="text-[11px] leading-relaxed font-normal opacity-90">
+                  {application.interviewFeedback || application.screeningSummary || 'Evaluated based on overall recruitment pipeline match.'}
+                </p>
+              </div>
+            </div>
+
+          </div>
+        </InfoSection>
+      )}
+
       {/* Structured AI Screening Insights Summary */}
       {!isPending && !isProcessing && (
         <InfoSection title="AI Screening Insights" icon={Sparkles}>

@@ -8,6 +8,7 @@ import ProblemSolvingEvaluation from '../models/ProblemSolvingEvaluation';
 import InterviewTranscript from '../models/InterviewTranscript';
 import InterviewRecording from '../models/InterviewRecording';
 import InterviewRecommendation from '../models/InterviewRecommendation';
+import { isSubstantiveAnswer, calculateAnswerStats } from '../utils/transcript-validator';
 
 export const getCandidates = async (req: Request, res: Response) => {
   try {
@@ -62,25 +63,40 @@ export const getCandidateScorecard = async (req: Request, res: Response) => {
       return res.status(404).json({ success: false, message: 'Scorecard not found' });
     }
 
-    // Completeness: how many questions were answered vs total
-    let completenessScore = 0;
-    if (session && session.totalQuestions > 0) {
-      completenessScore = Math.min(100, (session.currentQuestionIndex / session.totalQuestions) * 100);
+    // Compute answer stats using substantive transcripts helper
+    const transcripts = await InterviewTranscript.find({ sessionId });
+    const answerStats = calculateAnswerStats(session.totalQuestions, transcripts);
+    const { totalQuestions, answeredCount, skippedCount, completenessScore, hasSubstantiveAnswers } = answerStats;
+
+    // Handle zero substantive answers (completed or in-progress with 0 answers)
+    if (!hasSubstantiveAnswers) {
+      const reasoning = "Candidate completed the interview session but provided no substantive responses. All interview questions were skipped, so technical, communication, and problem-solving ability could not be evaluated.";
+      return res.status(200).json({
+        success: true,
+        data: {
+          technicalScore: null,
+          communicationScore: null,
+          problemSolvingScore: null,
+          completenessScore: 0,
+          overallScore: null,
+          recommendation: 'INSUFFICIENT_EVIDENCE',
+          reasonCode: 'NO_SUBSTANTIVE_RESPONSES',
+          confidence: 0,
+          reasoning,
+          answeredCount: 0,
+          skippedCount: totalQuestions,
+          totalQuestions,
+          answerCompleteness: 0,
+          evaluationStatus: 'INSUFFICIENT_EVIDENCE',
+        }
+      });
     }
 
-    // Step 1: Get all transcript IDs for this specific session
-    const transcripts = await InterviewTranscript.find({ sessionId }).select('_id');
-    const transcriptIds = transcripts.map(t => t._id);
+    // Filter substantive transcripts only
+    const substantiveTranscripts = transcripts.filter(t => isSubstantiveAnswer(t.transcript));
+    const transcriptIds = substantiveTranscripts.map(t => t._id);
 
-    if (transcriptIds.length === 0) {
-      // No evaluations yet
-      return res.status(200).json({ success: true, data: {
-        technicalScore: 0, communicationScore: 0, problemSolvingScore: 0,
-        completenessScore, overallScore: 0, recommendation: null, reasoning: null
-      }});
-    }
-
-    // Step 2: Fetch evaluations scoped to these transcript IDs
+    // Step 2: Fetch evaluations scoped to these substantive transcript IDs
     const techEvals = await TechnicalEvaluation.find({ transcriptId: { $in: transcriptIds } });
     const commEvals = await CommunicationAnalysis.find({ transcriptId: { $in: transcriptIds } });
     const probEvals = await ProblemSolvingEvaluation.find({ transcriptId: { $in: transcriptIds } });
@@ -88,24 +104,20 @@ export const getCandidateScorecard = async (req: Request, res: Response) => {
     const avg = (arr: any[], field: string) =>
       arr.length > 0 ? arr.reduce((s, e) => s + (e[field] || 0), 0) / arr.length : 0;
 
-    // Evaluations stored as 0–10 (score/10 from the 0–100 AI response)
     const avgTech = avg(techEvals, 'overallTechnicalScore');
     const avgComm = avg(commEvals, 'communicationScore');
     const avgProb = avg(probEvals, 'overallProblemSolvingScore');
 
-    // Scale back to 0–100 for UI
     const technicalScore = Math.round(avgTech * 10);
     const communicationScore = Math.round(avgComm * 10);
     const problemSolvingScore = Math.round(avgProb * 10);
 
-    // Weighted overall: Technical 40%, Communication 30%, Problem Solving 30%
     const overallScore = Math.round(
       (technicalScore * 0.40) +
       (communicationScore * 0.30) +
       (problemSolvingScore * 0.30)
     );
 
-    // Fetch recommendation
     const rec = await InterviewRecommendation.findOne({ sessionId });
 
     res.status(200).json({
@@ -114,11 +126,15 @@ export const getCandidateScorecard = async (req: Request, res: Response) => {
         technicalScore,
         communicationScore,
         problemSolvingScore,
-        completenessScore: Math.round(completenessScore),
+        completenessScore,
         overallScore,
         recommendation: rec?.recommendation ?? null,
         confidence: rec?.confidence ?? null,
         reasoning: rec?.reasoning ?? null,
+        answeredCount,
+        skippedCount,
+        totalQuestions,
+        answerCompleteness: completenessScore,
       }
     });
   } catch (error) {
@@ -221,14 +237,30 @@ export const compareCandidates = async (req: Request, res: Response) => {
   }
 };
 
+import { getQuestionReviewsBySession } from '../services/question-review.service';
+
 export const getCandidateMedia = async (req: Request, res: Response) => {
   try {
-    const sessionId = req.params.id;
-    const transcripts = await InterviewTranscript.find({ sessionId }).sort({ questionIndex: 1 });
-    const recordings = await InterviewRecording.find({ sessionId }).sort({ questionIndex: 1 });
+    const sessionId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    const reviewData = await getQuestionReviewsBySession(sessionId as string);
+    
+    const transcripts = await InterviewTranscript.find({ sessionId });
+    const recordings = await InterviewRecording.find({ sessionId });
 
-    res.status(200).json({ success: true, data: { transcripts, recordings } });
-  } catch (error) {
+    res.status(200).json({ 
+      success: true, 
+      data: { 
+        transcripts, 
+        recordings,
+        questionReviews: reviewData?.questions || [],
+        totalQuestions: reviewData?.totalQuestions || 0,
+        answeredCount: reviewData?.answeredCount || 0,
+        skippedCount: reviewData?.skippedCount || 0,
+        completenessScore: reviewData?.completenessScore || 0
+      } 
+    });
+  } catch (error: any) {
+    console.error('getCandidateMedia error:', error);
     res.status(500).json({ success: false, message: 'Server Error' });
   }
 };

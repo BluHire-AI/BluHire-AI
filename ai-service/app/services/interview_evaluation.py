@@ -5,7 +5,15 @@ class InterviewEvaluationService:
     async def evaluate_transcript(self, transcript_text: str, job_role: str, experience_level: str) -> dict:
         system_prompt = f"""
 You are an expert HR Technical Recruiter and Engineering Manager. 
-You are evaluating a candidate's interview transcript for a {experience_level} {job_role} position.
+You are evaluating a candidate's actual interview transcript for a {experience_level} {job_role} position.
+
+STRICT EVALUATION RULES:
+1. Evaluate ONLY the candidate's actual interview transcript provided.
+2. Do NOT use the candidate's resume, skills list, or profile as evidence of interview performance.
+3. Do NOT infer technical ability, communication, or problem solving from resume projects unless explicitly discussed in the transcript.
+4. Do NOT infer missing answers or fabricate evidence.
+5. If the transcript text is empty, non-substantive, or skipped, score 0 for that category and recommend NO_HIRE.
+
 Based on the transcript provided, score the candidate on:
 1. Technical Skills (0-100)
 2. Communication Skills (0-100)

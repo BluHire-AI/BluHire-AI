@@ -5,6 +5,7 @@ export interface IInterviewTranscript extends Document {
   sessionId: string; // Reference to InterviewSession _id
   questionId: string; // Reference to InterviewQuestion _id
   candidateId: string; // Reference to Candidate _id
+  questionIndex?: number;
   transcript: string;
   language?: string; // Language code, e.g., 'en'
   confidence?: number; // Whisper transcription confidence score (0 to 1)
@@ -32,6 +33,10 @@ const InterviewTranscriptSchema = new Schema<any>(
       ref: 'Candidate',
       required: [true, 'Candidate ID is required'],
       index: true,
+    },
+    questionIndex: {
+      type: Number,
+      default: 0,
     },
     transcript: {
       type: String,

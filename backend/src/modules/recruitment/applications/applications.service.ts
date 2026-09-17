@@ -28,6 +28,7 @@ import ProblemSolvingEvaluation from '../../../models/ProblemSolvingEvaluation';
 import InterviewRecommendation from '../../../models/InterviewRecommendation';
 import InterviewTranscript from '../../../models/InterviewTranscript';
 import { computeSkillMatch } from '../../../utils/skill-matcher';
+import { isSubstantiveAnswer, calculateAnswerStats } from '../../../utils/transcript-validator';
 
 export class ApplicationsService {
   /**
@@ -611,25 +612,57 @@ export class ApplicationsService {
       return;
     }
 
-    // Completeness
-    let completenessScore = 0;
-    if (session.totalQuestions > 0) {
-      completenessScore = Math.min(100, (session.currentQuestionIndex / session.totalQuestions) * 100);
+    // Completeness & Answer Statistics based on substantive candidate transcripts
+    const transcripts = await InterviewTranscript.find({ sessionId });
+    const answerStats = calculateAnswerStats(session.totalQuestions, transcripts);
+    const { totalQuestions, answeredCount, skippedCount, completenessScore, hasSubstantiveAnswers } = answerStats;
+
+    // Check deterministic zero-answer terminal state for completed session
+    if (session.status === SessionStatus.COMPLETED && totalQuestions > 0 && !hasSubstantiveAnswers) {
+      console.log(`[ZERO-ANSWER INTERVIEW DETECTED] Session ${sessionId}: 0/${totalQuestions} questions answered. Setting INSUFFICIENT_EVIDENCE state.`);
+      
+      const zeroAnswerReason = "Candidate completed the interview session but provided no substantive responses. All interview questions were skipped, so technical, communication, and problem-solving ability could not be evaluated.";
+      
+      // Store recommendation as MAYBE_HIRE (Requires Review) with 0 confidence & explicit reasoning
+      await InterviewRecommendation.findOneAndUpdate(
+        { sessionId: session._id },
+        {
+          recommendation: 'MAYBE_HIRE',
+          confidence: 0,
+          reasoning: zeroAnswerReason,
+        },
+        { upsert: true, new: true }
+      );
+
+      const screeningScore = app.screeningScore || app.aiScore || 0;
+
+      app.screeningScore = screeningScore;
+      app.interviewScore = null as any; // Not evaluated
+      app.interviewFeedback = zeroAnswerReason;
+      app.interviewStatus = 'COMPLETED_NO_RESPONSES';
+      app.aiRecommendation = 'Requires Review';
+      // DO NOT auto-reject application stage or candidate status — keep in active pipeline for recruiter decision
+
+      await CandidateModel.findByIdAndUpdate(session.candidateId, { status: 'UNDER_REVIEW' });
+      await app.save();
+
+      console.log(`[APPLICATION UPDATED] Session ${sessionId} marked as COMPLETED_NO_RESPONSES; preserved in review pipeline.`);
+      return;
     }
 
-    // Transcript IDs
-    const transcripts = await InterviewTranscript.find({ sessionId }).select('_id');
-    const transcriptIds = transcripts.map(t => t._id);
+    // Filter to substantive transcripts only
+    const substantiveTranscripts = transcripts.filter(t => isSubstantiveAnswer(t.transcript));
+    const substantiveIds = substantiveTranscripts.map(t => t._id);
 
     let techScore = 0;
     let commScore = 0;
     let probScore = 0;
     let overallInterviewScore = 0;
 
-    if (transcriptIds.length > 0) {
-      const techEvals = await TechnicalEvaluation.find({ transcriptId: { $in: transcriptIds } });
-      const commEvals = await CommunicationAnalysis.find({ transcriptId: { $in: transcriptIds } });
-      const probEvals = await ProblemSolvingEvaluation.find({ transcriptId: { $in: transcriptIds } });
+    if (substantiveIds.length > 0) {
+      const techEvals = await TechnicalEvaluation.find({ transcriptId: { $in: substantiveIds } });
+      const commEvals = await CommunicationAnalysis.find({ transcriptId: { $in: substantiveIds } });
+      const probEvals = await ProblemSolvingEvaluation.find({ transcriptId: { $in: substantiveIds } });
 
       const avg = (arr: any[], field: string) =>
         arr.length > 0 ? arr.reduce((s, e) => s + (e[field] || 0), 0) / arr.length : 0;
@@ -649,24 +682,23 @@ export class ApplicationsService {
       );
     }
 
-    console.log(`[INTERVIEW SCORE GENERATED] Score: ${overallInterviewScore} (Tech: ${techScore}, Comm: ${commScore}, Prob: ${probScore})`);
+    console.log(`[INTERVIEW SCORE GENERATED] Score: ${overallInterviewScore} (Tech: ${techScore}, Comm: ${commScore}, Prob: ${probScore}), Completeness: ${completenessScore}% (${answeredCount}/${totalQuestions} answered)`);
 
-    const screeningScore = app.screeningScore || app.aiScore || 40; // fallback to 40 or current score
+    const screeningScore = app.screeningScore || app.aiScore || 40;
     const finalScore = Math.round((screeningScore * 0.4) + (overallInterviewScore * 0.6));
 
     // Update Application
     app.screeningScore = screeningScore;
     app.interviewScore = overallInterviewScore;
     app.finalScore = finalScore;
-    app.aiScore = finalScore; // Sync back to aiScore so main list is sorted/ranked correctly
+    app.aiScore = finalScore;
 
-    console.log(`[APPLICATION UPDATED] App ID: ${app._id}, Screening: ${screeningScore}, Interview: ${overallInterviewScore}, Final: ${finalScore}`);
-
-    // Fetch recommendation
+    // Fetch recommendation & proctoring check
     const rec = await InterviewRecommendation.findOne({ sessionId });
     if (rec) {
       console.log(`[FINAL SCORE RECALCULATED] Recommendation: ${rec.recommendation}`);
-      app.aiRecommendation = rec.recommendation; // Update recommendations
+      app.aiRecommendation = rec.recommendation;
+      app.interviewFeedback = rec.reasoning || app.interviewFeedback;
 
       if (rec.recommendation === 'REJECT') {
         app.currentStage = ApplicationStage.REJECTED;

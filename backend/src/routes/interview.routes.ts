@@ -7,6 +7,7 @@ import {
   startPublicSession, 
   submitPublicSession,
   uploadRecording,
+  skipQuestion,
   getNextQuestion,
   getAllSessions,
   resetInterviewSession,
@@ -49,6 +50,9 @@ router.get('/public/:token/next-question', getNextQuestion);
 
 // Upload recording chunk/file (upload must come BEFORE submit so multer parses the body)
 router.post('/public/:token/upload', upload.single('video'), uploadRecording);
+
+// Explicit candidate skip action
+router.post('/public/:token/skip-question', skipQuestion);
 
 // Record proctoring events
 router.post('/public/:token/proctoring-event', recordProctoringEvent);

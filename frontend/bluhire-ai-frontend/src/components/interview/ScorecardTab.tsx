@@ -79,7 +79,7 @@ export const ScorecardTab: React.FC<ScorecardTabProps> = ({ candidateId }) => {
           <div className="flex items-center gap-4 text-xs font-mono pt-1 text-amber-300">
             <span>Asked: {scorecard.totalQuestions ?? 5}</span>
             <span>Answered: {scorecard.answeredCount ?? 0}</span>
-            <span>Skipped: {scorecard.skippedCount ?? (scorecard.totalQuestions ?? 5)}</span>
+            <span>Skipped: {scorecard.skippedCount ?? 0}</span>
             <span>Completeness: 0%</span>
           </div>
         </div>
@@ -117,7 +117,7 @@ export const ScorecardTab: React.FC<ScorecardTabProps> = ({ candidateId }) => {
 
         {/* AI Recommendation Badge */}
         <div className="mt-6 md:mt-0 flex flex-col items-center md:items-end">
-          <span className="text-xs uppercase tracking-wider font-semibold text-muted-foreground dark:text-zinc-400 mb-2">Evaluation Status</span>
+          <span className="text-xs uppercase tracking-wider font-semibold text-muted-foreground dark:text-zinc-400 mb-2">AI Recommendation</span>
           <div className={`px-6 py-3 rounded-xl border text-lg font-bold shadow-xs ${
             scorecard.recommendation === 'INSUFFICIENT_EVIDENCE' || isZeroAnswer ? 'bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30' :
             scorecard.recommendation === 'HIRE' ? 'badge-hired' :

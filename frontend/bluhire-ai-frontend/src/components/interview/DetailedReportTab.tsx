@@ -47,8 +47,8 @@ export const DetailedReportTab: React.FC<DetailedReportTabProps> = ({ candidateI
           </p>
           <div className="flex items-center gap-4 text-xs font-mono pt-2 text-amber-300/80 border-t border-amber-500/20">
             <span>Questions Asked: {scorecard?.totalQuestions ?? 5}</span>
-            <span>Substantive Answers: 0</span>
-            <span>Skipped: {scorecard?.totalQuestions ?? 5}</span>
+            <span>Substantive Answers: {scorecard?.answeredCount ?? 0}</span>
+            <span>Skipped: {scorecard?.skippedCount ?? 0}</span>
             <span>Answer Completeness: 0%</span>
           </div>
         </div>
@@ -78,9 +78,9 @@ export const DetailedReportTab: React.FC<DetailedReportTabProps> = ({ candidateI
             <p className="text-xs text-muted-foreground dark:text-zinc-400">Automated transcript synthesis and evaluation feedback</p>
           </div>
         </div>
-        {report.finalRecommendation && (
+        {(report.finalRecommendation || scorecard?.recommendation) && (
           <span className="px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider bg-purple-500/15 text-purple-300 border border-purple-500/30">
-            Recommendation: {report.finalRecommendation}
+            AI Recommendation: {report.finalRecommendation || scorecard?.recommendation}
           </span>
         )}
       </div>
@@ -97,54 +97,63 @@ export const DetailedReportTab: React.FC<DetailedReportTabProps> = ({ candidateI
         </div>
       )}
 
-      {/* Key Strengths & Weaknesses */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Strengths */}
-        <div className="space-y-3">
-          <h4 className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4" /> Evaluated Key Strengths
-          </h4>
-          <div className="p-4 rounded-xl bg-emerald-500/[0.04] border border-emerald-500/20 space-y-2">
-            {report.strengths && report.strengths.length > 0 ? (
-              report.strengths.map((str: string, i: number) => (
-                <div key={i} className="flex items-start gap-2 text-xs text-emerald-700 dark:text-emerald-300">
-                  <span className="font-bold">•</span>
-                  <span>{str}</span>
-                </div>
-              ))
-            ) : (
-              <p className="text-xs text-muted-foreground italic">No distinct strengths identified from transcript.</p>
-            )}
-          </div>
-        </div>
+      {/* Key Strengths & Areas for Improvement */}
+      {(() => {
+        const improvementItems = Array.from(new Set([
+          ...(report.improvementAreas || []),
+          ...(report.weaknesses || [])
+        ])).filter(Boolean);
 
-        {/* Weaknesses / Growth Areas */}
-        <div className="space-y-3">
-          <h4 className="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 flex items-center gap-2">
-            <AlertCircle className="w-4 h-4" /> Areas for Improvement
-          </h4>
-          <div className="p-4 rounded-xl bg-amber-500/[0.04] border border-amber-500/20 space-y-2">
-            {report.weaknesses && report.weaknesses.length > 0 ? (
-              report.weaknesses.map((w: string, i: number) => (
-                <div key={i} className="flex items-start gap-2 text-xs text-amber-700 dark:text-amber-300">
-                  <span className="font-bold">•</span>
-                  <span>{w}</span>
-                </div>
-              ))
-            ) : (
-              <p className="text-xs text-muted-foreground italic">No major risk areas flagged.</p>
-            )}
+        return (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Strengths */}
+            <div className="space-y-3">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4" /> Evaluated Key Strengths
+              </h4>
+              <div className="p-4 rounded-xl bg-emerald-500/[0.04] border border-emerald-500/20 space-y-2">
+                {report.strengths && report.strengths.length > 0 ? (
+                  report.strengths.map((str: string, i: number) => (
+                    <div key={i} className="flex items-start gap-2 text-xs text-emerald-700 dark:text-emerald-300">
+                      <span className="font-bold">•</span>
+                      <span>{str}</span>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-xs text-muted-foreground italic">No distinct strengths identified from transcript.</p>
+                )}
+              </div>
+            </div>
+
+            {/* Areas for Improvement */}
+            <div className="space-y-3">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 flex items-center gap-2">
+                <AlertCircle className="w-4 h-4" /> Areas for Improvement
+              </h4>
+              <div className="p-4 rounded-xl bg-amber-500/[0.04] border border-amber-500/20 space-y-2">
+                {improvementItems.length > 0 ? (
+                  improvementItems.map((w: string, i: number) => (
+                    <div key={i} className="flex items-start gap-2 text-xs text-amber-700 dark:text-amber-300">
+                      <span className="font-bold">•</span>
+                      <span>{w}</span>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-xs text-muted-foreground italic">No critical risk or improvement areas flagged.</p>
+                )}
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
+        );
+      })()}
 
       {/* Categorized Feedback */}
-      {(report.technicalFeedback || report.communicationFeedback) && (
+      {(report.technicalFeedback || report.communicationFeedback || report.problemSolvingFeedback) && (
         <div className="space-y-4 pt-2 border-t border-border dark:border-white/10">
           <h3 className="text-sm font-bold uppercase tracking-wider text-foreground dark:text-zinc-300">
             Categorized Evaluator Notes
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-xs">
             {report.technicalFeedback && (
               <div className="p-4 rounded-xl bg-muted/20 dark:bg-white/[0.02] border border-border dark:border-white/10 space-y-1">
                 <span className="font-bold text-foreground dark:text-white block text-[11px] uppercase tracking-wider text-blue-400">Technical Depth</span>
@@ -155,6 +164,12 @@ export const DetailedReportTab: React.FC<DetailedReportTabProps> = ({ candidateI
               <div className="p-4 rounded-xl bg-muted/20 dark:bg-white/[0.02] border border-border dark:border-white/10 space-y-1">
                 <span className="font-bold text-foreground dark:text-white block text-[11px] uppercase tracking-wider text-indigo-400">Communication & Clarity</span>
                 <p className="text-muted-foreground dark:text-zinc-300 leading-relaxed">{report.communicationFeedback}</p>
+              </div>
+            )}
+            {report.problemSolvingFeedback && (
+              <div className="p-4 rounded-xl bg-muted/20 dark:bg-white/[0.02] border border-border dark:border-white/10 space-y-1">
+                <span className="font-bold text-foreground dark:text-white block text-[11px] uppercase tracking-wider text-purple-400">Problem Solving & Logic</span>
+                <p className="text-muted-foreground dark:text-zinc-300 leading-relaxed">{report.problemSolvingFeedback}</p>
               </div>
             )}
           </div>

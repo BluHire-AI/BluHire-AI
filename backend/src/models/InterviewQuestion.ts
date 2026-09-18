@@ -3,10 +3,15 @@ import { Difficulty, QuestionCategory } from '../types/interview.types';
 
 export interface IInterviewQuestion extends Document {
   _id: any;
-  templateId: string; // Reference to InterviewTemplate _id
+  sessionId?: string; // Reference to InterviewSession _id
+  jobId?: string; // Reference to Job _id
+  templateId?: string; // Reference to InterviewTemplate _id (Legacy fallback)
   questionText: string;
-  category: QuestionCategory;
-  difficulty: Difficulty;
+  category: QuestionCategory | string;
+  competency?: string;
+  difficulty: Difficulty | string;
+  reason?: string;
+  sourceSkill?: string;
   expectedTopics: string[];
   generatedByAI: boolean;
   createdAt: Date;
@@ -14,10 +19,19 @@ export interface IInterviewQuestion extends Document {
 
 const InterviewQuestionSchema = new Schema<any>(
   {
+    sessionId: {
+      type: Schema.Types.ObjectId,
+      ref: 'InterviewSession',
+      index: true,
+    },
+    jobId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Job',
+      index: true,
+    },
     templateId: {
       type: Schema.Types.ObjectId,
       ref: 'InterviewTemplate',
-      required: [true, 'Template ID is required'],
       index: true,
     },
     questionText: {
@@ -27,13 +41,24 @@ const InterviewQuestionSchema = new Schema<any>(
     },
     category: {
       type: String,
-      enum: Object.values(QuestionCategory),
-      required: true,
+      default: 'TECHNICAL',
+    },
+    competency: {
+      type: String,
+      trim: true,
+      index: true,
     },
     difficulty: {
       type: String,
-      enum: Object.values(Difficulty),
-      required: true,
+      default: 'INTERMEDIATE',
+    },
+    reason: {
+      type: String,
+      trim: true,
+    },
+    sourceSkill: {
+      type: String,
+      trim: true,
     },
     expectedTopics: {
       type: [String],
@@ -45,12 +70,11 @@ const InterviewQuestionSchema = new Schema<any>(
     },
   },
   {
-    timestamps: { createdAt: true, updatedAt: false }, // Only createdAt specified in requirements, but we can leave timestamps: true or just createdAt
+    timestamps: { createdAt: true, updatedAt: false },
   }
 );
 
 // Indexes
-InterviewQuestionSchema.index({ templateId: 1 });
 InterviewQuestionSchema.index({ category: 1 });
 InterviewQuestionSchema.index({ difficulty: 1 });
 

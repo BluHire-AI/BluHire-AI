@@ -38,8 +38,10 @@ export const HiringDecisionCenter: React.FC<HiringDecisionCenterProps> = ({ cand
 
   return (
     <div className="bg-card dark:bg-card/80 backdrop-blur-md rounded-2xl border border-border dark:border-white/10 shadow-[0_4px_20px_rgba(23,32,51,0.06)] dark:shadow-lg p-6 mt-8 font-sans">
-      <h3 className="text-lg font-bold text-foreground dark:text-white mb-2">Hiring Decision</h3>
-      <p className="text-sm text-muted-foreground dark:text-zinc-400 mb-6">Finalize the candidate's application status based on AI evaluations.</p>
+      <h3 className="text-lg font-bold text-foreground dark:text-white mb-2">Human Hiring Decision</h3>
+      <p className="text-sm text-muted-foreground dark:text-zinc-400 mb-6">
+        Record recruiter / manager decision. Current status: <strong className="text-foreground dark:text-white uppercase">{safeStatus.replace(/_/g, ' ')}</strong> (Maintained separately from AI Recommendation).
+      </p>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         

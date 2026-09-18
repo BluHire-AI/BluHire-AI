@@ -135,7 +135,7 @@ export default function ApplyPage() {
 
   if (success) {
     return (
-      <BluHireBackground showConstellation={true} className="flex items-center justify-center p-6">
+      <BluHireBackground showConstellation={true} containerClassName="items-center justify-center p-6">
         <Card className="max-w-md w-full border border-border/80 dark:border-white/10 bg-card/90 dark:bg-[#0e101e]/90 backdrop-blur-2xl p-8 rounded-2xl shadow-xl text-center relative overflow-hidden">
           <div className="absolute top-0 left-0 w-full h-[1.5px] bg-gradient-to-r from-transparent via-emerald-500/50 to-transparent" />
           <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 flex items-center justify-center mx-auto mb-5 shadow-xs">

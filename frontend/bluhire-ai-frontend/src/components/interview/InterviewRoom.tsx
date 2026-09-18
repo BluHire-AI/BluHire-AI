@@ -29,6 +29,7 @@ interface Question {
   questionId: string;
   questionText: string;
   category: string;
+  competency?: string;
   difficulty: string;
   questionIndex: number;
   totalQuestions: number;
@@ -36,14 +37,17 @@ interface Question {
 
 export const InterviewRoom: React.FC<{
   sessionId: string;   // This is actually the public token
+  initialTotalQuestions?: number;
   onComplete: (blobs: Blob[]) => void;
-}> = ({ sessionId: token, onComplete }) => {
+}> = ({ sessionId: token, initialTotalQuestions = 5, onComplete }) => {
   const [phase, setPhase] = useState<InterviewPhase>('INITIALIZING');
   const [cameraActive, setCameraActive] = useState(true);
   const [micActive, setMicActive] = useState(true);
   const [replayCount, setReplayCount] = useState(0);
   const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null);
   const [errorMessage, setErrorMessage] = useState<string>('');
+  const [submissionError, setSubmissionError] = useState<string | null>(null);
+  const [isSubmittingFinal, setIsSubmittingFinal] = useState<boolean>(false);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
@@ -51,6 +55,7 @@ export const InterviewRoom: React.FC<{
   const recordedChunksRef = useRef<Blob[]>([]);
   const allRecordedBlobsRef = useRef<Blob[]>([]);   // Accumulates all question blobs
   const currentQuestionIdRef = useRef<string | null>(null);
+  const isFetchingRef = useRef<boolean>(false);
 
   const voiceSettings = React.useMemo(() => ({ rate: 1.0, pitch: 1.0 }), []);
   const { speak, status: voiceStatus } = useVoiceEngine(voiceSettings);
@@ -123,36 +128,59 @@ export const InterviewRoom: React.FC<{
 
   // ─── Fetch Next Question (Adaptive) ────────────────────────────────────────
   const fetchNextQuestion = useCallback(async () => {
+    if (isFetchingRef.current) {
+      console.log('[InterviewRoom] fetchNextQuestion already in-flight, skipping duplicate call.');
+      return;
+    }
+    isFetchingRef.current = true;
     setPhase('LOADING_QUESTION');
+    setErrorMessage('');
     try {
-      const res = await api.get(`/interviews/public/${token}/next-question`);
-      const q: Question | null = res.data.data;
+      const res = await api.get(`/interviews/public/${token}/next-question`, { timeout: 45000 });
+      const data = res.data?.data;
 
-      if (!q) {
-        // No more questions — check if this is the VERY FIRST question
-        if (allRecordedBlobsRef.current.length === 0 && !currentQuestionIdRef.current) {
+      // Completion check: backend returned completion signal or no more questions
+      if (!data || data.completed || !data.questionText) {
+        // Case A: Zero questions ever asked/delivered and no completion reason
+        if (allRecordedBlobsRef.current.length === 0 && !currentQuestionIdRef.current && !data?.completed) {
           console.log('[DEBUG_AUDIT] Case A: Zero questions asked. Triggering configuration error.');
-          setErrorMessage('Interview Configuration Error: No questions available for this assessment.');
+          setErrorMessage('Unable to prepare your interview question. Please try again.');
           setPhase('ERROR');
           return;
         }
 
-        // Case B: Completed at least one question
-        console.log('[DEBUG_AUDIT] Case B: Interview naturally complete. Triggering onComplete().');
+        // Case B: Interview naturally complete (Hard termination reached or target competencies satisfied)
+        console.log(`[InterviewRoom] Interview naturally complete. Reason: ${data?.reason || 'NO_MORE_QUESTIONS'}`);
+        if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+          mediaRecorderRef.current.stop();
+        }
         setPhase('COMPLETED');
-        onComplete(allRecordedBlobsRef.current);
+        setIsSubmittingFinal(true);
+        setSubmissionError(null);
+        try {
+          await onComplete(allRecordedBlobsRef.current);
+        } catch (subErr: any) {
+          console.error('[InterviewRoom] Final submission failed:', subErr);
+          setSubmissionError(subErr.message || 'Failed to submit interview. Please click Retry Submission.');
+        } finally {
+          setIsSubmittingFinal(false);
+        }
         return;
       }
 
-      console.log(`[InterviewRoom] Question ${q.questionIndex}/${q.totalQuestions}: [${q.difficulty}] ${q.questionText}`);
+      const q: Question = data;
+      console.log(`[Frontend] question state updated sessionId=${token} questionId=${q.questionId} (Q${q.questionIndex} of ${q.totalQuestions}): [${q.difficulty}] ${q.questionText}`);
       currentQuestionIdRef.current = q.questionId;
       setCurrentQuestion(q);
       setReplayCount(0);
       setPhase('AI_SPEAKING');
     } catch (err: any) {
       console.error('[InterviewRoom] Failed to fetch next question:', err);
-      setErrorMessage('Failed to load question. Please check your connection.');
+      const msg = err.response?.data?.message || err.message || 'Unable to prepare your interview question. Please check your connection.';
+      setErrorMessage(msg);
       setPhase('ERROR');
+    } finally {
+      isFetchingRef.current = false;
     }
   }, [token, onComplete]);
 
@@ -236,8 +264,8 @@ export const InterviewRoom: React.FC<{
     }, 1500);
   }, [currentQuestion, token, fetchNextQuestion]);
 
-  const totalQuestions = currentQuestion?.totalQuestions ?? 3;
-  const questionIndex = currentQuestion?.questionIndex ?? 0;
+  const totalQuestions = currentQuestion?.totalQuestions ?? initialTotalQuestions ?? 5;
+  const questionIndex = currentQuestion?.questionIndex ?? (phase === 'LOADING_QUESTION' ? 1 : 0);
 
   if (phase === 'ERROR') {
     return (
@@ -246,12 +274,28 @@ export const InterviewRoom: React.FC<{
           <div className="bg-ambient" />
           <StarField dark={true} />
         </div>
-        <div className="relative z-10 w-full max-w-md bg-card/85 dark:bg-[#0e101e]/85 backdrop-blur-2xl p-8 rounded-[28px] border border-red-500/30 text-center space-y-4 shadow-2xl">
+        <div className="relative z-10 w-full max-w-md bg-card/85 dark:bg-[#0e101e]/85 backdrop-blur-2xl p-8 rounded-[28px] border border-red-500/30 text-center space-y-5 shadow-2xl">
           <div className="mx-auto w-16 h-16 bg-rose-500/15 text-rose-400 rounded-2xl border border-rose-500/30 flex items-center justify-center shadow-[0_0_20px_rgba(239,68,68,0.2)]">
             <AlertCircle className="w-8 h-8" />
           </div>
-          <h2 className="text-xl font-bold text-white">Interview Error</h2>
-          <p className="text-xs text-zinc-400 leading-relaxed">{errorMessage}</p>
+          <div className="space-y-2">
+            <h2 className="text-xl font-bold text-white">Unable to Prepare Question</h2>
+            <p className="text-xs text-zinc-400 leading-relaxed">
+              {errorMessage || 'Unable to prepare your interview question. Please try again.'}
+            </p>
+          </div>
+          <div className="pt-2 flex justify-center">
+            <button
+              onClick={() => {
+                setErrorMessage('');
+                fetchNextQuestion();
+              }}
+              className="px-6 py-2.5 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-xs shadow-[0_0_20px_rgba(139,92,246,0.35)] flex items-center gap-2 cursor-pointer transition-all active:scale-95 border-0"
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+              <span>Retry</span>
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -430,13 +474,49 @@ export const InterviewRoom: React.FC<{
               <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="bg-[#0e101e]/95 backdrop-blur-xl p-8 rounded-[28px] border border-emerald-500/30 text-center space-y-3 shadow-2xl max-w-sm"
+                className={`bg-[#0e101e]/95 backdrop-blur-xl p-8 rounded-[28px] border text-center space-y-3 shadow-2xl max-w-sm pointer-events-auto ${
+                  submissionError ? 'border-rose-500/30' : 'border-emerald-500/30'
+                }`}
               >
-                <div className="w-14 h-14 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-full flex items-center justify-center mx-auto shadow-[0_0_20px_rgba(16,185,129,0.3)]">
-                  <CheckCircle2 className="w-8 h-8" />
-                </div>
-                <h3 className="text-xl font-extrabold text-white">Interview Complete!</h3>
-                <p className="text-xs text-zinc-400">Your responses are saved. Submitting assessment...</p>
+                {submissionError ? (
+                  <>
+                    <div className="w-14 h-14 bg-rose-500/20 text-rose-400 border border-rose-500/30 rounded-full flex items-center justify-center mx-auto shadow-[0_0_20px_rgba(244,63,94,0.3)]">
+                      <AlertCircle className="w-8 h-8" />
+                    </div>
+                    <h3 className="text-xl font-extrabold text-white">Submission Error</h3>
+                    <p className="text-xs text-rose-300 leading-relaxed">{submissionError}</p>
+                    <button
+                      onClick={async () => {
+                        setIsSubmittingFinal(true);
+                        setSubmissionError(null);
+                        try {
+                          await onComplete(allRecordedBlobsRef.current);
+                        } catch (retryErr: any) {
+                          setSubmissionError(retryErr.message || 'Failed to submit interview. Please try again.');
+                        } finally {
+                          setIsSubmittingFinal(false);
+                        }
+                      }}
+                      disabled={isSubmittingFinal}
+                      className="mt-2 px-6 py-2.5 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-xs shadow-[0_0_20px_rgba(139,92,246,0.35)] flex items-center gap-2 mx-auto cursor-pointer transition-all active:scale-95 disabled:opacity-50"
+                    >
+                      <RefreshCw className={`w-3.5 h-3.5 ${isSubmittingFinal ? 'animate-spin' : ''}`} />
+                      <span>{isSubmittingFinal ? 'Retrying...' : 'Retry Submission'}</span>
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <div className="w-14 h-14 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-full flex items-center justify-center mx-auto shadow-[0_0_20px_rgba(16,185,129,0.3)]">
+                      <CheckCircle2 className="w-8 h-8" />
+                    </div>
+                    <h3 className="text-xl font-extrabold text-white">Interview Complete!</h3>
+                    <p className="text-xs text-zinc-400">
+                      {isSubmittingFinal
+                        ? 'Your responses are saved. Submitting assessment...'
+                        : 'Responses submitted! Finalizing your session...'}
+                    </p>
+                  </>
+                )}
               </motion.div>
             )}
           </div>
@@ -451,7 +531,7 @@ export const InterviewRoom: React.FC<{
               </span>
               {currentQuestion && (
                 <span className="text-[10px] font-mono text-zinc-400 uppercase tracking-wider">
-                  {currentQuestion.category} · {currentQuestion.difficulty}
+                  {currentQuestion.competency ? `${currentQuestion.competency} · ` : ''}{currentQuestion.category} · {currentQuestion.difficulty}
                 </span>
               )}
             </div>
@@ -459,7 +539,7 @@ export const InterviewRoom: React.FC<{
           </div>
 
           <h3 className="text-base sm:text-lg md:text-xl font-semibold text-white leading-relaxed tracking-tight">
-            {currentQuestion ? `"${currentQuestion.questionText}"` : 'Loading question text...'}
+            {currentQuestion ? `"${currentQuestion.questionText}"` : (phase === 'LOADING_QUESTION' ? 'Preparing question...' : 'Loading question text...')}
           </h3>
         </div>
       </main>
@@ -513,6 +593,15 @@ export const InterviewRoom: React.FC<{
               // Stop recorder if active
               if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
                 mediaRecorderRef.current.stop();
+              }
+              // Explicit candidate skip action in backend (Rule 10)
+              try {
+                await api.post(`/interviews/public/${token}/skip-question`, {
+                  questionId: currentQuestionIdRef.current,
+                  questionIndex: currentQuestion?.questionIndex,
+                });
+              } catch (skipErr) {
+                console.error('[InterviewRoom] Skip question error:', skipErr);
               }
               // Wait briefly and fetch next question directly without upload
               setTimeout(async () => {

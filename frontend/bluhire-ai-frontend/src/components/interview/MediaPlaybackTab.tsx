@@ -36,8 +36,10 @@ export const MediaPlaybackTab: React.FC<MediaPlaybackTabProps> = ({ candidateId 
 
   const questionReviews = media?.questionReviews || [];
   const totalQuestions = media?.totalQuestions || questionReviews.length || 0;
-  const answeredCount = media?.answeredCount ?? 0;
-  const skippedCount = media?.skippedCount ?? Math.max(0, totalQuestions - answeredCount);
+  const answeredCount = media?.answeredCount ?? questionReviews.filter((q: any) => q.status === 'ANSWERED').length;
+  const skippedCount = media?.skippedCount ?? questionReviews.filter((q: any) => q.status === 'SKIPPED').length;
+  const transcriptionFailedCount = media?.transcriptionFailedCount ?? questionReviews.filter((q: any) => q.status === 'TRANSCRIPTION_FAILED').length;
+  const recordingFailedCount = media?.recordingFailedCount ?? questionReviews.filter((q: any) => q.status === 'RECORDING_FAILED').length;
 
   if (error || !media || (!questionReviews.length && !media.recordings?.length && !media.transcripts?.length)) {
     return (
@@ -60,6 +62,22 @@ export const MediaPlaybackTab: React.FC<MediaPlaybackTabProps> = ({ candidateId 
     evaluation: { status: 'NOT_EVALUATED' },
   };
 
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'ANSWERED':
+        return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
+      case 'TRANSCRIPTION_FAILED':
+        return 'bg-amber-500/10 text-amber-400 border-amber-500/20';
+      case 'RECORDING_FAILED':
+        return 'bg-rose-500/10 text-rose-400 border-rose-500/20';
+      case 'PENDING':
+        return 'bg-blue-500/10 text-blue-400 border-blue-500/20';
+      case 'SKIPPED':
+      default:
+        return 'bg-zinc-500/10 text-zinc-400 border-zinc-500/20';
+    }
+  };
+
   return (
     <div className="w-full bg-card dark:bg-card/80 backdrop-blur-md rounded-2xl border border-border dark:border-white/10 shadow-[0_4px_20px_rgba(23,32,51,0.06)] dark:shadow-lg font-sans flex flex-col md:flex-row overflow-hidden min-h-[550px]">
       
@@ -67,11 +85,19 @@ export const MediaPlaybackTab: React.FC<MediaPlaybackTabProps> = ({ candidateId 
       <div className="md:w-1/3 bg-muted/20 dark:bg-white/[0.02] border-r border-border dark:border-white/10 flex flex-col">
         <div className="p-4 border-b border-border dark:border-white/10 bg-muted/30 dark:bg-white/[0.02]">
           <h3 className="font-bold text-foreground dark:text-white text-base">Interview Segments</h3>
-          <div className="flex items-center justify-between mt-1 text-xs text-muted-foreground dark:text-zinc-400">
-            <span>{answeredCount} answered • {skippedCount} skipped</span>
-            <span className="font-semibold text-primary dark:text-purple-400">
-              {totalQuestions > 0 ? Math.round((answeredCount / totalQuestions) * 100) : 0}% Answered
-            </span>
+          <div className="flex flex-col gap-1 mt-1 text-xs text-muted-foreground dark:text-zinc-400">
+            <div className="flex items-center justify-between">
+              <span>{answeredCount} answered • {skippedCount} skipped</span>
+              <span className="font-semibold text-primary dark:text-purple-400">
+                {totalQuestions > 0 ? Math.round((answeredCount / totalQuestions) * 100) : 0}% Complete
+              </span>
+            </div>
+            {(transcriptionFailedCount > 0 || recordingFailedCount > 0) && (
+              <span className="text-amber-400 text-[11px]">
+                {transcriptionFailedCount > 0 && `${transcriptionFailedCount} audio processing failed `}
+                {recordingFailedCount > 0 && `${recordingFailedCount} recording failed`}
+              </span>
+            )}
           </div>
         </div>
 
@@ -95,21 +121,20 @@ export const MediaPlaybackTab: React.FC<MediaPlaybackTabProps> = ({ candidateId 
                     <span className={`font-semibold text-sm ${isSelected ? 'text-primary dark:text-purple-300' : 'text-foreground dark:text-zinc-300'}`}>
                       Question {q.questionNumber || i + 1}
                     </span>
-                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${
-                      q.status === 'ANSWERED'
-                        ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' 
-                        : q.status === 'NO_RESPONSE'
-                        ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
-                        : 'bg-zinc-500/10 text-zinc-400 border border-zinc-500/20'
-                    }`}>
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider border ${getStatusBadge(q.status)}`}>
                       {q.status}
                     </span>
                   </div>
+                  {q.competency && (
+                    <span className="inline-block text-[11px] text-purple-400 font-medium mt-0.5">
+                      {q.competency}
+                    </span>
+                  )}
                   <p className="text-xs text-muted-foreground dark:text-zinc-400 line-clamp-1 mt-1">
                     {q.questionText}
                   </p>
                 </div>
-                {q.status === 'ANSWERED' ? (
+                {isAnswered ? (
                   <CheckCircle2 className={`w-4 h-4 shrink-0 ${isSelected ? 'text-primary dark:text-purple-400' : 'text-emerald-400'}`} />
                 ) : (
                   <XCircle className="w-4 h-4 shrink-0 text-zinc-400" />
@@ -126,20 +151,28 @@ export const MediaPlaybackTab: React.FC<MediaPlaybackTabProps> = ({ candidateId 
         {/* Question Header & Status */}
         <div className="bg-muted/30 dark:bg-white/[0.02] border border-border dark:border-white/10 rounded-xl p-5">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground dark:text-zinc-400">
-              Question {currentQ.questionNumber} ({currentQ.category || 'General'})
-            </span>
-            <span className={`px-2.5 py-1 rounded-full text-xs font-bold uppercase border ${
-              currentQ.status === 'ANSWERED'
-                ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                : 'bg-zinc-500/10 text-zinc-400 border-zinc-500/20'
-            }`}>
+            <div className="flex items-center space-x-2">
+              <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground dark:text-zinc-400">
+                Question {currentQ.questionNumber} ({currentQ.category || 'General'})
+              </span>
+              {currentQ.competency && (
+                <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-purple-500/10 text-purple-300 border border-purple-500/20">
+                  Target: {currentQ.competency}
+                </span>
+              )}
+            </div>
+            <span className={`px-2.5 py-1 rounded-full text-xs font-bold uppercase border ${getStatusBadge(currentQ.status)}`}>
               {currentQ.status}
             </span>
           </div>
           <h2 className="text-lg font-bold text-foreground dark:text-white">
             {currentQ.questionText}
           </h2>
+          {currentQ.reason && (
+            <p className="text-xs text-muted-foreground dark:text-zinc-400 mt-2 italic">
+              Rationale: {currentQ.reason} {currentQ.sourceSkill ? `(Evaluates ${currentQ.sourceSkill})` : ''}
+            </p>
+          )}
         </div>
 
         {/* Video Player */}

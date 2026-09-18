@@ -53,25 +53,39 @@ export interface InterviewAnswerStats {
   totalQuestions: number;
   answeredCount: number;
   skippedCount: number;
+  transcriptionFailedCount?: number;
+  recordingFailedCount?: number;
   completenessScore: number;
   hasSubstantiveAnswers: boolean;
 }
 
 /**
- * Calculates answer statistics for an interview session based on stored substantive transcripts.
+ * Calculates answer statistics for an interview session based on stored substantive transcripts and response statuses.
+ * NEVER calculates skippedCount by subtraction (Rule 15).
  */
 export function calculateAnswerStats(
   totalQuestionsCount: number,
-  transcripts: Array<{ transcript?: string | null }>
+  items: Array<{ transcript?: string | null; responseStatus?: string }>
 ): InterviewAnswerStats {
   const totalQuestions = Math.max(0, totalQuestionsCount || 0);
-  
-  const substantiveTranscripts = (transcripts || []).filter((t) =>
-    isSubstantiveAnswer(t.transcript)
-  );
 
-  const answeredCount = substantiveTranscripts.length;
-  const skippedCount = Math.max(0, totalQuestions - answeredCount);
+  let answeredCount = 0;
+  let skippedCount = 0;
+  let transcriptionFailedCount = 0;
+  let recordingFailedCount = 0;
+
+  for (const item of items || []) {
+    if (item.responseStatus === 'SKIPPED') {
+      skippedCount++;
+    } else if (item.responseStatus === 'TRANSCRIPTION_FAILED') {
+      transcriptionFailedCount++;
+    } else if (item.responseStatus === 'RECORDING_FAILED') {
+      recordingFailedCount++;
+    } else if (item.responseStatus === 'ANSWERED' || isSubstantiveAnswer(item.transcript)) {
+      answeredCount++;
+    }
+  }
+
   const completenessScore =
     totalQuestions > 0 ? Math.round((answeredCount / totalQuestions) * 100) : 0;
 
@@ -79,6 +93,8 @@ export function calculateAnswerStats(
     totalQuestions,
     answeredCount,
     skippedCount,
+    transcriptionFailedCount,
+    recordingFailedCount,
     completenessScore,
     hasSubstantiveAnswers: answeredCount > 0,
   };

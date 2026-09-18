@@ -1,5 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
-import { ResponseStatus } from '../types/interview.types';
+import { ResponseStatus, EvaluationStatus } from '../types/interview.types';
 
 export interface IInterviewResponse extends Document {
   _id: any;
@@ -8,7 +8,10 @@ export interface IInterviewResponse extends Document {
   candidateId: string; // Reference to Candidate _id
   recordingId?: string; // Reference to InterviewRecording _id
   transcriptId?: string; // Reference to InterviewTranscript _id
-  responseStatus: ResponseStatus;
+  responseStatus: ResponseStatus | string;
+  evaluationStatus: EvaluationStatus | string;
+  transcriptionError?: string | null;
+  evaluationError?: string | null;
   answeredAt?: Date;
   createdAt: Date;
   updatedAt: Date;
@@ -46,9 +49,22 @@ const InterviewResponseSchema = new Schema<any>(
     },
     responseStatus: {
       type: String,
-      enum: Object.values(ResponseStatus),
       default: ResponseStatus.PENDING,
       index: true,
+    },
+    evaluationStatus: {
+      type: String,
+      enum: Object.values(EvaluationStatus),
+      default: EvaluationStatus.NOT_STARTED,
+      index: true,
+    },
+    transcriptionError: {
+      type: String,
+      default: null,
+    },
+    evaluationError: {
+      type: String,
+      default: null,
     },
     answeredAt: {
       type: Date,

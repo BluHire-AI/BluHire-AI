@@ -32,14 +32,22 @@ export default function InterviewRecordingPage() {
     if (token) fetchSession();
   }, [token, router]);
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const handleComplete = async (blobs: Blob[]) => {
+    setIsSubmitting(true);
     try {
-      console.log(`[InterviewRecordingPage] Interview complete. Total blobs captured: ${blobs.length}`);
+      console.log(`[AI_INTERVIEW] Submitting completed session token=${token}, blobsCount=${blobs.length}`);
       await api.post(`/interviews/public/${token}/submit`);
-      console.log('[DEBUG_AUDIT] Submitting session and pushing to success page:', { token, totalBlobs: blobs.length });
+      console.log('[AI_INTERVIEW] Session submitted successfully, routing to success page');
       router.push(`/interview/${token}/success`);
     } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Failed to submit interview.');
+      console.error('[AI_INTERVIEW] Failed to submit interview session:', err);
+      const msg = err.response?.data?.message || err.message || 'Failed to submit interview. Please try again.';
+      toast.error(msg);
+      throw new Error(msg);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -65,6 +73,10 @@ export default function InterviewRecordingPage() {
   if (!session) return null;
 
   return (
-    <InterviewRoom sessionId={token} onComplete={handleComplete} />
+    <InterviewRoom 
+      sessionId={token} 
+      initialTotalQuestions={session?.totalQuestions || session?.interviewConfig?.targetQuestions || 5}
+      onComplete={handleComplete} 
+    />
   );
 }

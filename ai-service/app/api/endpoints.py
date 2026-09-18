@@ -267,28 +267,96 @@ async def transcribe_audio(payload: dict):
         if not file_path:
             raise HTTPException(status_code=400, detail="filePath is required")
         
-        transcript_text = await transcription_service.transcribe(file_path)
+        res = await transcription_service.transcribe(file_path)
         
         return {
             "recordingId": recording_id,
-            "transcript": transcript_text
+            "success": res.get("success", False),
+            "transcript": res.get("transcript", ""),
+            "error": res.get("error")
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Transcription failed: {str(e)}")
 
-from app.services.interview_evaluation import evaluation_service
+from app.services.interview_generator import interview_generator_service
 
+@router.post("/interview/plan-competencies")
+async def plan_competencies_endpoint(payload: dict):
+    try:
+        job_data = payload.get("job") or payload
+        if not job_data or not job_data.get("title"):
+            raise HTTPException(status_code=400, detail="Job data with title is required.")
+        plan = await interview_generator_service.plan_competencies(job_data)
+        return plan.model_dump()
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Competency planning failed: {str(e)}")
+
+@router.post("/interview/generate-question")
+async def generate_question_endpoint(payload: dict):
+    try:
+        job_data = payload.get("job")
+        target_competency = payload.get("targetCompetency")
+        experience_level = payload.get("experienceLevel", "Mid-level")
+        previous_questions = payload.get("previousQuestions", [])
+        previous_answers = payload.get("previousAnswers", [])
+
+        if not job_data or not target_competency:
+            raise HTTPException(status_code=400, detail="job and targetCompetency are required.")
+
+        question = await interview_generator_service.generate_question(
+            job_data=job_data,
+            target_competency=target_competency,
+            experience_level=experience_level,
+            previous_questions=previous_questions,
+            previous_answers=previous_answers
+        )
+        return question.model_dump()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Question generation failed: {str(e)}")
+
+@router.post("/interview/validate-question")
+async def validate_question_endpoint(payload: dict):
+    try:
+        job_data = payload.get("job")
+        question_data = payload.get("question")
+
+        if not job_data or not question_data:
+            raise HTTPException(status_code=400, detail="job and question are required.")
+
+        validation = await interview_generator_service.validate_question_semantic(
+            job_data=job_data,
+            question_data=question_data
+        )
+        return validation.model_dump()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Question validation failed: {str(e)}")
+
+@router.post("/interview/evaluate")
 @router.post("/evaluate")
 async def evaluate_transcript_endpoint(payload: dict):
     try:
         transcript_text = payload.get("transcript")
-        job_role = payload.get("jobRole", "Software Engineer")
-        experience_level = payload.get("experienceLevel", "Mid-level")
-        
         if not transcript_text:
             raise HTTPException(status_code=400, detail="transcript is required")
-            
-        result = await evaluation_service.evaluate_transcript(transcript_text, job_role, experience_level)
-        return result
+
+        job_data = payload.get("job") or {
+            "title": payload.get("jobRole", "Software Engineer"),
+            "description": payload.get("jobDescription", ""),
+            "requiredSkills": payload.get("requiredSkills", [])
+        }
+        question_data = payload.get("question") or {
+            "question": payload.get("questionText", "Technical assessment question"),
+            "competency": payload.get("competency", "Technical Ability"),
+            "expectedTopics": payload.get("expectedTopics", [])
+        }
+
+        result = await interview_generator_service.evaluate_response(
+            job_data=job_data,
+            question_data=question_data,
+            transcript=transcript_text
+        )
+        return result.model_dump()
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Evaluation failed: {str(e)}")

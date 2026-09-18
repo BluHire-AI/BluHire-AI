@@ -92,7 +92,7 @@ export default function CandidateDetailPage() {
 
         {/* Current Status Badge */}
         <div className="bg-muted/40 dark:bg-white/[0.03] border border-border dark:border-white/10 px-6 py-4 rounded-xl text-center min-w-[200px]">
-          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground dark:text-zinc-400 mb-1">Application Status</p>
+          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground dark:text-zinc-400 mb-1">Human Application Status</p>
           <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold tracking-wide uppercase border ${
             candidate.status === 'UNDER_REVIEW' ? 'badge-review' :
             candidate.status === 'SHORTLISTED' ? 'badge-shortlisted' :

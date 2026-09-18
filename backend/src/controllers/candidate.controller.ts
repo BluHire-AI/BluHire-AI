@@ -43,13 +43,188 @@ export const getCandidateById = async (req: Request, res: Response) => {
 export const getCandidateReport = async (req: Request, res: Response) => {
   try {
     const sessionId = req.params.id;
-    const report = await InterviewReport.findOne({ sessionId });
+    let report = await InterviewReport.findOne({ sessionId });
     
     if (!report) {
-      return res.status(404).json({ success: false, message: 'Report not found' });
+      const session = await InterviewSession.findById(sessionId);
+      if (!session) {
+        return res.status(404).json({ success: false, message: 'Interview session not found' });
+      }
+
+      const transcripts = await InterviewTranscript.find({ sessionId });
+      const answerStats = calculateAnswerStats(session.totalQuestions || 8, transcripts);
+      const { totalQuestions, answeredCount, skippedCount, completenessScore, hasSubstantiveAnswers } = answerStats;
+
+      if (!hasSubstantiveAnswers) {
+        return res.status(200).json({
+          success: true,
+          data: {
+            sessionId,
+            candidateSummary: 'Candidate completed the interview session but provided no substantive responses. All interview questions were skipped.',
+            strengths: [],
+            weaknesses: ['All interview questions were skipped'],
+            improvementAreas: ['Participate actively in the interview and provide verbal responses to domain questions'],
+            technicalFeedback: 'No substantive responses provided.',
+            communicationFeedback: 'No substantive responses provided.',
+            problemSolvingFeedback: 'No substantive responses provided.',
+            finalRecommendation: 'INSUFFICIENT_EVIDENCE',
+            confidence: 0,
+            overallScore: null,
+            technicalScore: null,
+            communicationScore: null,
+            problemSolvingScore: null,
+            completenessScore: 0,
+            answeredCount: 0,
+            skippedCount: totalQuestions,
+            totalQuestions,
+            isZeroAnswer: true,
+            isSynthesized: true,
+          }
+        });
+      }
+
+      const substantiveTranscripts = transcripts.filter(t => isSubstantiveAnswer(t.transcript));
+      const transcriptIds = substantiveTranscripts.map(t => t._id);
+
+      const techEvals = await TechnicalEvaluation.find({ transcriptId: { $in: transcriptIds } });
+      const commEvals = await CommunicationAnalysis.find({ transcriptId: { $in: transcriptIds } });
+      const probEvals = await ProblemSolvingEvaluation.find({ transcriptId: { $in: transcriptIds } });
+      const rec = await InterviewRecommendation.findOne({ sessionId });
+
+      const avg = (arr: any[], field: string) =>
+        arr.length > 0 ? arr.reduce((s, e) => s + (e[field] || 0), 0) / arr.length : 0;
+
+      const avgTech = avg(techEvals, 'overallTechnicalScore');
+      const avgPractical = avg(techEvals, 'practicalKnowledge');
+      const avgDepth = avg(techEvals, 'depth');
+      const avgComm = avg(commEvals, 'communicationScore');
+      const avgClarity = avg(commEvals, 'clarityScore');
+      const avgVocab = avg(commEvals, 'vocabularyScore');
+      const avgGrammar = avg(commEvals, 'grammarScore');
+      const avgProb = avg(probEvals, 'overallProblemSolvingScore');
+      const avgLogical = avg(probEvals, 'logicalThinking');
+      const avgTradeoffs = avg(probEvals, 'tradeoffs');
+      const avgApproach = avg(probEvals, 'approach');
+
+      const technicalScore = Math.round(avgTech * 10);
+      const communicationScore = Math.round(avgComm * 10);
+      const problemSolvingScore = Math.round(avgProb * 10);
+
+      const overallScore = Math.round(
+        (technicalScore * 0.40) +
+        (communicationScore * 0.30) +
+        (problemSolvingScore * 0.30)
+      );
+
+      // Distinct dimensional strengths - deduplicated by evaluating each dimension once at aggregate level
+      const strengths: string[] = [];
+      if (avgTech >= 7) {
+        strengths.push(`High technical accuracy and core concept depth (${technicalScore}%)`);
+      }
+      if (avgPractical >= 7 || avgDepth >= 7) {
+        strengths.push('Demonstrated practical architecture and implementation knowledge');
+      }
+      if (avgComm >= 7 || avgClarity >= 7) {
+        strengths.push(`Clear, articulate verbal communication and structured delivery (${communicationScore}%)`);
+      }
+      if (avgVocab >= 7.5 && avgGrammar >= 7.5) {
+        strengths.push('Professional domain vocabulary and clear technical articulation');
+      }
+      if (avgProb >= 7 || avgLogical >= 7) {
+        strengths.push(`Methodical problem-solving approach and systematic reasoning (${problemSolvingScore}%)`);
+      }
+      if (avgTradeoffs >= 7) {
+        strengths.push('Sound evaluation of engineering trade-offs and production constraints');
+      }
+
+      if (strengths.length === 0 && hasSubstantiveAnswers) {
+        strengths.push('Demonstrated ability to answer domain interview questions systematically');
+      }
+
+      // Genuine improvement areas and weaknesses derived from metrics and evaluations
+      const weaknesses: string[] = [];
+      const improvementAreas: string[] = [];
+
+      if (completenessScore < 100) {
+        weaknesses.push(`Incomplete session coverage: answered ${answeredCount} of ${totalQuestions} questions (${completenessScore}% completeness)`);
+        improvementAreas.push('Ensure all interview questions are addressed to provide comprehensive evaluation evidence');
+      }
+      if (avgTech < 6) {
+        weaknesses.push('Identified gaps in core technical concepts or implementation precision');
+        improvementAreas.push('Deepen fundamental technical knowledge and best practices');
+      } else if (avgDepth < 7 || avgTradeoffs < 7) {
+        improvementAreas.push('Provide deeper discussion of architectural trade-offs, scalability, and edge cases');
+      }
+
+      if (avgComm < 6 || avgClarity < 6) {
+        weaknesses.push('Communication delivery lacked structure or conciseness in select responses');
+        improvementAreas.push('Practice structured response delivery (e.g. STAR method) with concise summaries');
+      }
+
+      if (avgProb < 6 || avgApproach < 6) {
+        weaknesses.push('Inconsistent problem-solving framework when analyzing complex scenarios');
+        improvementAreas.push('Adopt a systematic problem decomposition before proposing implementation details');
+      }
+
+      if (weaknesses.length === 0 && improvementAreas.length === 0) {
+        improvementAreas.push('Continue expanding exposure to high-scale production systems and advanced patterns');
+      }
+
+      // Evaluator feedbacks with truthful fallbacks (no fabricated data)
+      const techFeedbacks = techEvals.map((e) => e.feedback?.trim()).filter(Boolean);
+      let finalTechFeedback = techFeedbacks.join(' | ');
+      if (!finalTechFeedback && rec?.reasoning) {
+        const match = rec.reasoning.match(/Technical:\s*([^|]+)/i);
+        if (match && match[1] && match[1].trim() !== 'N/A') finalTechFeedback = match[1].trim();
+      }
+      if (!finalTechFeedback) finalTechFeedback = 'No detailed technical feedback available.';
+
+      const commFeedbacks = commEvals.map((e: any) => e.feedback?.trim()).filter(Boolean);
+      let finalCommFeedback = commFeedbacks.join(' | ');
+      if (!finalCommFeedback && rec?.reasoning) {
+        const match = rec.reasoning.match(/Communication:\s*([^|]+)/i);
+        if (match && match[1] && match[1].trim() !== 'N/A') finalCommFeedback = match[1].trim();
+      }
+      if (!finalCommFeedback) finalCommFeedback = 'No detailed communication feedback available.';
+
+      const probFeedbacks = probEvals.map((e) => e.feedback?.trim()).filter(Boolean);
+      let finalProbFeedback = probFeedbacks.join(' | ');
+      if (!finalProbFeedback && rec?.reasoning) {
+        const match = rec.reasoning.match(/Problem Solving:\s*([^|]+)/i);
+        if (match && match[1] && match[1].trim() !== 'N/A') finalProbFeedback = match[1].trim();
+      }
+      if (!finalProbFeedback) finalProbFeedback = 'No detailed problem-solving feedback available.';
+
+      const finalRec = rec?.recommendation || (overallScore >= 70 ? 'HIRE' : 'REJECT');
+      const candidateSummary = rec?.reasoning || 'Candidate completed the assessment with evaluated technical, communication, and problem-solving responses.';
+
+      return res.status(200).json({
+        success: true,
+        data: {
+          sessionId,
+          candidateSummary,
+          strengths: Array.from(new Set(strengths)),
+          weaknesses: Array.from(new Set(weaknesses)),
+          improvementAreas: Array.from(new Set(improvementAreas)),
+          technicalFeedback: finalTechFeedback,
+          communicationFeedback: finalCommFeedback,
+          problemSolvingFeedback: finalProbFeedback,
+          finalRecommendation: finalRec,
+          confidence: rec?.confidence ?? (overallScore ? overallScore / 100 : null),
+          overallScore,
+          technicalScore,
+          communicationScore,
+          problemSolvingScore,
+          completenessScore,
+          answeredCount,
+          totalQuestions,
+          isSynthesized: true,
+        }
+      });
     }
     res.status(200).json({ success: true, data: report });
   } catch (error) {
+    console.error('getCandidateReport error:', error);
     res.status(500).json({ success: false, message: 'Server Error' });
   }
 };
@@ -256,6 +431,8 @@ export const getCandidateMedia = async (req: Request, res: Response) => {
         totalQuestions: reviewData?.totalQuestions || 0,
         answeredCount: reviewData?.answeredCount || 0,
         skippedCount: reviewData?.skippedCount || 0,
+        transcriptionFailedCount: reviewData?.transcriptionFailedCount || 0,
+        recordingFailedCount: reviewData?.recordingFailedCount || 0,
         completenessScore: reviewData?.completenessScore || 0
       } 
     });

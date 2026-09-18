@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import InterviewSession from '../models/InterviewSession';
 import InterviewQuestion from '../models/InterviewQuestion';
+import InterviewResponse from '../models/InterviewResponse';
 import InterviewRecording from '../models/InterviewRecording';
 import InterviewTranscript from '../models/InterviewTranscript';
 import TechnicalEvaluation from '../models/TechnicalEvaluation';
@@ -13,8 +14,12 @@ export interface QuestionReviewItem {
   questionNumber: number;
   questionText: string;
   category?: string;
+  competency?: string;
   difficulty?: string;
-  status: 'ANSWERED' | 'SKIPPED' | 'NO_RESPONSE';
+  reason?: string;
+  sourceSkill?: string;
+  expectedTopics?: string[];
+  status: 'ANSWERED' | 'SKIPPED' | 'RECORDING_FAILED' | 'TRANSCRIPTION_FAILED' | 'NO_RESPONSE';
   recording: {
     available: boolean;
     url?: string;
@@ -24,7 +29,7 @@ export interface QuestionReviewItem {
     text?: string | null;
   };
   evaluation: {
-    status: 'EVALUATED' | 'NOT_EVALUATED';
+    status: 'EVALUATED' | 'NOT_EVALUATED' | 'FAILED';
     technicalScore?: number | null;
     communicationScore?: number | null;
     problemSolvingScore?: number | null;
@@ -37,12 +42,16 @@ export const getQuestionReviewsBySession = async (sessionId: string) => {
   const session = await InterviewSession.findById(sessionId);
   if (!session) return null;
 
-  // 1. Fetch template questions
-  const questions = await InterviewQuestion.find({ templateId: session.templateId }).sort({ createdAt: 1 });
+  // 1. Fetch session questions (with fallback to templateId for legacy sessions)
+  let questions = await InterviewQuestion.find({ sessionId: session._id }).sort({ createdAt: 1 });
+  if (questions.length === 0 && session.templateId) {
+    questions = await InterviewQuestion.find({ templateId: session.templateId }).sort({ createdAt: 1 });
+  }
 
-  // 2. Fetch all recordings, transcripts for session
+  // 2. Fetch all recordings, transcripts, and responses for session
   const recordings = await InterviewRecording.find({ sessionId });
   const transcripts = await InterviewTranscript.find({ sessionId });
+  const responses = await InterviewResponse.find({ sessionId });
   const transcriptIds = transcripts.map((t) => t._id);
 
   // 3. Fetch evaluations linked to transcripts
@@ -55,15 +64,20 @@ export const getQuestionReviewsBySession = async (sessionId: string) => {
   const probMap = new Map(probEvals.map((e) => [e.transcriptId.toString(), e]));
 
   const questionReviews: QuestionReviewItem[] = questions.map((q, idx) => {
-    // Find recording matching questionId strictly (or fallback to questionIndex only if questionId is null)
+    const qIdStr = q._id.toString();
+
+    // Find recording matching questionId strictly (or fallback to questionIndex)
     const rec = recordings.find(
-      (r) => (r.questionId && r.questionId.toString() === q._id.toString()) || (!r.questionId && r.questionIndex === idx)
+      (r) => (r.questionId && r.questionId.toString() === qIdStr) || (!r.questionId && r.questionIndex === idx)
     );
 
-    // Find transcript matching questionId strictly (or fallback to questionIndex only if questionId is null)
+    // Find transcript matching questionId strictly (or fallback to questionIndex)
     const tr = transcripts.find(
-      (t) => (t.questionId && t.questionId.toString() === q._id.toString()) || (!t.questionId && (t as any).questionIndex === idx)
+      (t) => (t.questionId && t.questionId.toString() === qIdStr) || (!t.questionId && (t as any).questionIndex === idx)
     );
+
+    // Find response document
+    const resp = responses.find((r) => r.questionId?.toString() === qIdStr);
 
     const hasSubstantiveText = tr ? isSubstantiveAnswer(tr.transcript) : false;
     const isRecordingAvailable = !!rec && !!rec.videoUrl;
@@ -75,7 +89,6 @@ export const getQuestionReviewsBySession = async (sessionId: string) => {
       transcriptStatus = 'AVAILABLE';
       cleanTranscriptText = tr.transcript;
     } else if (isRecordingAvailable || (tr && !isSubstantiveAnswer(tr.transcript))) {
-      // Audio/recording exists or transcript doc exists, but no substantive text parsed
       transcriptStatus = 'UNAVAILABLE';
       cleanTranscriptText = tr && !isSubstantiveAnswer(tr.transcript) 
         ? 'Transcript unavailable — no substantive speech detected or processing failed.'
@@ -85,18 +98,34 @@ export const getQuestionReviewsBySession = async (sessionId: string) => {
       cleanTranscriptText = null;
     }
 
-    const questionStatus: 'ANSWERED' | 'SKIPPED' | 'NO_RESPONSE' = hasSubstantiveText
-      ? 'ANSWERED'
-      : isRecordingAvailable
-      ? 'NO_RESPONSE'
-      : 'SKIPPED';
+    // Determine accurate responseStatus based on persisted response and actual pipeline state
+    let questionStatus: 'ANSWERED' | 'SKIPPED' | 'RECORDING_FAILED' | 'TRANSCRIPTION_FAILED' | 'NO_RESPONSE';
 
-    let evalStatus: 'EVALUATED' | 'NOT_EVALUATED' = 'NOT_EVALUATED';
+    if (resp?.responseStatus === 'SKIPPED') {
+      questionStatus = 'SKIPPED';
+    } else if (resp?.responseStatus === 'TRANSCRIPTION_FAILED') {
+      questionStatus = 'TRANSCRIPTION_FAILED';
+    } else if (resp?.responseStatus === 'RECORDING_FAILED') {
+      questionStatus = 'RECORDING_FAILED';
+    } else if (resp?.responseStatus === 'ANSWERED' || hasSubstantiveText) {
+      questionStatus = 'ANSWERED';
+    } else if (isRecordingAvailable) {
+      questionStatus = 'TRANSCRIPTION_FAILED';
+    } else {
+      questionStatus = 'SKIPPED';
+    }
+
+    let evalStatus: 'EVALUATED' | 'NOT_EVALUATED' | 'FAILED' = 'NOT_EVALUATED';
     let techScore: number | null = null;
     let commScore: number | null = null;
     let probScore: number | null = null;
     let overallQScore: number | null = null;
     let feedbackStr: string | null = null;
+
+    if (resp?.evaluationStatus === 'FAILED') {
+      evalStatus = 'FAILED';
+      feedbackStr = resp.evaluationError || 'Automated evaluation service temporarily unavailable.';
+    }
 
     if (tr && hasSubstantiveText) {
       const tEval = techMap.get(tr._id.toString());
@@ -118,11 +147,15 @@ export const getQuestionReviewsBySession = async (sessionId: string) => {
     }
 
     return {
-      questionId: q._id.toString(),
+      questionId: qIdStr,
       questionNumber: idx + 1,
       questionText: q.questionText,
       category: q.category,
+      competency: q.competency,
       difficulty: q.difficulty,
+      reason: q.reason,
+      sourceSkill: q.sourceSkill,
+      expectedTopics: q.expectedTopics,
       status: questionStatus,
       recording: {
         available: isRecordingAvailable,
@@ -143,9 +176,12 @@ export const getQuestionReviewsBySession = async (sessionId: string) => {
     };
   });
 
+  // Calculate statistics directly from actual statuses (Never subtract total - answered)
   const totalQuestions = questions.length;
-  const answeredCount = questionReviews.filter((q) => q.status === 'ANSWERED' && q.transcript.status === 'AVAILABLE').length;
-  const skippedCount = totalQuestions - answeredCount;
+  const answeredCount = questionReviews.filter((q) => q.status === 'ANSWERED').length;
+  const skippedCount = questionReviews.filter((q) => q.status === 'SKIPPED').length;
+  const transcriptionFailedCount = questionReviews.filter((q) => q.status === 'TRANSCRIPTION_FAILED').length;
+  const recordingFailedCount = questionReviews.filter((q) => q.status === 'RECORDING_FAILED').length;
   const completenessScore = totalQuestions > 0 ? Math.round((answeredCount / totalQuestions) * 100) : 0;
 
   return {
@@ -153,7 +189,10 @@ export const getQuestionReviewsBySession = async (sessionId: string) => {
     totalQuestions,
     answeredCount,
     skippedCount,
+    transcriptionFailedCount,
+    recordingFailedCount,
     completenessScore,
+    competencyPlan: session.competencyPlan || [],
     questions: questionReviews,
   };
 };

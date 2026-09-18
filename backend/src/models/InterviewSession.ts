@@ -1,14 +1,33 @@
 import mongoose, { Schema, Document } from 'mongoose';
 import { SessionStatus } from '../types/interview.types';
 
+export interface ICompetencyCoverage {
+  name: string;
+  importance: 'high' | 'medium' | 'low';
+  sourceSkills: string[];
+  covered: boolean;
+  coverageScore: number;
+  questionsAsked: number;
+}
+
+export interface IInterviewConfig {
+  targetQuestions: number;
+  minimumQuestions: number;
+  maximumQuestions: number;
+}
+
 export interface IInterviewSession extends Document {
   _id: any;
   candidateId: string; // Reference to Candidate _id
-  templateId: string; // Reference to InterviewTemplate _id
+  jobId?: string; // Reference to Job _id (Authoritative context for modern interviews)
+  applicationId?: string; // Reference to Application _id
+  templateId?: string; // Reference to InterviewTemplate _id (Legacy fallback)
   recruiterId: string; // Reference to User _id
   status: SessionStatus;
   currentQuestionIndex: number;
   totalQuestions: number;
+  competencyPlan?: ICompetencyCoverage[];
+  interviewConfig?: IInterviewConfig;
   startedAt?: Date;
   completedAt?: Date;
   duration?: number; // In minutes or seconds
@@ -38,11 +57,35 @@ const InterviewSessionSchema = new Schema<any>(
       required: [true, 'Candidate ID is required'],
       index: true,
     },
+    jobId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Job',
+      index: true,
+    },
+    applicationId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Application',
+      index: true,
+    },
     templateId: {
       type: Schema.Types.ObjectId,
       ref: 'InterviewTemplate',
-      required: [true, 'Template ID is required'],
       index: true,
+    },
+    competencyPlan: [
+      {
+        name: { type: String, required: true },
+        importance: { type: String, enum: ['high', 'medium', 'low'], default: 'high' },
+        sourceSkills: { type: [String], default: [] },
+        covered: { type: Boolean, default: false },
+        coverageScore: { type: Number, default: 0 },
+        questionsAsked: { type: Number, default: 0 },
+      },
+    ],
+    interviewConfig: {
+      targetQuestions: { type: Number, default: 5 },
+      minimumQuestions: { type: Number, default: 4 },
+      maximumQuestions: { type: Number, default: 8 },
     },
     recruiterId: {
       type: Schema.Types.ObjectId,

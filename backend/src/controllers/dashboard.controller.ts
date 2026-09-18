@@ -1,38 +1,48 @@
 import { Request, Response } from 'express';
-import Application from '../models/Application';
+import Application, { ApplicationStage } from '../models/Application';
+import Candidate from '../models/Candidate';
+import InterviewSession from '../models/InterviewSession';
+import { SessionStatus } from '../types/interview.types';
 
 export const getDashboardOverview = async (req: Request, res: Response) => {
   try {
-    const statuses = await Application.aggregate([
-      { $match: { isDeleted: false } },
-      {
-        $group: {
-          _id: '$status', // HIRED, REJECTED, etc
-          count: { $sum: 1 },
-        },
-      },
+    const [
+      candidateCount,
+      appCount,
+      completedInterviews,
+      candidateStatuses,
+      applicationStages
+    ] = await Promise.all([
+      Candidate.countDocuments({ isDeleted: false }),
+      Application.countDocuments({ isDeleted: false }),
+      InterviewSession.countDocuments({ status: SessionStatus.COMPLETED }),
+      Candidate.aggregate([
+        { $match: { isDeleted: false } },
+        { $group: { _id: '$status', count: { $sum: 1 } } }
+      ]),
+      Application.aggregate([
+        { $match: { isDeleted: false } },
+        { $group: { _id: '$currentStage', count: { $sum: 1 } } }
+      ])
     ]);
 
     const overview = {
-      totalCandidates: 0,
-      completedInterviews: 0,
+      totalCandidates: candidateCount || appCount || 0,
+      completedInterviews: completedInterviews || 0,
       underReview: 0,
       shortlisted: 0,
       rejected: 0,
       selected: 0,
     };
 
-    statuses.forEach((status) => {
-      overview.totalCandidates += status.count;
+    candidateStatuses.forEach((status) => {
       switch (status._id) {
         case 'UNDER_REVIEW':
         case 'SCREENING':
           overview.underReview += status.count;
           break;
         case 'SHORTLISTED':
-        case 'INTERVIEW':
           overview.shortlisted += status.count;
-          overview.completedInterviews += status.count; // assuming they finished interview if shortlisted
           break;
         case 'REJECTED':
           overview.rejected += status.count;
@@ -40,8 +50,20 @@ export const getDashboardOverview = async (req: Request, res: Response) => {
         case 'HIRED':
         case 'SELECTED':
           overview.selected += status.count;
-          overview.completedInterviews += status.count;
           break;
+      }
+    });
+
+    // Supplement from Application stages if candidate status did not populate them
+    applicationStages.forEach((stage) => {
+      if (stage._id === ApplicationStage.SCREENING && overview.underReview === 0) {
+        overview.underReview += stage.count;
+      } else if (stage._id === ApplicationStage.SHORTLISTED && overview.shortlisted === 0) {
+        overview.shortlisted += stage.count;
+      } else if ((stage._id === ApplicationStage.HIRED || stage._id === ApplicationStage.OFFER) && overview.selected === 0) {
+        overview.selected += stage.count;
+      } else if (stage._id === ApplicationStage.REJECTED && overview.rejected === 0) {
+        overview.rejected += stage.count;
       }
     });
 

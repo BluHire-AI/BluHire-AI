@@ -95,4 +95,4 @@ const InterviewTemplateSchema = new Schema<any>(
 InterviewTemplateSchema.index({ departmentId: 1, status: 1 });
 InterviewTemplateSchema.index({ createdAt: -1 });
 
-export default mongoose.model<IInterviewTemplate>('InterviewTemplate', InterviewTemplateSchema);
+export default mongoose.models.InterviewTemplate || mongoose.model<IInterviewTemplate>('InterviewTemplate', InterviewTemplateSchema);

@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getDashboardOverview, getInterviewSessions, deleteInterviewSession } from '@/services/candidate.service';
-import { Users, CheckCircle, Clock, Star, XCircle, Trophy, Eye, Video, FileText, Trash2 } from 'lucide-react';
+import { Users, CheckCircle, Clock, Star, XCircle, Trophy, Eye, Video, FileText, Trash2, AlertCircle, RefreshCw } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -14,14 +14,24 @@ import { toast } from 'sonner';
 
 export default function AIInterviewsDashboard() {
   const queryClient = useQueryClient();
-  const { data: overview, isLoading: isOverviewLoading } = useQuery({
+  const { data: overview, isLoading: isOverviewLoading, refetch: refetchOverview } = useQuery({
     queryKey: ['ai-interviews-overview'],
     queryFn: getDashboardOverview,
+    staleTime: 0,
+    refetchOnMount: 'always',
   });
 
-  const { data: sessions, isLoading: isSessionsLoading } = useQuery({
+  const { 
+    data: sessions, 
+    isLoading: isSessionsLoading,
+    isError: isSessionsError,
+    error: sessionsError,
+    refetch: refetchSessions
+  } = useQuery({
     queryKey: ['ai-interviews-sessions'],
     queryFn: getInterviewSessions,
+    staleTime: 0,
+    refetchOnMount: 'always',
   });
 
   const deleteSessionMutation = useMutation({
@@ -176,14 +186,32 @@ export default function AIInterviewsDashboard() {
       <div className="mt-8 space-y-4">
         <h2 className="text-h2 text-foreground dark:text-white">Recent AI Interview Sessions</h2>
         <Card className="bg-card dark:bg-card/45 backdrop-blur-2xl border-border dark:border-white/10 shadow-[0_4px_20px_rgba(23,32,51,0.04)] dark:shadow-2xl rounded-2xl overflow-hidden">
-          {!sessions || sessions.length === 0 ? (
+          {isSessionsError ? (
+            <div className="flex flex-col items-center justify-center py-16 px-4 text-center space-y-3">
+              <div className="w-12 h-12 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400">
+                <AlertCircle className="w-6 h-6" />
+              </div>
+              <h3 className="text-sm font-bold text-foreground dark:text-white">Failed to load interview sessions</h3>
+              <p className="text-xs text-muted-foreground dark:text-zinc-400 max-w-sm">
+                {(sessionsError as any)?.response?.data?.message || (sessionsError as any)?.message || 'An error occurred while fetching interview sessions.'}
+              </p>
+              <Button
+                size="sm"
+                onClick={() => refetchSessions()}
+                className="mt-2 bg-primary hover:bg-primary-hover text-white text-xs font-semibold rounded-xl h-8 px-4 gap-1.5"
+              >
+                <RefreshCw className="w-3.5 h-3.5" />
+                Retry
+              </Button>
+            </div>
+          ) : !sessions || sessions.length === 0 ? (
             <div className="text-center py-20 text-muted-foreground text-xs">No active AI interview sessions found.</div>
           ) : (
             <Table>
               <TableHeader className="bg-muted/30 dark:bg-white/5 border-b border-border dark:border-white/10">
                 <TableRow className="hover:bg-transparent border-b border-border dark:border-white/10">
                   <TableHead className="text-small-label font-bold text-foreground dark:text-zinc-300 border-b border-border dark:border-white/10 pl-6">Candidate</TableHead>
-                  <TableHead className="text-small-label font-bold text-foreground dark:text-zinc-300 border-b border-border dark:border-white/10">Template</TableHead>
+                  <TableHead className="text-small-label font-bold text-foreground dark:text-zinc-300 border-b border-border dark:border-white/10">Interview / Role</TableHead>
                   <TableHead className="text-small-label font-bold text-foreground dark:text-zinc-300 border-b border-border dark:border-white/10">Session Status</TableHead>
                   <TableHead className="text-small-label font-bold text-foreground dark:text-zinc-300 border-b border-border dark:border-white/10">Date Invited</TableHead>
                   <TableHead className="text-small-label font-bold text-foreground dark:text-zinc-300 border-b border-border dark:border-white/10 text-right pr-6 w-36">Actions</TableHead>
@@ -201,7 +229,7 @@ export default function AIInterviewsDashboard() {
                       </div>
                     </TableCell>
                     <TableCell className="text-xs text-foreground/80 dark:text-zinc-300 font-medium">
-                      {session.templateId?.title || 'Unknown Template'}
+                      {session.jobId?.title || session.templateId?.title || 'Job Interview'}
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline" className={`text-[9px] font-bold px-2 py-0.5 rounded border ${getStatusColor(session.status)}`}>

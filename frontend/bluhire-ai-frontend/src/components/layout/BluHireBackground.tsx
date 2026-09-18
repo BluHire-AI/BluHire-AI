@@ -8,12 +8,14 @@ interface BluHireBackgroundProps {
   children?: React.ReactNode;
   showConstellation?: boolean;
   className?: string;
+  containerClassName?: string;
 }
 
 export function BluHireBackground({
   children,
   showConstellation = true,
   className = '',
+  containerClassName = '',
 }: BluHireBackgroundProps) {
   const { theme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = React.useState(false);
@@ -33,7 +35,7 @@ export function BluHireBackground({
       </div>
 
       {/* Foreground Content */}
-      <div className="relative z-10 w-full min-h-screen flex flex-col">
+      <div className={`relative z-10 w-full min-h-screen flex flex-col ${containerClassName}`}>
         {children}
       </div>
     </div>

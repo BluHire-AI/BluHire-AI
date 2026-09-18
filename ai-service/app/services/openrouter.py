@@ -19,7 +19,7 @@ class OpenRouterClient:
 
         self.default_model = os.getenv(
             "OPENROUTER_MODEL",
-            "openrouter/auto"
+            "google/gemini-2.5-flash"
         ).strip()
 
         print(f"[OpenRouter] API Key initialized: {'exists' if self.api_key else 'missing'}")
@@ -42,9 +42,10 @@ class OpenRouterClient:
         }
 
         fallbacks = [
-            "google/gemma-2-9b-it:free",
-            "meta-llama/llama-3-8b-instruct:free",
-            "openchat/openchat-7b:free"
+            "google/gemini-2.5-flash",
+            "deepseek/deepseek-chat",
+            "meta-llama/llama-3.3-70b-instruct",
+            "openrouter/auto"
         ]
         models_to_try = [self.default_model]
         for fb in fallbacks:
@@ -69,7 +70,8 @@ class OpenRouterClient:
                         "content": user_prompt
                     }
                 ],
-                "temperature": 0.2
+                "temperature": 0.2,
+                "max_tokens": 1500
             }
 
             if response_format_json:
@@ -79,7 +81,7 @@ class OpenRouterClient:
 
             try:
                 t_call_start = time.perf_counter()
-                async with httpx.AsyncClient(timeout=60.0) as client:
+                async with httpx.AsyncClient(timeout=30.0) as client:
                     response = await client.post(
                         self.api_url,
                         headers=headers,
@@ -87,12 +89,16 @@ class OpenRouterClient:
                     )
                 t_call_end = time.perf_counter()
 
+                if response.status_code == 400 and response_format_json and "response_format" in payload:
+                    print(f"[OpenRouter] Retrying model {model} without response_format constraint...")
+                    del payload["response_format"]
+                    async with httpx.AsyncClient(timeout=30.0) as client:
+                        response = await client.post(self.api_url, headers=headers, json=payload)
+
                 if response.status_code == 200:
                     t_parse_start = time.perf_counter()
                     data = response.json()
                     t_parse_end = time.perf_counter()
-                    # Truncate raw response logging if too large, but keep minimal
-                    # print(f"[OpenRouter] Raw Response:\n{json.dumps(data, indent=2)}")
 
                     if (
                         "choices" in data
@@ -109,26 +115,12 @@ class OpenRouterClient:
                         )
 
                         return data["choices"][0]["message"]["content"]
-
-                        last_error = f"Empty choices returned: {data}"
-
-                        print(
-                            f"[OpenRouter] Empty choices. "
-                            f"Response: {data}"
-                        )
-
                     else:
-                        last_error = (
-                            f"API error status "
-                            f"{response.status_code}: "
-                            f"{response.text}"
-                        )
-
-                        print(
-                            f"[OpenRouter] Failed. "
-                            f"Status={response.status_code} "
-                            f"Response={response.text}"
-                        )
+                        last_error = f"Empty choices returned: {data}"
+                        print(f"[OpenRouter] Empty choices. Response: {data}")
+                else:
+                    last_error = f"API error status {response.status_code}: {response.text}"
+                    print(f"[OpenRouter] Failed with status {response.status_code}: {response.text}")
 
             except Exception as e:
                 last_error = f"Connection error: {str(e)}"

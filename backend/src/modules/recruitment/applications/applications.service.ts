@@ -371,28 +371,31 @@ export class ApplicationsService {
       await existingSession.save();
     }
 
-    // Get an active template
-    const template = await InterviewTemplate.findOne({ status: TemplateStatus.ACTIVE });
-    if (!template) {
-      throw new Error('No active Interview Template found. Please create one first.');
-    }
-
     // Generate Token
     const publicToken = crypto.randomBytes(32).toString('hex');
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7); // 7 days expiration
 
-    // Create Interview Session
+    // Create Job-Aware Interview Session (Job is the source of truth)
     const session = new InterviewSession({
       candidateId: candidate._id,
-      templateId: template._id,
+      jobId: job._id,
+      applicationId: app._id,
       recruiterId: userId,
       status: SessionStatus.CREATED,
-      totalQuestions: template.questionCount || 5,
+      totalQuestions: 5,
+      interviewConfig: { targetQuestions: 5, minimumQuestions: 4, maximumQuestions: 8 },
       publicToken,
       tokenExpiresAt: expiresAt,
     });
     await session.save();
+
+    // Asynchronously initialize competency plan for this Job
+    import('../../../services/question-generator.service').then(({ questionGeneratorService }) => {
+      questionGeneratorService.initializeSessionCompetencies(session, job as any).catch((err: any) => {
+        console.warn(`[JobPlan Warning] Pre-planning competencies async note: ${err.message}`);
+      });
+    });
 
     // Update Application Stage
     await applicationRepository.updateStage(app._id, ApplicationStage.INTERVIEW, userId, 'Candidate invited to AI Interview.');
@@ -688,6 +691,8 @@ export class ApplicationsService {
     const finalScore = Math.round((screeningScore * 0.4) + (overallInterviewScore * 0.6));
 
     // Update Application
+    app.interviewStatus = 'COMPLETED';
+    app.interviewCompletedAt = session.completedAt || app.interviewCompletedAt || new Date();
     app.screeningScore = screeningScore;
     app.interviewScore = overallInterviewScore;
     app.finalScore = finalScore;

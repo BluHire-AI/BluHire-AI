@@ -27,6 +27,7 @@ import CommunicationAnalysis from '../../../models/CommunicationAnalysis';
 import ProblemSolvingEvaluation from '../../../models/ProblemSolvingEvaluation';
 import InterviewRecommendation from '../../../models/InterviewRecommendation';
 import InterviewTranscript from '../../../models/InterviewTranscript';
+import InterviewResponse from '../../../models/InterviewResponse';
 import { computeSkillMatch } from '../../../utils/skill-matcher';
 import { isSubstantiveAnswer, calculateAnswerStats } from '../../../utils/transcript-validator';
 
@@ -36,12 +37,19 @@ export class ApplicationsService {
    */
   private async generateEmployeeCode(): Promise<string> {
     const year = new Date().getFullYear();
-    const count = await EmployeeModel.countDocuments();
-    let index = count + 1;
+    const [empCount, userCount] = await Promise.all([
+      EmployeeModel.countDocuments(),
+      User.countDocuments(),
+    ]);
+    let index = Math.max(empCount, userCount) + 1;
     let empCode = `EMP-${year}-${index.toString().padStart(4, '0')}`;
 
-    // Ensure uniqueness
-    while (await EmployeeRepository.codeExists(empCode)) {
+    // Ensure uniqueness across BOTH Employee and User collections
+    while (
+      (await EmployeeRepository.codeExists(empCode)) ||
+      (await EmployeeModel.exists({ employeeCode: empCode })) ||
+      (await User.exists({ employeeId: empCode }))
+    ) {
       index++;
       empCode = `EMP-${year}-${index.toString().padStart(4, '0')}`;
     }
@@ -465,10 +473,11 @@ export class ApplicationsService {
     const temporaryPassword = `Blu@${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
     const passwordHash = await hashPassword(temporaryPassword);
 
-    // 4. Generate unique Employee ID
-    const year = new Date().getFullYear();
-    const count = await User.countDocuments({ role: SystemRoles.EMPLOYEE });
-    const employeeId = `EMP-${year}-${(count + 1).toString().padStart(4, '0')}`;
+    // 4. Generate or resolve unique Employee ID
+    let employeeId = existingUser?.employeeId;
+    if (!employeeId) {
+      employeeId = await this.generateEmployeeCode();
+    }
 
     // 5. Create or re-activate User account with EMPLOYEE role
     let userAccount = existingUser;
@@ -485,14 +494,17 @@ export class ApplicationsService {
         isActive: true,
       });
     } else {
-      await User.findByIdAndUpdate(existingUser._id, {
-        role: onboardingData?.employeeRole || SystemRoles.EMPLOYEE,
-        employeeId,
+      const updateData: any = {
+        role: onboardingData?.employeeRole || existingUser.role || SystemRoles.EMPLOYEE,
         passwordHash,
         mustChangePassword: true,
         isActive: true,
         refreshToken: null,
-      });
+      };
+      if (!existingUser.employeeId) {
+        updateData.employeeId = employeeId;
+      }
+      userAccount = await User.findByIdAndUpdate(existingUser._id, updateData, { new: true });
     }
 
     // 5b. Create or reactivate the Employee record
@@ -508,12 +520,14 @@ export class ApplicationsService {
       : job.designationId?.toString());
 
     if (!employeeRecord) {
-      // Generate a unique employee code
-      const empCount = await EmployeeModel.countDocuments();
-      const empCode = `EMP${new Date().getFullYear()}${(empCount + 1).toString().padStart(4, '0')}`;
+      // Keep employeeCode in sync with employeeId
+      let finalEmpCode = employeeId;
+      if (await EmployeeRepository.codeExists(finalEmpCode)) {
+        finalEmpCode = await this.generateEmployeeCode();
+      }
 
       employeeRecord = await EmployeeModel.create({
-        employeeCode: empCode,
+        employeeCode: finalEmpCode,
         userId: newUserId,
         firstName: candidate.firstName,
         lastName: candidate.lastName,
@@ -537,7 +551,7 @@ export class ApplicationsService {
         designationId: desigId,
         joiningDate: onboardingData?.joiningDate ? new Date(onboardingData.joiningDate) : new Date(),
         workLocation: job.location || 'Head Office',
-        employmentStatus: 'ACTIVE',
+        employmentStatus: EmploymentStatus.ACTIVE,
         managerId: onboardingData?.managerId === 'NONE' || !onboardingData?.managerId ? undefined : onboardingData.managerId,
         isDeleted: false,
         updatedBy: recruiterId,
@@ -609,9 +623,34 @@ export class ApplicationsService {
       return;
     }
 
-    const app = await Application.findOne({ candidateId: session.candidateId, isDeleted: false }).sort({ createdAt: -1 });
+    let app: any = null;
+    if (session.applicationId) {
+      app = await Application.findOne({ _id: session.applicationId, isDeleted: false });
+    }
     if (!app) {
-      console.error(`[EMAIL ERROR] Active application not found for candidate ${session.candidateId}`);
+      app = await Application.findOne({
+        candidateId: session.candidateId,
+        ...(session.jobId ? { jobId: session.jobId } : {}),
+        isDeleted: false,
+      }).sort({ createdAt: -1 });
+    }
+    if (!app) {
+      console.error(`[AI_EVALUATION] Active application not found for candidate ${session.candidateId} (session: ${sessionId})`);
+      return;
+    }
+
+    // Check whether InterviewResponses are still pending, transcribing, or evaluating
+    const responses = await InterviewResponse.find({ sessionId });
+    const hasInFlightResponses = responses.some(
+      (r) =>
+        r.responseStatus === 'PENDING' ||
+        r.evaluationStatus === 'PROCESSING' ||
+        r.evaluationStatus === 'NOT_STARTED' ||
+        (r.recordingId && !r.transcriptId)
+    );
+
+    if (hasInFlightResponses) {
+      console.log(`[AI_EVALUATION] Score synchronization deferred for session ${sessionId}: responses/evaluations are still in progress.`);
       return;
     }
 
@@ -620,7 +659,7 @@ export class ApplicationsService {
     const answerStats = calculateAnswerStats(session.totalQuestions, transcripts);
     const { totalQuestions, answeredCount, skippedCount, completenessScore, hasSubstantiveAnswers } = answerStats;
 
-    // Check deterministic zero-answer terminal state for completed session
+    // Check deterministic zero-answer terminal state for completed session ONLY when all responses are settled and no substantive answers exist
     if (session.status === SessionStatus.COMPLETED && totalQuestions > 0 && !hasSubstantiveAnswers) {
       console.log(`[ZERO-ANSWER INTERVIEW DETECTED] Session ${sessionId}: 0/${totalQuestions} questions answered. Setting INSUFFICIENT_EVIDENCE state.`);
       
@@ -646,7 +685,11 @@ export class ApplicationsService {
       app.aiRecommendation = 'Requires Review';
       // DO NOT auto-reject application stage or candidate status — keep in active pipeline for recruiter decision
 
-      await CandidateModel.findByIdAndUpdate(session.candidateId, { status: 'UNDER_REVIEW' });
+      // Only update candidate status if not already advanced
+      const cand = await CandidateModel.findById(session.candidateId);
+      if (cand && ['APPLIED', 'SCREENING'].includes(cand.status)) {
+        await CandidateModel.findByIdAndUpdate(session.candidateId, { status: 'UNDER_REVIEW' });
+      }
       await app.save();
 
       console.log(`[APPLICATION UPDATED] Session ${sessionId} marked as COMPLETED_NO_RESPONSES; preserved in review pipeline.`);
@@ -705,15 +748,22 @@ export class ApplicationsService {
       app.aiRecommendation = rec.recommendation;
       app.interviewFeedback = rec.reasoning || app.interviewFeedback;
 
+      // Never downgrade OFFER or HIRED stages
+      const isOfferOrHired = app.currentStage === ApplicationStage.OFFER || app.currentStage === ApplicationStage.HIRED;
+
       if (rec.recommendation === 'REJECT') {
-        app.currentStage = ApplicationStage.REJECTED;
-        app.status = 'REJECTED';
-        await CandidateModel.findByIdAndUpdate(session.candidateId, { status: 'REJECTED' });
-        console.log(`[APPLICATION UPDATED] Auto-rejected candidate based on REJECT recommendation.`);
+        if (!isOfferOrHired) {
+          app.currentStage = ApplicationStage.REJECTED;
+          app.status = 'REJECTED';
+          await CandidateModel.findByIdAndUpdate(session.candidateId, { status: 'REJECTED' });
+          console.log(`[APPLICATION UPDATED] Auto-rejected candidate based on REJECT recommendation.`);
+        }
       } else if (rec.recommendation === 'HIRE') {
-        app.currentStage = ApplicationStage.SHORTLISTED;
-        await CandidateModel.findByIdAndUpdate(session.candidateId, { status: 'SHORTLISTED' });
-        console.log(`[APPLICATION UPDATED] Auto-shortlisted candidate based on HIRE recommendation.`);
+        if (!isOfferOrHired) {
+          app.currentStage = ApplicationStage.SHORTLISTED;
+          await CandidateModel.findByIdAndUpdate(session.candidateId, { status: 'SHORTLISTED' });
+          console.log(`[APPLICATION UPDATED] Auto-shortlisted candidate based on HIRE recommendation.`);
+        }
       }
     }
 

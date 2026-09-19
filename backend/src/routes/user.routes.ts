@@ -3,7 +3,7 @@ import { userController } from '../controllers/user.controller';
 import { authenticate } from '../middlewares/auth.middleware';
 import { authorize } from '../middlewares/role.middleware';
 import { validateRequest } from '../middlewares/validate.middleware';
-import { userUpdateSchema } from '../validators/authValidators';
+import { userUpdateSchema, profileUpdateSchema } from '../validators/authValidators';
 import { SystemRoles } from '../models/roles';
 
 const router = Router();
@@ -13,7 +13,7 @@ router.use(authenticate);
 
 // Profile routes
 router.get('/me', userController.getMe);
-router.put('/me', validateRequest(userUpdateSchema), userController.updateMe);
+router.put('/me', validateRequest(profileUpdateSchema), userController.updateMe);
 
 // Admin / HR Management routes
 router.get('/', authorize([SystemRoles.MANAGEMENT_ADMIN, SystemRoles.SENIOR_MANAGER, SystemRoles.HR_RECRUITER]), userController.listUsers);

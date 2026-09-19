@@ -8,6 +8,12 @@ import ProblemSolvingEvaluation from '../models/ProblemSolvingEvaluation';
 import InterviewTranscript from '../models/InterviewTranscript';
 import InterviewRecording from '../models/InterviewRecording';
 import InterviewRecommendation from '../models/InterviewRecommendation';
+import InterviewResponse from '../models/InterviewResponse';
+import Candidate from '../models/Candidate';
+import Job from '../models/Job';
+import Department from '../models/Department';
+import InterviewTemplate from '../models/InterviewTemplate';
+import { SessionStatus } from '../types/interview.types';
 import { isSubstantiveAnswer, calculateAnswerStats } from '../utils/transcript-validator';
 
 export const getCandidates = async (req: Request, res: Response) => {
@@ -25,8 +31,19 @@ export const getCandidates = async (req: Request, res: Response) => {
 
 export const getCandidateById = async (req: Request, res: Response) => {
   try {
+    // Explicitly reference models so Mongoose registers schemas for populate()
+    void Candidate;
+    void Job;
+    void Department;
+    void InterviewTemplate;
+
     const session = await InterviewSession.findById(req.params.id)
       .populate('candidateId')
+      .populate({
+        path: 'jobId',
+        select: 'title departmentId location',
+        populate: { path: 'departmentId', select: 'name' }
+      })
       .populate('templateId');
     
     if (!session) {
@@ -51,11 +68,65 @@ export const getCandidateReport = async (req: Request, res: Response) => {
         return res.status(404).json({ success: false, message: 'Interview session not found' });
       }
 
+      const responses = await InterviewResponse.find({ sessionId });
+      const recordings = await InterviewRecording.find({ sessionId });
       const transcripts = await InterviewTranscript.find({ sessionId });
+
+      // Check if responses are still being transcribed or evaluated
+      const isProcessing =
+        responses.some(
+          (r) =>
+            r.responseStatus === 'PENDING' ||
+            r.evaluationStatus === 'PROCESSING' ||
+            r.evaluationStatus === 'NOT_STARTED' ||
+            (r.recordingId && !r.transcriptId)
+        ) ||
+        (recordings.length > 0 && recordings.length > transcripts.length);
+
+      if (isProcessing) {
+        return res.status(200).json({
+          success: true,
+          data: {
+            sessionId,
+            evaluationStatus: 'PROCESSING',
+            candidateSummary: 'Interview responses are currently being transcribed and evaluated by AI. Results will appear shortly.',
+            strengths: [],
+            weaknesses: [],
+            improvementAreas: [],
+            technicalFeedback: 'Evaluation in progress.',
+            communicationFeedback: 'Evaluation in progress.',
+            problemSolvingFeedback: 'Evaluation in progress.',
+            finalRecommendation: 'PROCESSING',
+            confidence: null,
+            overallScore: null,
+            technicalScore: null,
+            communicationScore: null,
+            problemSolvingScore: null,
+            completenessScore: null,
+            answeredCount: responses.filter(r => r.responseStatus === 'ANSWERED').length,
+            skippedCount: responses.filter(r => r.responseStatus === 'SKIPPED').length,
+            totalQuestions: session.totalQuestions || 8,
+            isZeroAnswer: false,
+            isProcessing: true,
+            isSynthesized: true,
+          }
+        });
+      }
+
       const answerStats = calculateAnswerStats(session.totalQuestions || 8, transcripts);
       const { totalQuestions, answeredCount, skippedCount, completenessScore, hasSubstantiveAnswers } = answerStats;
 
-      if (!hasSubstantiveAnswers) {
+      const substantiveTranscripts = transcripts.filter(t => isSubstantiveAnswer(t.transcript));
+      const transcriptIds = substantiveTranscripts.map(t => t._id);
+
+      const techEvals = await TechnicalEvaluation.find({ transcriptId: { $in: transcriptIds } });
+      const commEvals = await CommunicationAnalysis.find({ transcriptId: { $in: transcriptIds } });
+      const probEvals = await ProblemSolvingEvaluation.find({ transcriptId: { $in: transcriptIds } });
+      const rec = await InterviewRecommendation.findOne({ sessionId });
+
+      const hasEvaluationData = techEvals.length > 0 || commEvals.length > 0 || probEvals.length > 0 || !!rec;
+
+      if (!hasSubstantiveAnswers && !hasEvaluationData) {
         return res.status(200).json({
           success: true,
           data: {
@@ -82,14 +153,6 @@ export const getCandidateReport = async (req: Request, res: Response) => {
           }
         });
       }
-
-      const substantiveTranscripts = transcripts.filter(t => isSubstantiveAnswer(t.transcript));
-      const transcriptIds = substantiveTranscripts.map(t => t._id);
-
-      const techEvals = await TechnicalEvaluation.find({ transcriptId: { $in: transcriptIds } });
-      const commEvals = await CommunicationAnalysis.find({ transcriptId: { $in: transcriptIds } });
-      const probEvals = await ProblemSolvingEvaluation.find({ transcriptId: { $in: transcriptIds } });
-      const rec = await InterviewRecommendation.findOne({ sessionId });
 
       const avg = (arr: any[], field: string) =>
         arr.length > 0 ? arr.reduce((s, e) => s + (e[field] || 0), 0) / arr.length : 0;
@@ -238,13 +301,59 @@ export const getCandidateScorecard = async (req: Request, res: Response) => {
       return res.status(404).json({ success: false, message: 'Scorecard not found' });
     }
 
-    // Compute answer stats using substantive transcripts helper
+    const responses = await InterviewResponse.find({ sessionId });
+    const recordings = await InterviewRecording.find({ sessionId });
     const transcripts = await InterviewTranscript.find({ sessionId });
+
+    // Check if responses are still being transcribed or evaluated
+    const isProcessing =
+      responses.some(
+        (r) =>
+          r.responseStatus === 'PENDING' ||
+          r.evaluationStatus === 'PROCESSING' ||
+          r.evaluationStatus === 'NOT_STARTED' ||
+          (r.recordingId && !r.transcriptId)
+      ) ||
+      (recordings.length > 0 && recordings.length > transcripts.length);
+
+    if (isProcessing) {
+      return res.status(200).json({
+        success: true,
+        data: {
+          technicalScore: null,
+          communicationScore: null,
+          problemSolvingScore: null,
+          completenessScore: null,
+          overallScore: null,
+          recommendation: 'PROCESSING',
+          reasonCode: 'EVALUATION_IN_PROGRESS',
+          confidence: null,
+          reasoning: 'Interview evaluation is in progress. Scores will appear once transcription and analysis are completed.',
+          answeredCount: responses.filter((r) => r.responseStatus === 'ANSWERED').length,
+          skippedCount: responses.filter((r) => r.responseStatus === 'SKIPPED').length,
+          totalQuestions: session.totalQuestions || 8,
+          answerCompleteness: 0,
+          evaluationStatus: 'PROCESSING',
+        },
+      });
+    }
+
+    // Compute answer stats using substantive transcripts helper
     const answerStats = calculateAnswerStats(session.totalQuestions, transcripts);
     const { totalQuestions, answeredCount, skippedCount, completenessScore, hasSubstantiveAnswers } = answerStats;
 
-    // Handle zero substantive answers (completed or in-progress with 0 answers)
-    if (!hasSubstantiveAnswers) {
+    const substantiveTranscripts = transcripts.filter(t => isSubstantiveAnswer(t.transcript));
+    const transcriptIds = substantiveTranscripts.map(t => t._id);
+
+    const techEvals = await TechnicalEvaluation.find({ transcriptId: { $in: transcriptIds } });
+    const commEvals = await CommunicationAnalysis.find({ transcriptId: { $in: transcriptIds } });
+    const probEvals = await ProblemSolvingEvaluation.find({ transcriptId: { $in: transcriptIds } });
+    const rec = await InterviewRecommendation.findOne({ sessionId });
+
+    const hasEvaluationData = techEvals.length > 0 || commEvals.length > 0 || probEvals.length > 0 || !!rec;
+
+    // Handle zero substantive answers ONLY when no evaluation data exists
+    if (!hasSubstantiveAnswers && !hasEvaluationData) {
       const reasoning = "Candidate completed the interview session but provided no substantive responses. All interview questions were skipped, so technical, communication, and problem-solving ability could not be evaluated.";
       return res.status(200).json({
         success: true,
@@ -267,15 +376,6 @@ export const getCandidateScorecard = async (req: Request, res: Response) => {
       });
     }
 
-    // Filter substantive transcripts only
-    const substantiveTranscripts = transcripts.filter(t => isSubstantiveAnswer(t.transcript));
-    const transcriptIds = substantiveTranscripts.map(t => t._id);
-
-    // Step 2: Fetch evaluations scoped to these substantive transcript IDs
-    const techEvals = await TechnicalEvaluation.find({ transcriptId: { $in: transcriptIds } });
-    const commEvals = await CommunicationAnalysis.find({ transcriptId: { $in: transcriptIds } });
-    const probEvals = await ProblemSolvingEvaluation.find({ transcriptId: { $in: transcriptIds } });
-
     const avg = (arr: any[], field: string) =>
       arr.length > 0 ? arr.reduce((s, e) => s + (e[field] || 0), 0) / arr.length : 0;
 
@@ -292,8 +392,6 @@ export const getCandidateScorecard = async (req: Request, res: Response) => {
       (communicationScore * 0.30) +
       (problemSolvingScore * 0.30)
     );
-
-    const rec = await InterviewRecommendation.findOne({ sessionId });
 
     res.status(200).json({
       success: true,

@@ -25,7 +25,13 @@ export default function CreateEmployeePage() {
   // Form states
   const [users, setUsers] = useState<User[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
+  const [departmentsLoading, setDepartmentsLoading] = useState(true);
+  const [departmentsError, setDepartmentsError] = useState<string | null>(null);
+
   const [designations, setDesignations] = useState<Designation[]>([]);
+  const [designationsLoading, setDesignationsLoading] = useState(true);
+  const [designationsError, setDesignationsError] = useState<string | null>(null);
+
   const [managers, setManagers] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -62,26 +68,69 @@ export default function CreateEmployeePage() {
   // Fetch form dependency data
   useEffect(() => {
     const fetchData = async () => {
-      try {
-        const [usersRes, deptsRes, desgsRes, employeesRes] = await Promise.all([
-          userService.list({ limit: 100 }).catch(() => ({ users: [], total: 0 })),
-          departmentService.getActive().catch(() => []),
-          designationService.getAll().catch(() => []),
-          employeeService.list({ limit: 100 }).catch(() => ({ employees: [], total: 0 }))
-        ]);
-        
-        // Filter users who do not have an employee profile already
-        const unlinked = (usersRes?.users || []).filter(u => !u.employeeId);
-        setUsers(unlinked);
-        setDepartments(deptsRes || []);
-        setDesignations(desgsRes || []);
-        setManagers(employeesRes?.employees || []);
-      } catch (error) {
-        toast.error('Failed to load dependency data for the form');
-      }
+      // 1. Fetch Users
+      userService.list({ limit: 100 })
+        .then((res) => {
+          const unlinked = (res?.users || []).filter((u) => !u.employeeId);
+          setUsers(unlinked);
+        })
+        .catch(() => setUsers([]));
+
+      // 2. Fetch Departments with explicit loading and error handling
+      setDepartmentsLoading(true);
+      departmentService.getActive()
+        .then((depts) => {
+          setDepartments(depts || []);
+          setDepartmentsError(null);
+        })
+        .catch(() => {
+          setDepartmentsError('Failed to load departments');
+          setDepartments([]);
+        })
+        .finally(() => setDepartmentsLoading(false));
+
+      // 3. Fetch Designations with explicit loading and error handling
+      setDesignationsLoading(true);
+      designationService.getAll()
+        .then((desgs) => {
+          setDesignations(desgs || []);
+          setDesignationsError(null);
+        })
+        .catch(() => {
+          setDesignationsError('Failed to load designations');
+          setDesignations([]);
+        })
+        .finally(() => setDesignationsLoading(false));
+
+      // 4. Fetch Managers
+      employeeService.list({ limit: 100 })
+        .then((res) => setManagers(res?.employees || []))
+        .catch(() => setManagers([]));
     };
     fetchData();
   }, []);
+
+  // Filter designations by selected department
+  const availableDesignations = React.useMemo(() => {
+    if (!departmentId) return [];
+    return designations.filter((d) => {
+      const dDeptId = typeof d.departmentId === 'object' && d.departmentId ? (d.departmentId as any)._id : d.departmentId;
+      return String(dDeptId) === String(departmentId);
+    });
+  }, [designations, departmentId]);
+
+  // Handle department change with designation invalidation
+  const handleDepartmentChange = (newDeptId: string) => {
+    setDepartmentId(newDeptId);
+    // If currently selected designation does not belong to new department, clear it
+    const matching = designations.find((d) => {
+      const dDeptId = typeof d.departmentId === 'object' && d.departmentId ? (d.departmentId as any)._id : d.departmentId;
+      return String(d._id) === String(designationId) && String(dDeptId) === String(newDeptId);
+    });
+    if (!matching) {
+      setDesignationId('');
+    }
+  };
 
   // Autofill user fields when linked user is selected
   const handleUserSelect = (userId: string) => {
@@ -366,9 +415,24 @@ export default function CreateEmployeePage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5.5">
               <div className="space-y-2">
                 <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">Department <span className="text-destructive">*</span></label>
-                <Select value={departmentId} onValueChange={setDepartmentId} searchable={true}>
+                <Select
+                  value={departmentId}
+                  onValueChange={handleDepartmentChange}
+                  searchable={true}
+                  disabled={departmentsLoading}
+                >
                   <SelectTrigger className="w-full h-10 rounded-xl border border-border/60 bg-muted/20">
-                    <SelectValue placeholder="Select Department..." />
+                    <SelectValue
+                      placeholder={
+                        departmentsLoading
+                          ? "Loading departments..."
+                          : departmentsError
+                          ? "Failed to load departments"
+                          : departments.length === 0
+                          ? "No departments available"
+                          : "Select Department..."
+                      }
+                    />
                   </SelectTrigger>
                   <SelectContent className="bg-card border border-border">
                     {departments.map((d) => (
@@ -376,20 +440,46 @@ export default function CreateEmployeePage() {
                     ))}
                   </SelectContent>
                 </Select>
+                {departmentsError && (
+                  <p className="text-[11px] text-destructive font-medium">{departmentsError}</p>
+                )}
               </div>
 
               <div className="space-y-2">
                 <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">Designation <span className="text-destructive">*</span></label>
-                <Select value={designationId} onValueChange={setDesignationId} searchable={true}>
+                <Select
+                  value={designationId}
+                  onValueChange={setDesignationId}
+                  searchable={true}
+                  disabled={!departmentId || designationsLoading || availableDesignations.length === 0}
+                >
                   <SelectTrigger className="w-full h-10 rounded-xl border border-border/60 bg-muted/20">
-                    <SelectValue placeholder="Select Designation..." />
+                    <SelectValue
+                      placeholder={
+                        !departmentId
+                          ? "Select a department first"
+                          : designationsLoading
+                          ? "Loading designations..."
+                          : designationsError
+                          ? "Failed to load designations"
+                          : availableDesignations.length === 0
+                          ? "No designations available for this department"
+                          : "Select Designation..."
+                      }
+                    />
                   </SelectTrigger>
                   <SelectContent className="bg-card border border-border">
-                    {designations.map((d) => (
+                    {availableDesignations.map((d) => (
                       <SelectItem key={d._id} value={d._id} className="cursor-pointer">{d.title} (Level {d.level})</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
+                {designationsError && (
+                  <p className="text-[11px] text-destructive font-medium">{designationsError}</p>
+                )}
+                {!departmentId && !designationsLoading && (
+                  <p className="text-[11px] text-muted-foreground/70 font-medium">Please select a department to view available designations.</p>
+                )}
               </div>
 
               <div className="space-y-2">

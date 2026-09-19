@@ -216,6 +216,45 @@ export const InterviewRoom: React.FC<{
     }
   }, []);
 
+  // ─── Promise-based Recorder Stop & Blob Resolution (Phase 2 & 3) ────────────
+  const stopRecorderAndGetBlob = useCallback((): Promise<Blob | null> => {
+    return new Promise((resolve) => {
+      const recorder = mediaRecorderRef.current;
+      if (!recorder || recorder.state === 'inactive') {
+        const fallbackBlob = allRecordedBlobsRef.current[allRecordedBlobsRef.current.length - 1] || null;
+        return resolve(fallbackBlob);
+      }
+
+      let timeoutId: any = null;
+
+      const handleStop = () => {
+        if (timeoutId) clearTimeout(timeoutId);
+        try {
+          const blob = new Blob(recordedChunksRef.current, { type: 'video/webm' });
+          console.log(`[InterviewRoom] Recording stopped & assembled. Blob size: ${blob.size} bytes, type: ${blob.type}`);
+          allRecordedBlobsRef.current.push(blob);
+          resolve(blob);
+        } catch (e) {
+          console.error('[InterviewRoom] Error assembling recorded blob on stop:', e);
+          resolve(allRecordedBlobsRef.current[allRecordedBlobsRef.current.length - 1] || null);
+        }
+      };
+
+      // Fallback timeout in case onstop never fires
+      timeoutId = setTimeout(() => {
+        console.warn('[InterviewRoom] Recorder onstop timed out after 5000ms. Forcing fallback resolution.');
+        const fallbackBlob = recordedChunksRef.current.length > 0 
+          ? new Blob(recordedChunksRef.current, { type: 'video/webm' }) 
+          : (allRecordedBlobsRef.current[allRecordedBlobsRef.current.length - 1] || null);
+        resolve(fallbackBlob);
+      }, 5000);
+
+      recorder.onstop = handleStop;
+      recorder.stop();
+      console.log('[InterviewRoom] Recording stop() called, awaiting onstop event.');
+    });
+  }, []);
+
   // ─── Repeat Question ────────────────────────────────────────────────────────
   const handleRepeatQuestion = () => {
     if (replayCount >= 2) {
@@ -226,43 +265,41 @@ export const InterviewRoom: React.FC<{
     setPhase('AI_SPEAKING');
   };
 
-  // ─── Submit Answer ──────────────────────────────────────────────────────────
-  const handleSubmitAnswer = useCallback(() => {
+  // ─── Submit Answer (Explicit Await Chain: Stop -> Upload -> Next Question) ──
+  const handleSubmitAnswer = useCallback(async () => {
     setPhase('PROCESSING');
 
-    // Stop recorder — onstop fires asynchronously
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
-      mediaRecorderRef.current.stop();
-      console.log('[InterviewRoom] Recording stop() called.');
-    }
+    try {
+      // 1. Explicitly await MediaRecorder stop and Blob assembly (removes arbitrary setTimeout)
+      const blob = await stopRecorderAndGetBlob();
 
-    // Wait for onstop to fire (blob to be assembled) before fetching next question
-    setTimeout(async () => {
-      // Upload the last recorded blob immediately so we don't wait until end
-      const lastBlob = allRecordedBlobsRef.current[allRecordedBlobsRef.current.length - 1];
-      if (lastBlob && currentQuestionIdRef.current) {
+      // 2. Upload recording and await server response so Q8 is persisted before completing
+      if (blob && currentQuestionIdRef.current) {
         try {
           const formData = new FormData();
           const qi = currentQuestion?.questionIndex ?? 0;
-          // Append text fields FIRST so backend multer has them in req.body
           formData.append('questionIndex', qi.toString());
-          if (currentQuestionIdRef.current) {
-            formData.append('questionId', currentQuestionIdRef.current);
-          }
-          formData.append('video', lastBlob, `question_${qi}.webm`);
+          formData.append('questionId', currentQuestionIdRef.current);
+          formData.append('video', blob, `question_${qi}.webm`);
+          console.log(`[InterviewRoom] Uploading answer for question ${qi} (size: ${blob.size} bytes)...`);
           await api.post(`/interviews/public/${token}/upload`, formData, {
             headers: { 'Content-Type': 'multipart/form-data' },
           });
           console.log(`[InterviewRoom] Upload successful for question ${qi}.`);
         } catch (uploadErr) {
-          console.error('[InterviewRoom] Upload failed:', uploadErr);
+          console.error('[InterviewRoom] Upload failed for question:', uploadErr);
         }
+      } else {
+        console.warn('[InterviewRoom] No blob or questionId available to upload.');
       }
 
-      // Fetch next adaptive question
+      // 3. Only after upload completes, fetch next question (which detects termination if Q8)
       await fetchNextQuestion();
-    }, 1500);
-  }, [currentQuestion, token, fetchNextQuestion]);
+    } catch (err: any) {
+      console.error('[InterviewRoom] Error in handleSubmitAnswer:', err);
+      await fetchNextQuestion();
+    }
+  }, [currentQuestion, token, fetchNextQuestion, stopRecorderAndGetBlob]);
 
   const totalQuestions = currentQuestion?.totalQuestions ?? initialTotalQuestions ?? 5;
   const questionIndex = currentQuestion?.questionIndex ?? (phase === 'LOADING_QUESTION' ? 1 : 0);
@@ -603,10 +640,7 @@ export const InterviewRoom: React.FC<{
               } catch (skipErr) {
                 console.error('[InterviewRoom] Skip question error:', skipErr);
               }
-              // Wait briefly and fetch next question directly without upload
-              setTimeout(async () => {
-                await fetchNextQuestion();
-              }, 500);
+              await fetchNextQuestion();
             }}
             disabled={phase !== 'RECORDING' && phase !== 'COUNTDOWN'}
             className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 hover:bg-white/15 disabled:opacity-40 border border-white/15 text-xs font-semibold text-zinc-300 hover:text-white transition-all cursor-pointer disabled:cursor-not-allowed"

@@ -5,12 +5,12 @@ export const registerSchema = Joi.object({
   firstName: Joi.string().required().min(2).max(50),
   lastName: Joi.string().required().min(2).max(50),
   email: Joi.string().email().required(),
-  employeeId: Joi.string().required(),
+  employeeId: Joi.string().optional().allow('', null),
   password: Joi.string().min(8).required(),
-  phone: Joi.string().optional(),
-  role: Joi.string().valid(...Object.values(SystemRoles)).optional(),
-  department: Joi.string().optional(),
-  designation: Joi.string().optional(),
+  phone: Joi.string().optional().allow('', null),
+  role: Joi.string().valid(SystemRoles.EMPLOYEE).optional(),
+  department: Joi.string().optional().allow('', null),
+  designation: Joi.string().optional().allow('', null),
 });
 
 export const loginSchema = Joi.object({
@@ -22,12 +22,21 @@ export const refreshTokenSchema = Joi.object({
   refreshToken: Joi.string().required(),
 });
 
+export const profileUpdateSchema = Joi.object({
+  firstName: Joi.string().min(2).max(50).optional(),
+  lastName: Joi.string().min(2).max(50).optional(),
+  phone: Joi.string().allow('', null).optional(),
+  department: Joi.string().allow('', null).optional(),
+  designation: Joi.string().allow('', null).optional(),
+  profileImage: Joi.string().allow('', null).optional(),
+});
+
 export const userUpdateSchema = Joi.object({
   firstName: Joi.string().min(2).max(50),
   lastName: Joi.string().min(2).max(50),
-  phone: Joi.string(),
-  department: Joi.string(),
-  designation: Joi.string(),
+  phone: Joi.string().allow('', null),
+  department: Joi.string().allow('', null),
+  designation: Joi.string().allow('', null),
   isActive: Joi.boolean(),
   role: Joi.string().valid(...Object.values(SystemRoles)),
 });

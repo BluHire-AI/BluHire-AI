@@ -26,7 +26,13 @@ export default function EditEmployeePage() {
 
   // Lists
   const [departments, setDepartments] = useState<Department[]>([]);
+  const [departmentsLoading, setDepartmentsLoading] = useState(true);
+  const [departmentsError, setDepartmentsError] = useState<string | null>(null);
+
   const [designations, setDesignations] = useState<Designation[]>([]);
+  const [designationsLoading, setDesignationsLoading] = useState(true);
+  const [designationsError, setDesignationsError] = useState<string | null>(null);
+
   const [managers, setManagers] = useState<Employee[]>([]);
 
   // Form Fields
@@ -62,15 +68,37 @@ export default function EditEmployeePage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [deptsRes, desgsRes, employeesRes, empData] = await Promise.all([
-          departmentService.getActive().catch(() => []),
-          designationService.getAll().catch(() => []),
+        // Fetch departments
+        setDepartmentsLoading(true);
+        departmentService.getActive()
+          .then((depts) => {
+            setDepartments(depts || []);
+            setDepartmentsError(null);
+          })
+          .catch(() => {
+            setDepartmentsError('Failed to load departments');
+            setDepartments([]);
+          })
+          .finally(() => setDepartmentsLoading(false));
+
+        // Fetch designations
+        setDesignationsLoading(true);
+        designationService.getAll()
+          .then((desgs) => {
+            setDesignations(desgs || []);
+            setDesignationsError(null);
+          })
+          .catch(() => {
+            setDesignationsError('Failed to load designations');
+            setDesignations([]);
+          })
+          .finally(() => setDesignationsLoading(false));
+
+        const [employeesRes, empData] = await Promise.all([
           employeeService.list({ limit: 100 }).catch(() => ({ employees: [], total: 0 })),
           employeeService.get(id)
         ]);
 
-        setDepartments(deptsRes || []);
-        setDesignations(desgsRes || []);
         setManagers((employeesRes?.employees || []).filter(e => e._id !== id));
 
         // Prefill Form Fields
@@ -83,8 +111,10 @@ export default function EditEmployeePage() {
         if (empData.dateOfBirth) {
           setDateOfBirth(new Date(empData.dateOfBirth).toISOString().split('T')[0]);
         }
-        setDepartmentId(empData.departmentId?._id || '');
-        setDesignationId(empData.designationId?._id || '');
+        const deptIdVal = empData.departmentId?._id || (typeof empData.departmentId === 'string' ? empData.departmentId : '');
+        const desgIdVal = empData.designationId?._id || (typeof empData.designationId === 'string' ? empData.designationId : '');
+        setDepartmentId(deptIdVal);
+        setDesignationId(desgIdVal);
         setManagerId(empData.managerId?._id || '');
         setEmploymentType(empData.employmentType || 'FULL_TIME');
         setEmploymentStatus(empData.employmentStatus || 'ACTIVE');
@@ -118,6 +148,27 @@ export default function EditEmployeePage() {
     };
     fetchData();
   }, [id]);
+
+  // Filter designations by selected department
+  const availableDesignations = React.useMemo(() => {
+    if (!departmentId) return [];
+    return designations.filter((d) => {
+      const dDeptId = typeof d.departmentId === 'object' && d.departmentId ? (d.departmentId as any)._id : d.departmentId;
+      return String(dDeptId) === String(departmentId);
+    });
+  }, [designations, departmentId]);
+
+  // Handle department change with designation invalidation
+  const handleDepartmentChange = (newDeptId: string) => {
+    setDepartmentId(newDeptId);
+    const matching = designations.find((d) => {
+      const dDeptId = typeof d.departmentId === 'object' && d.departmentId ? (d.departmentId as any)._id : d.departmentId;
+      return String(d._id) === String(designationId) && String(dDeptId) === String(newDeptId);
+    });
+    if (!matching) {
+      setDesignationId('');
+    }
+  };
 
   const validateForm = () => {
     if (!firstName.trim() || !lastName.trim()) {
@@ -340,9 +391,24 @@ export default function EditEmployeePage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <label className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">Department <span className="text-red-500">*</span></label>
-                <Select value={departmentId} onValueChange={setDepartmentId} searchable={true}>
+                <Select
+                  value={departmentId}
+                  onValueChange={handleDepartmentChange}
+                  searchable={true}
+                  disabled={departmentsLoading}
+                >
                   <SelectTrigger className="w-full h-10">
-                    <SelectValue placeholder="Select Department..." />
+                    <SelectValue
+                      placeholder={
+                        departmentsLoading
+                          ? "Loading departments..."
+                          : departmentsError
+                          ? "Failed to load departments"
+                          : departments.length === 0
+                          ? "No departments available"
+                          : "Select Department..."
+                      }
+                    />
                   </SelectTrigger>
                   <SelectContent>
                     {departments.map((d) => (
@@ -350,20 +416,46 @@ export default function EditEmployeePage() {
                     ))}
                   </SelectContent>
                 </Select>
+                {departmentsError && (
+                  <p className="text-xs text-red-500">{departmentsError}</p>
+                )}
               </div>
 
               <div className="space-y-2">
                 <label className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">Designation <span className="text-red-500">*</span></label>
-                <Select value={designationId} onValueChange={setDesignationId} searchable={true}>
+                <Select
+                  value={designationId}
+                  onValueChange={setDesignationId}
+                  searchable={true}
+                  disabled={!departmentId || designationsLoading || availableDesignations.length === 0}
+                >
                   <SelectTrigger className="w-full h-10">
-                    <SelectValue placeholder="Select Designation..." />
+                    <SelectValue
+                      placeholder={
+                        !departmentId
+                          ? "Select a department first"
+                          : designationsLoading
+                          ? "Loading designations..."
+                          : designationsError
+                          ? "Failed to load designations"
+                          : availableDesignations.length === 0
+                          ? "No designations available for this department"
+                          : "Select Designation..."
+                      }
+                    />
                   </SelectTrigger>
                   <SelectContent>
-                    {designations.map((d) => (
+                    {availableDesignations.map((d) => (
                       <SelectItem key={d._id} value={d._id}>{d.title} (Level {d.level})</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
+                {designationsError && (
+                  <p className="text-xs text-red-500">{designationsError}</p>
+                )}
+                {!departmentId && !designationsLoading && (
+                  <p className="text-xs text-zinc-500">Please select a department to view available designations.</p>
+                )}
               </div>
 
               <div className="space-y-2">

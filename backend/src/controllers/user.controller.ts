@@ -13,7 +13,14 @@ export class UserController {
 
   async updateMe(req: Request | any, res: Response, next: NextFunction): Promise<void> {
     try {
-      const user = await userService.updateProfile(req.user.id, req.body);
+      const allowedFields = ['firstName', 'lastName', 'phone', 'department', 'designation', 'profileImage'];
+      const updateData: Record<string, any> = {};
+      for (const field of allowedFields) {
+        if (req.body[field] !== undefined) {
+          updateData[field] = req.body[field];
+        }
+      }
+      const user = await userService.updateProfile(req.user.id, updateData);
       res.status(200).json({ success: true, data: user });
     } catch (error) {
       next(error);

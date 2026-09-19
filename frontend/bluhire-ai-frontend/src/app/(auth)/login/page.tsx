@@ -71,7 +71,7 @@ export default function LoginPage() {
   };
 
   return (
-    <Card className="w-full border-border/80 dark:border-white/10 bg-card/90 dark:bg-[#0e101e]/85 backdrop-blur-2xl rounded-2xl shadow-xl relative overflow-hidden group">
+    <Card className="w-full border-border/80 dark:border-white/10 bg-card/90 dark:bg-[#0e101e]/85 backdrop-blur-2xl rounded-[24px] shadow-2xl relative overflow-hidden group">
       <div className="absolute top-0 left-0 w-full h-[1.5px] bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
       <CardHeader className="space-y-1.5 pb-6">
         <CardTitle className="text-xl sm:text-2xl font-bold tracking-tight text-foreground dark:text-white">Welcome back</CardTitle>
@@ -88,7 +88,7 @@ export default function LoginPage() {
               type="email" 
               placeholder="name@company.com" 
               {...register('email')}
-              className={`text-xs h-10.5 bg-background/50 dark:bg-white/[0.03] border-border dark:border-white/15 focus:border-primary/60 focus:ring-2 focus:ring-primary/25 text-foreground dark:text-white rounded-xl placeholder:text-muted-foreground/60 transition-all ${errors.email ? 'border-destructive/60' : ''}`}
+              className={`text-xs h-10.5 bg-background/50 dark:bg-white/[0.03] border-border dark:border-white/15 focus-visible:border-primary/60 focus-visible:ring-1 focus-visible:ring-primary/25 text-foreground dark:text-white rounded-xl placeholder:text-muted-foreground/60 transition-all ${errors.email ? 'border-destructive/60' : ''}`}
             />
             {errors.email && (
               <p className="text-[11px] text-destructive mt-1 font-medium">{errors.email.message}</p>
@@ -109,7 +109,7 @@ export default function LoginPage() {
               type="password" 
               placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;"
               {...register('password')}
-              className={`text-xs h-10.5 bg-background/50 dark:bg-white/[0.03] border-border dark:border-white/15 focus:border-primary/60 focus:ring-2 focus:ring-primary/25 text-foreground dark:text-white rounded-xl placeholder:text-muted-foreground/60 transition-all ${errors.password ? 'border-destructive/60' : ''}`}
+              className={`text-xs h-10.5 bg-background/50 dark:bg-white/[0.03] border-border dark:border-white/15 focus-visible:border-primary/60 focus-visible:ring-1 focus-visible:ring-primary/25 text-foreground dark:text-white rounded-xl placeholder:text-muted-foreground/60 transition-all ${errors.password ? 'border-destructive/60' : ''}`}
             />
             {errors.password && (
               <p className="text-[11px] text-destructive mt-1 font-medium">{errors.password.message}</p>
@@ -117,7 +117,7 @@ export default function LoginPage() {
           </div>
           <Button 
             type="submit" 
-            className="w-full h-10.5 mt-2 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-600 dark:hover:bg-indigo-500 text-white text-xs font-bold rounded-xl border-0 shadow-lg shadow-indigo-600/20 dark:shadow-[0_0_20px_rgba(99,102,241,0.25)] transition-all duration-200 cursor-pointer" 
+            className="w-full h-10.5 mt-2 bg-primary hover:bg-primary-hover text-white text-xs font-bold rounded-xl border-0 shadow-lg shadow-primary/20 dark:shadow-[0_0_20px_rgba(139,92,246,0.25)] transition-all duration-200 cursor-pointer" 
             disabled={isLoading}
           >
             {isLoading ? 'Signing in...' : 'Sign in to workspace'}

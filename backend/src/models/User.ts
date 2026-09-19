@@ -60,7 +60,25 @@ const userSchema = new Schema<IUser>(
     mustChangePassword: { type: Boolean, default: false }
   },
   { 
-    timestamps: true // Adds createdAt and updatedAt
+    timestamps: true, // Adds createdAt and updatedAt
+    toJSON: {
+      transform: (_doc: any, ret: any) => {
+        delete ret.passwordHash;
+        delete ret.refreshToken;
+        delete ret.passwordResetOtp;
+        delete ret.passwordResetOtpExpires;
+        return ret;
+      }
+    },
+    toObject: {
+      transform: (_doc: any, ret: any) => {
+        delete ret.passwordHash;
+        delete ret.refreshToken;
+        delete ret.passwordResetOtp;
+        delete ret.passwordResetOtpExpires;
+        return ret;
+      }
+    }
   }
 );
 

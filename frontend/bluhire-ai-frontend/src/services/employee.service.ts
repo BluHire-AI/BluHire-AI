@@ -57,6 +57,8 @@ export interface Employee {
     fileUrl: string;
     uploadedAt: string;
   }>;
+  salaryGrade?: string;
+  experience?: number;
   emergencyContact?: {
     name: string;
     relationship: string;
@@ -66,7 +68,8 @@ export interface Employee {
     street: string;
     city: string;
     state: string;
-    zipCode: string;
+    zipCode?: string;
+    postalCode?: string;
     country: string;
   };
   notes?: string;

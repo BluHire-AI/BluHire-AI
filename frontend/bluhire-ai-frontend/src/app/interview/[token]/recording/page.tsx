@@ -43,7 +43,13 @@ export default function InterviewRecordingPage() {
       router.push(`/interview/${token}/success`);
     } catch (err: any) {
       console.error('[AI_INTERVIEW] Failed to submit interview session:', err);
-      const msg = err.response?.data?.message || err.message || 'Failed to submit interview. Please try again.';
+      // If server confirms session is already completed, route to success page safely
+      if (err.response?.data?.data?.status === 'COMPLETED' || err.response?.data?.message?.toLowerCase().includes('already completed')) {
+        console.log('[AI_INTERVIEW] Session was already confirmed completed, routing to success page.');
+        router.push(`/interview/${token}/success`);
+        return;
+      }
+      const msg = err.response?.data?.message || err.message || 'Failed to submit interview. Please click Retry Submission.';
       toast.error(msg);
       throw new Error(msg);
     } finally {

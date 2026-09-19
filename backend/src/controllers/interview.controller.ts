@@ -95,16 +95,23 @@ export const resetInterviewSession = async (req: Request, res: Response) => {
   }
 };
 
+import Department from '../models/Department';
+
 export const getAllSessions = async (req: Request, res: Response) => {
   try {
     // Explicitly reference models so Mongoose registers schemas for populate()
     void Candidate;
     void Job;
+    void Department;
     void InterviewTemplate;
 
     const sessions = await InterviewSession.find()
       .populate('candidateId', 'firstName lastName email candidateCode status')
-      .populate('jobId', 'title department location')
+      .populate({
+        path: 'jobId',
+        select: 'title departmentId location',
+        populate: { path: 'departmentId', select: 'name' }
+      })
       .populate('templateId', 'title')
       .sort({ createdAt: -1 });
     
@@ -295,8 +302,15 @@ export const submitPublicSession = async (req: Request, res: Response) => {
     console.log(`[AI_INTERVIEW] Completing interview for token: ${token}`);
     
     const session = await InterviewSession.findOne({ publicToken: token });
-    if (!session || (session.tokenExpiresAt && new Date() > session.tokenExpiresAt)) {
-      console.warn(`[AI_INTERVIEW] Completion failed: Invalid or expired token`);
+    if (!session) {
+      console.warn(`[AI_INTERVIEW] Completion failed: Interview session not found for token: ${token}`);
+      return res.status(404).json(createErrorResponse('Interview session not found', undefined, 404));
+    }
+
+    // A legitimately started interview or already completed interview can be safely finalized
+    const isStartedOrCompleted = session.status === SessionStatus.COMPLETED || !!session.startedAt;
+    if (session.tokenExpiresAt && new Date() > session.tokenExpiresAt && !isStartedOrCompleted) {
+      console.warn(`[AI_INTERVIEW] Completion failed: Token expired before interview was started`);
       return res.status(400).json(createErrorResponse('Invalid or expired interview link', undefined, 400));
     }
 
@@ -315,22 +329,35 @@ export const submitPublicSession = async (req: Request, res: Response) => {
     await session.save();
     console.log(`[AI_INTERVIEW] Interview marked COMPLETED for session: ${session._id}`);
 
-    // Ensure Candidate status is UNDER_REVIEW
-    await Candidate.findByIdAndUpdate(session.candidateId, { 
-      $set: { status: 'UNDER_REVIEW' } 
-    });
+    // Ensure Candidate status is UNDER_REVIEW only if not already advanced to OFFER/HIRED/REJECTED
+    const candidate = await Candidate.findById(session.candidateId);
+    if (candidate && ['APPLIED', 'SCREENING'].includes(candidate.status)) {
+      candidate.status = 'UNDER_REVIEW';
+      await candidate.save();
+    }
     
-    // Ensure Application stage and interviewStatus is COMPLETED
-    await Application.findOneAndUpdate(
-      { candidateId: session.candidateId, isDeleted: false },
-      { 
-        $set: {
-          currentStage: ApplicationStage.INTERVIEW, 
-          interviewStatus: 'COMPLETED',
-          interviewCompletedAt: session.completedAt || new Date()
-        }
+    // Ensure Application stage and interviewStatus is COMPLETED using scoped lookup
+    let app: any = null;
+    if (session.applicationId) {
+      app = await Application.findOne({ _id: session.applicationId, isDeleted: false });
+    }
+    if (!app) {
+      app = await Application.findOne({
+        candidateId: session.candidateId,
+        ...(session.jobId ? { jobId: session.jobId } : {}),
+        isDeleted: false,
+      }).sort({ createdAt: -1 });
+    }
+
+    if (app) {
+      app.interviewStatus = 'COMPLETED';
+      app.interviewCompletedAt = session.completedAt || new Date();
+      // Never downgrade OFFER or HIRED or REJECTED
+      if (app.currentStage === ApplicationStage.APPLIED || app.currentStage === ApplicationStage.SCREENING) {
+        app.currentStage = ApplicationStage.INTERVIEW;
       }
-    );
+      await app.save();
+    }
 
     // Check evaluation status from responses
     const responses = await InterviewResponse.find({ sessionId: session._id });

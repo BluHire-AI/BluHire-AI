@@ -3,20 +3,87 @@ import { hashPassword, comparePassword } from '../utils/password.util';
 import { generateTokens, verifyRefreshToken, generateResetToken, verifyResetToken } from '../utils/jwt.util';
 import { RegisterDTO, LoginDTO } from '../dto/user.dto';
 import { emailService } from './email.service';
+import { SystemRoles } from '../models/roles';
+import { User } from '../models/User';
+import EmployeeModel from '../models/Employee';
 
 export class AuthService {
+  private async generateEmployeeCode(): Promise<string> {
+    const year = new Date().getFullYear();
+    const [empCount, userCount] = await Promise.all([
+      EmployeeModel.countDocuments(),
+      User.countDocuments(),
+    ]);
+    let index = Math.max(empCount, userCount) + 1;
+    let empCode = `EMP-${year}-${index.toString().padStart(4, '0')}`;
+
+    while (
+      (await EmployeeModel.exists({ employeeCode: empCode })) ||
+      (await User.exists({ employeeId: empCode }))
+    ) {
+      index++;
+      empCode = `EMP-${year}-${index.toString().padStart(4, '0')}`;
+    }
+    return empCode;
+  }
+
   async register(data: any) {
-    const existingUser = await userRepository.findByEmail(data.email);
+    const normalizedEmail = data.email.toLowerCase().trim();
+    const existingUser = await userRepository.findByEmail(normalizedEmail);
     if (existingUser) {
       throw new Error('Email is already registered');
     }
 
+    let finalEmployeeId: string;
+    const providedEmpId = data.employeeId ? String(data.employeeId).trim() : '';
+
+    if (providedEmpId) {
+      // 1. Check if user with this employeeId already exists
+      const userExists = await User.findOne({ employeeId: providedEmpId });
+      if (userExists) {
+        throw new Error('Employee ID is already in use');
+      }
+
+      // 2. If an employee record exists with this code, verify email ownership
+      const existingEmployee = await EmployeeModel.findOne({ employeeCode: providedEmpId });
+      if (existingEmployee) {
+        if (existingEmployee.email.toLowerCase() !== normalizedEmail) {
+          throw new Error('Employee ID does not match email address');
+        }
+      }
+      finalEmployeeId = providedEmpId;
+    } else {
+      // Check if an employee record already exists for this email
+      const existingEmployee = await EmployeeModel.findOne({ email: normalizedEmail });
+      if (existingEmployee && existingEmployee.employeeCode) {
+        finalEmployeeId = existingEmployee.employeeCode;
+      } else {
+        finalEmployeeId = await this.generateEmployeeCode();
+      }
+    }
+
     const hashedPassword = await hashPassword(data.password);
     
+    // Server-side role enforcement: MUST always be SystemRoles.EMPLOYEE for public registration
+    // Ignore any submitted role, isActive, or permissions fields
     const user = await userRepository.create({
-      ...data,
+      firstName: data.firstName,
+      lastName: data.lastName,
+      email: normalizedEmail,
       passwordHash: hashedPassword,
+      phone: data.phone,
+      department: data.department,
+      designation: data.designation,
+      employeeId: finalEmployeeId,
+      role: SystemRoles.EMPLOYEE,
+      isActive: true,
     });
+
+    // If matching employee record exists, link userId
+    await EmployeeModel.findOneAndUpdate(
+      { email: normalizedEmail, userId: { $exists: false } },
+      { userId: user.id }
+    );
 
     const { accessToken, refreshToken } = generateTokens(user);
     await userRepository.updateRefreshToken(user.id as string, refreshToken);

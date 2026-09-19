@@ -18,11 +18,9 @@ const registerSchema = z.object({
   firstName: z.string().min(2, { message: 'First name must be at least 2 characters' }),
   lastName: z.string().min(2, { message: 'Last name must be at least 2 characters' }),
   email: z.string().email({ message: 'Invalid email address' }),
-  employeeId: z.string().min(2, { message: 'Employee ID is required' }),
+  employeeId: z.string().optional(),
   password: z.string().min(8, { message: 'Password must be at least 8 characters' }),
-  role: z.enum(['HR_RECRUITER', 'EMPLOYEE', 'MANAGEMENT_ADMIN', 'SENIOR_MANAGER'], { 
-    message: 'Please select a role' 
-  }),
+  role: z.literal('EMPLOYEE').default('EMPLOYEE'),
 });
 
 type RegisterFormValues = z.infer<typeof registerSchema>;
@@ -34,8 +32,6 @@ export default function RegisterPage() {
   const {
     register,
     handleSubmit,
-    setValue,
-    watch,
     formState: { errors },
   } = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
@@ -45,16 +41,25 @@ export default function RegisterPage() {
       email: '',
       employeeId: '',
       password: '',
-      role: 'EMPLOYEE', // Default role
+      role: 'EMPLOYEE',
     },
   });
-
-  const activeRole = watch('role');
 
   const onSubmit = async (data: RegisterFormValues) => {
     try {
       setIsLoading(true);
-      const response = await api.post('/auth/register', data);
+      const payload: Record<string, any> = {
+        firstName: data.firstName,
+        lastName: data.lastName,
+        email: data.email,
+        password: data.password,
+        role: 'EMPLOYEE',
+      };
+      if (data.employeeId?.trim()) {
+        payload.employeeId = data.employeeId.trim();
+      }
+
+      const response = await api.post('/auth/register', payload);
       
       if (response.data.success) {
         toast.success('Registration successful! Please sign in.');
@@ -63,14 +68,14 @@ export default function RegisterPage() {
     } catch (error: unknown) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const err = error as any;
-      toast.error(err.response?.data?.message || 'Failed to register. Please try again.');
+      toast.error(err.response?.data?.message || err.response?.data?.errors?.[0] || 'Failed to register. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <Card className="w-full border-border/80 dark:border-white/10 bg-card/90 dark:bg-[#0e101e]/85 backdrop-blur-2xl rounded-2xl shadow-xl relative overflow-hidden group my-4">
+    <Card className="w-full border-border/80 dark:border-white/10 bg-card/90 dark:bg-[#0e101e]/85 backdrop-blur-2xl rounded-[24px] shadow-2xl relative overflow-hidden group my-2">
       <div className="absolute top-0 left-0 w-full h-[1.5px] bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
       <CardHeader className="space-y-1.5 pb-5">
         <CardTitle className="text-xl sm:text-2xl font-bold tracking-tight text-foreground dark:text-white">Create an account</CardTitle>
@@ -87,7 +92,7 @@ export default function RegisterPage() {
                 id="firstName" 
                 placeholder="John" 
                 {...register('firstName')}
-                className={`text-xs h-10 bg-background/50 dark:bg-white/[0.03] border-border dark:border-white/15 focus:border-primary/60 focus:ring-2 focus:ring-primary/25 text-foreground dark:text-white rounded-xl placeholder:text-muted-foreground/60 transition-all ${errors.firstName ? 'border-destructive/60' : ''}`}
+                className={`text-xs h-10 bg-background/50 dark:bg-white/[0.03] border-border dark:border-white/15 focus-visible:border-primary/60 focus-visible:ring-1 focus-visible:ring-primary/25 text-foreground dark:text-white rounded-xl placeholder:text-muted-foreground/60 transition-all ${errors.firstName ? 'border-destructive/60' : ''}`}
               />
               {errors.firstName && (
                 <p className="text-[11px] text-destructive mt-1 font-medium">{errors.firstName.message}</p>
@@ -99,7 +104,7 @@ export default function RegisterPage() {
                 id="lastName" 
                 placeholder="Doe" 
                 {...register('lastName')}
-                className={`text-xs h-10 bg-background/50 dark:bg-white/[0.03] border-border dark:border-white/15 focus:border-primary/60 focus:ring-2 focus:ring-primary/25 text-foreground dark:text-white rounded-xl placeholder:text-muted-foreground/60 transition-all ${errors.lastName ? 'border-destructive/60' : ''}`}
+                className={`text-xs h-10 bg-background/50 dark:bg-white/[0.03] border-border dark:border-white/15 focus-visible:border-primary/60 focus-visible:ring-1 focus-visible:ring-primary/25 text-foreground dark:text-white rounded-xl placeholder:text-muted-foreground/60 transition-all ${errors.lastName ? 'border-destructive/60' : ''}`}
               />
               {errors.lastName && (
                 <p className="text-[11px] text-destructive mt-1 font-medium">{errors.lastName.message}</p>
@@ -115,7 +120,7 @@ export default function RegisterPage() {
                 type="email" 
                 placeholder="name@company.com" 
                 {...register('email')}
-                className={`text-xs h-10 bg-background/50 dark:bg-white/[0.03] border-border dark:border-white/15 focus:border-primary/60 focus:ring-2 focus:ring-primary/25 text-foreground dark:text-white rounded-xl placeholder:text-muted-foreground/60 transition-all ${errors.email ? 'border-destructive/60' : ''}`}
+                className={`text-xs h-10 bg-background/50 dark:bg-white/[0.03] border-border dark:border-white/15 focus-visible:border-primary/60 focus-visible:ring-1 focus-visible:ring-primary/25 text-foreground dark:text-white rounded-xl placeholder:text-muted-foreground/60 transition-all ${errors.email ? 'border-destructive/60' : ''}`}
               />
               {errors.email && (
                 <p className="text-[11px] text-destructive mt-1 font-medium">{errors.email.message}</p>
@@ -123,12 +128,12 @@ export default function RegisterPage() {
             </div>
             
             <div className="space-y-1.5">
-              <Label htmlFor="employeeId" className="text-xs font-semibold text-foreground/90 dark:text-zinc-300">Employee ID</Label>
+              <Label htmlFor="employeeId" className="text-xs font-semibold text-foreground/90 dark:text-zinc-300">Employee ID <span className="text-[10px] text-muted-foreground font-normal">(Optional)</span></Label>
               <Input 
                 id="employeeId" 
-                placeholder="EMP-1234" 
+                placeholder="Auto-generated if left blank" 
                 {...register('employeeId')}
-                className={`text-xs h-10 bg-background/50 dark:bg-white/[0.03] border-border dark:border-white/15 focus:border-primary/60 focus:ring-2 focus:ring-primary/25 text-foreground dark:text-white rounded-xl placeholder:text-muted-foreground/60 transition-all ${errors.employeeId ? 'border-destructive/60' : ''}`}
+                className={`text-xs h-10 bg-background/50 dark:bg-white/[0.03] border-border dark:border-white/15 focus-visible:border-primary/60 focus-visible:ring-1 focus-visible:ring-primary/25 text-foreground dark:text-white rounded-xl placeholder:text-muted-foreground/60 transition-all ${errors.employeeId ? 'border-destructive/60' : ''}`}
               />
               {errors.employeeId && (
                 <p className="text-[11px] text-destructive mt-1 font-medium">{errors.employeeId.message}</p>
@@ -137,35 +142,22 @@ export default function RegisterPage() {
           </div>
           
           <div className="space-y-1.5">
-            <Label className="text-xs font-semibold text-foreground/90 dark:text-zinc-300">Account Role</Label>
-            <div className="grid grid-cols-2 gap-2">
-              {[
-                { value: 'EMPLOYEE', label: 'Employee', desc: 'Core profile & timesheets.' },
-                { value: 'HR_RECRUITER', label: 'HR Recruiter', desc: 'ATS management & pipelines.' },
-                { value: 'SENIOR_MANAGER', label: 'Senior Manager', desc: 'Performances & logs.' },
-                { value: 'MANAGEMENT_ADMIN', label: 'Admin', desc: 'Full workspace control.' },
-              ].map((r) => {
-                const isSelected = activeRole === r.value;
-                return (
-                  <button
-                    key={r.value}
-                    type="button"
-                    onClick={() => setValue('role', r.value as any)}
-                    className={`flex flex-col text-left p-2.5 rounded-xl border text-xs transition-all cursor-pointer ${
-                      isSelected 
-                        ? 'border-primary bg-primary/10 text-primary dark:text-white shadow-xs' 
-                        : 'border-border/80 dark:border-white/10 bg-background/40 dark:bg-white/[0.02] text-muted-foreground hover:bg-muted/50 hover:border-border'
-                    }`}
-                  >
-                    <span className={`font-semibold mb-0.5 ${isSelected ? 'text-primary dark:text-violet-300' : 'text-foreground/90 dark:text-zinc-200'}`}>{r.label}</span>
-                    <span className="text-[10px] text-muted-foreground dark:text-zinc-400 leading-tight">{r.desc}</span>
-                  </button>
-                );
-              })}
+            <Label className="text-xs font-semibold text-foreground/90 dark:text-zinc-300">Account Access Level</Label>
+            <div className="flex items-center justify-between p-3 rounded-xl border border-primary/25 bg-primary/5 dark:bg-primary/10">
+              <div className="flex items-center space-x-2.5">
+                <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-sm shadow-emerald-500/50 animate-pulse" />
+                <div>
+                  <p className="text-xs font-semibold text-foreground dark:text-zinc-200">Standard Employee Account</p>
+                  <p className="text-[10px] text-muted-foreground dark:text-zinc-400">Timesheets, profiles, reviews & self-service</p>
+                </div>
+              </div>
+              <span className="text-[10px] uppercase font-bold tracking-wider px-2.5 py-1 rounded-md bg-primary/15 dark:bg-primary/25 text-primary border border-primary/30">
+                EMPLOYEE
+              </span>
             </div>
-            {errors.role && (
-              <p className="text-[11px] text-destructive mt-1 font-medium">{errors.role.message}</p>
-            )}
+            <p className="text-[10.5px] text-muted-foreground/75 dark:text-zinc-500 leading-tight">
+              * Privileged workspace roles (HR Recruiter, Senior Manager, Management Admin) are strictly provisioned by internal system administrators.
+            </p>
           </div>
  
           <div className="space-y-1.5">
@@ -175,7 +167,7 @@ export default function RegisterPage() {
               type="password" 
               placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;"
               {...register('password')}
-              className={`text-xs h-10 bg-background/50 dark:bg-white/[0.03] border-border dark:border-white/15 focus:border-primary/60 focus:ring-2 focus:ring-primary/25 text-foreground dark:text-white rounded-xl placeholder:text-muted-foreground/60 transition-all ${errors.password ? 'border-destructive/60' : ''}`}
+              className={`text-xs h-10 bg-background/50 dark:bg-white/[0.03] border-border dark:border-white/15 focus-visible:border-primary/60 focus-visible:ring-1 focus-visible:ring-primary/25 text-foreground dark:text-white rounded-xl placeholder:text-muted-foreground/60 transition-all ${errors.password ? 'border-destructive/60' : ''}`}
             />
             {errors.password && (
               <p className="text-[11px] text-destructive mt-1 font-medium">{errors.password.message}</p>
@@ -184,7 +176,7 @@ export default function RegisterPage() {
           
           <Button 
             type="submit" 
-            className="w-full h-10.5 mt-2 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-600 dark:hover:bg-indigo-500 text-white text-xs font-bold rounded-xl border-0 shadow-lg shadow-indigo-600/20 dark:shadow-[0_0_20px_rgba(99,102,241,0.25)] transition-all duration-200 cursor-pointer" 
+            className="w-full h-10.5 mt-2 bg-primary hover:bg-primary-hover text-white text-xs font-bold rounded-xl border-0 shadow-lg shadow-primary/20 dark:shadow-[0_0_20px_rgba(139,92,246,0.25)] transition-all duration-200 cursor-pointer" 
             disabled={isLoading}
           >
             {isLoading ? 'Creating account...' : 'Create workspace account'}

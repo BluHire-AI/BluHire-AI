@@ -6,39 +6,100 @@ import { Select as SelectPrimitive } from "@base-ui/react/select"
 import { cn } from "@/lib/utils"
 import { ChevronDownIcon, CheckIcon, ChevronUpIcon, Search } from "lucide-react"
 
-const SelectSearchContext = React.createContext<{
+const SelectContext = React.createContext<{
   searchQuery: string;
   setSearchQuery: (query: string) => void;
   isSearchable: boolean;
+  itemMap: Map<any, React.ReactNode>;
+  getLabel: (val: any) => React.ReactNode | undefined;
 } | null>(null);
+
+function extractItemMap(node: React.ReactNode, map = new Map<any, React.ReactNode>()): Map<any, React.ReactNode> {
+  if (!node) return map;
+  if (Array.isArray(node)) {
+    node.forEach(child => extractItemMap(child, map));
+    return map;
+  }
+  if (React.isValidElement(node)) {
+    const props = node.props as any;
+    if (props && 'value' in props && props.value !== undefined) {
+      let label = props.label;
+      if (!label && props.children) {
+        if (typeof props.children === 'string' || typeof props.children === 'number') {
+          label = props.children;
+        } else if (Array.isArray(props.children)) {
+          const textParts = props.children
+            .map((c: any) => (typeof c === 'string' || typeof c === 'number' ? c : ''))
+            .join('');
+          label = textParts || props.children;
+        } else {
+          label = props.children;
+        }
+      }
+      map.set(props.value, label !== undefined && label !== null ? label : props.value);
+    }
+    if (props && props.children) {
+      extractItemMap(props.children, map);
+    }
+  }
+  return map;
+}
 
 function Select({
   searchable = false,
+  items: itemsProp,
   children,
   open,
   onOpenChange,
   ...props
-}: SelectPrimitive.Root.Props & {
+}: SelectPrimitive.Root.Props<any> & {
   searchable?: boolean;
+  items?: Array<{ value: any; label: any }> | any[];
 }) {
   const [searchQuery, setSearchQuery] = React.useState("");
   const [internalOpen, setInternalOpen] = React.useState(false);
 
+  const itemMap = React.useMemo(() => {
+    const map = extractItemMap(children);
+    if (Array.isArray(itemsProp)) {
+      itemsProp.forEach((it) => {
+        if (it && typeof it === 'object' && 'value' in it) {
+          map.set(it.value, it.label ?? it.value);
+        }
+      });
+    }
+    return map;
+  }, [children, itemsProp]);
+
+  const mergedItems = React.useMemo(() => {
+    if (itemsProp) return itemsProp;
+    const itemsArr: Array<{ value: any; label: React.ReactNode }> = [];
+    itemMap.forEach((label, value) => {
+      itemsArr.push({ value, label });
+    });
+    return itemsArr.length > 0 ? itemsArr : undefined;
+  }, [itemsProp, itemMap]);
+
+  const getLabel = React.useCallback((val: any) => {
+    if (val === undefined || val === null || val === '') return undefined;
+    return itemMap.get(val);
+  }, [itemMap]);
+
   const isOpen = open !== undefined ? open : internalOpen;
-  const handleOpenChange = (nextOpen: boolean) => {
+  const handleOpenChange = (nextOpen: boolean, eventDetails: any) => {
     if (!nextOpen) {
       setSearchQuery("");
     }
-    onOpenChange?.(nextOpen);
+    onOpenChange?.(nextOpen, eventDetails);
     setInternalOpen(nextOpen);
   };
 
   return (
-    <SelectSearchContext.Provider value={{ searchQuery, setSearchQuery, isSearchable: searchable }}>
-      <SelectPrimitive.Root open={isOpen} onOpenChange={handleOpenChange} {...props}>
+    <SelectContext.Provider value={{ searchQuery, setSearchQuery, isSearchable: searchable, itemMap, getLabel }}>
+      <SelectPrimitive.Root open={isOpen} onOpenChange={handleOpenChange} items={mergedItems} {...props}>
         {children}
       </SelectPrimitive.Root>
-    </SelectSearchContext.Provider>
+    </SelectContext.Provider>
   );
 }
 
@@ -52,14 +113,44 @@ function SelectGroup({ className, ...props }: SelectPrimitive.Group.Props) {
   )
 }
 
-function SelectValue({ className, ...props }: SelectPrimitive.Value.Props) {
+function SelectValue({
+  className,
+  placeholder,
+  children,
+  ...props
+}: SelectPrimitive.Value.Props) {
+  const ctx = React.useContext(SelectContext);
+
   return (
     <SelectPrimitive.Value
       data-slot="select-value"
-      className={cn("flex flex-1 text-left", className)}
+      className={cn("flex flex-1 text-left truncate", className)}
+      placeholder={placeholder}
       {...props}
-    />
-  )
+    >
+      {(val) => {
+        if (typeof children === 'function') {
+          return children(val);
+        }
+        if (children) {
+          return children;
+        }
+        if (val === undefined || val === null || val === '') {
+          return placeholder;
+        }
+        const resolved = ctx?.getLabel(val);
+        if (resolved !== undefined && resolved !== null) {
+          return resolved;
+        }
+        // If value is a 24-character hex MongoDB ObjectId that is not yet in lookup data:
+        // Do not display raw ObjectId to the user; fallback to placeholder or friendly text
+        if (typeof val === 'string' && /^[0-9a-fA-F]{24}$/.test(val)) {
+          return placeholder || 'Loading...';
+        }
+        return val;
+      }}
+    </SelectPrimitive.Value>
+  );
 }
 
 function SelectTrigger({
@@ -104,7 +195,7 @@ function SelectContent({
     SelectPrimitive.Positioner.Props,
     "align" | "alignOffset" | "side" | "sideOffset" | "alignItemWithTrigger"
   >) {
-  const context = React.useContext(SelectSearchContext);
+  const context = React.useContext(SelectContext);
   const isSearchable = context?.isSearchable ?? false;
   const searchQuery = context?.searchQuery ?? "";
   const setSearchQuery = context?.setSearchQuery;
@@ -118,7 +209,8 @@ function SelectContent({
     // Helper to get text recursively from a React element
     const getElementText = (element: React.ReactElement): string => {
       let text = "";
-      React.Children.forEach(element.props.children, (child) => {
+      const elProps = element.props as any;
+      React.Children.forEach(elProps?.children, (child) => {
         if (typeof child === "string" || typeof child === "number") {
           text += child;
         } else if (React.isValidElement(child)) {
@@ -227,11 +319,29 @@ function SelectLabel({
 function SelectItem({
   className,
   children,
+  label: labelProp,
   ...props
-}: SelectPrimitive.Item.Props) {
+}: SelectPrimitive.Item.Props & {
+  label?: string;
+}) {
+  const computedLabel = React.useMemo(() => {
+    if (labelProp) return labelProp;
+    if (typeof children === 'string' || typeof children === 'number') {
+      return String(children);
+    }
+    if (Array.isArray(children)) {
+      const text = children
+        .map((c) => (typeof c === 'string' || typeof c === 'number' ? c : ''))
+        .join('');
+      if (text) return text;
+    }
+    return undefined;
+  }, [labelProp, children]);
+
   return (
     <SelectPrimitive.Item
       data-slot="select-item"
+      label={computedLabel}
       className={cn(
         "relative flex w-full cursor-pointer items-center gap-2 rounded-lg py-2 pr-8 pl-3 text-xs md:text-sm text-foreground dark:text-zinc-300 outline-hidden select-none transition-all duration-150 data-[highlighted]:bg-primary data-[highlighted]:text-primary-foreground focus:bg-primary focus:text-primary-foreground hover:bg-primary hover:text-primary-foreground data-[selected]:bg-primary/10 dark:data-[selected]:bg-primary/20 data-[selected]:text-primary dark:data-[selected]:text-white data-[selected]:font-semibold data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 *:[span]:last:flex *:[span]:last:items-center *:[span]:last:gap-2",
         className

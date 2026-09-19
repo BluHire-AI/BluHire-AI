@@ -12,10 +12,12 @@ import {
   resetPasswordSchema
 } from '../validators/authValidators';
 
+import { registerLimiter, loginLimiter } from '../middlewares/rateLimiter.middleware';
+
 const router = Router();
 
-router.post('/register', validateRequest(registerSchema), authController.register);
-router.post('/login', validateRequest(loginSchema), authController.login);
+router.post('/register', registerLimiter, validateRequest(registerSchema), authController.register);
+router.post('/login', loginLimiter, validateRequest(loginSchema), authController.login);
 router.post('/logout', authenticate, authController.logout);
 router.post('/refresh', validateRequest(refreshTokenSchema), authController.refresh);
 router.post('/change-password', authenticate, validateRequest(changePasswordSchema), authController.changePassword);
